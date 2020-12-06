@@ -4,6 +4,8 @@
 
 #include "Wacomm.hpp"
 
+using namespace netCDF;
+
 Wacomm::Wacomm() {
     log4cplus::BasicConfigurator config;
     config.configure();
@@ -59,7 +61,7 @@ void Wacomm::load(string fileName,
     LOG4CPLUS_INFO(logger,"Loading:"+fileName);
 
     // Open the file for read access
-    NcFile dataFile(fileName, NcFile::read);
+    netCDF::NcFile dataFile(fileName, NcFile::read);
 
     // Retrieve the variable named "mask_rho"
     NcVar varMaskRho=dataFile.getVar("mask_rho");

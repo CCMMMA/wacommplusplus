@@ -23,7 +23,7 @@ ExternalProject_Add(szlib
         BUILD_COMMAND make
         INSTALL_COMMAND make install
         )
-set(LIBSZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libszip.a)
+set(LIBSZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libsz.a)
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(LIBSZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libszip.dylib)
 endif()
@@ -62,7 +62,7 @@ ExternalProject_Add(hdf5
         BUILD_COMMAND make
         INSTALL_COMMAND make install
         )
-set(LIBHDF5 ${EXTERNAL_INSTALL_LOCATION}/lib/libhdf5.a)
+set(LIBHDF5 ${EXTERNAL_INSTALL_LOCATION}/lib/libhdf5_hl.a;${EXTERNAL_INSTALL_LOCATION}/lib/libhdf5.a)
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(LIBHDF5 ${EXTERNAL_INSTALL_LOCATION}/lib/libhdf5.dylib)
 endif()
@@ -100,7 +100,7 @@ ExternalProject_Add(log4cplus
         BUILD_COMMAND make
         INSTALL_COMMAND make install
         )
-set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.a)
+set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.so)
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.dylib)
 endif()
@@ -116,4 +116,5 @@ add_dependencies(netcdfcxx netcdf )
 add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
 
-target_link_libraries(${PROJECT_NAME} ${LIBSZLIB} ${LIBZLIB} ${LIBCURL} ${LIBHDF5} ${LIBNETCDF} ${LIBNETCDFCXX} ${LIBLOG4CPLUS})
+target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} pthread dl)
+
