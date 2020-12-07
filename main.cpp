@@ -15,6 +15,7 @@ namespace fs = std::filesystem;
 
 #include "Wacomm.hpp"
 #include "Particles.hpp"
+#include "Sources.hpp"
 
 log4cplus::Logger logger;
 
@@ -79,7 +80,9 @@ int main(int argc, char **argv) {
 
     //Particles particles(restartFileName);
     Particles particles;
-    Wacomm wacomm(netcdfFileName,particles);
+    //Sources sources(sourcesFileName);
+    Sources sources;
+    Wacomm wacomm(netcdfFileName, sources, particles);
 
     // ROMS2Wacomm roms2Wacomm(fileName, ocean_time, ucomp, vcomp, wcomp, aktcomp);
     // Array4<double> conc=wacomm.run(ocean_time, ucomp, vcomp, wcomp, aktcomp);
