@@ -26,7 +26,7 @@ ExternalProject_Add(szlib
         )
 set(LIBSZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libsz.a)
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIBSZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libszip.dylib)
+    set(LIBSZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libsz.dylib)
 endif()
 
 ExternalProject_Add(zlib
@@ -72,7 +72,8 @@ ExternalProject_Add(netcdf
         URL https://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-c-4.7.4.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ LIBS="-lhdf5_hl -lhdf5 -lm -lz -lcurl" --enable-cxx --enable-shared --enable-netcdf-4 --enable-dap --enable-byterange --enable-erange-fill
+        set(LIBS_PARAMS "-lhdf5_hl -lhdf5 -lm -lz -lcurl")
+        CONFIGURE_COMMAND ./configure LIBS=${LIBS_PARAMS} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}  --enable-shared --enable-netcdf-4 --enable-dap --enable-byterange --enable-erange-fill
         INSTALL_COMMAND make install
         )
 set(LIBNETCDF ${EXTERNAL_INSTALL_LOCATION}/lib/libnetcdf.a)
@@ -84,7 +85,8 @@ ExternalProject_Add(netcdfcxx
         URL https://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-cxx4-4.3.1.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ LIBS="-lnetcdf" --enable-shared
+        set(LIBS_PARAMS "-lnetcdf -lhdf5_hl -lhdf5 -lm -lz -lcurl")
+        CONFIGURE_COMMAND ./configure LIBS=${LIBS_PARAMS} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}   --enable-shared
         INSTALL_COMMAND make install
         )
 set(LIBNETCDFCXX ${EXTERNAL_INSTALL_LOCATION}/lib/libnetcdf_c++4.a)
