@@ -72,7 +72,7 @@ void Wacomm::load(string fileName,
     cout << eta_rho << "," << xi_rho << endl;
     mask_rho=Array2<double>(eta_rho,xi_rho);
     cout << "aaaa" << endl;
-    varMaskRho.getVar(mask_rho());
+    varMaskRho.getVar(mask_rho.ptr());
     cout << "bbbb" << endl;
 
     // Retrieve the variable named "mask_u"
@@ -82,7 +82,7 @@ void Wacomm::load(string fileName,
     size_t xi_u = varMaskU.getDim(1).getSize();
 
     mask_u=Array2<double>(eta_u,xi_u);
-    varMaskU.getVar(mask_u());
+    varMaskU.getVar(mask_u.ptr());
 
     // Retrieve the variable named "mask_v"
     NcVar varMaskV=dataFile.getVar("mask_v");
@@ -91,7 +91,7 @@ void Wacomm::load(string fileName,
     size_t xi_v = varMaskV.getDim(1).getSize();
 
     mask_v=Array2<double>(eta_v,xi_v);
-    varMaskU.getVar(mask_v());
+    varMaskU.getVar(mask_v.ptr());
 
     // Retrieve the variable named "u"
     NcVar varU=dataFile.getVar("u");
@@ -100,13 +100,13 @@ void Wacomm::load(string fileName,
     size_t s_rho = varU.getDim(1).getSize();
 
     u=Array4<double>(ocean_time, s_rho, eta_u, xi_u);
-    varU.getVar(u());
+    varU.getVar(u.ptr());
 
     // Retrieve the variable named "v"
     NcVar varV=dataFile.getVar("v");
 
     v=Array4<double>(ocean_time, s_rho, eta_v, xi_v);
-    varV.getVar(v());
+    varV.getVar(v.ptr());
 
     // Retrieve the variable named "w"
     NcVar varW=dataFile.getVar("w");
@@ -114,13 +114,13 @@ void Wacomm::load(string fileName,
     size_t s_w = varW.getDim(1).getSize();
 
     w=Array4<double>(ocean_time,s_w,eta_rho,xi_rho);
-    varV.getVar(w());
+    varV.getVar(w.ptr());
 
     // Retrieve the variable named "AKt"
     NcVar varAKt=dataFile.getVar("AKt");
 
     akt=Array4<double>(ocean_time,s_w,eta_rho,xi_rho);
-    varAKt.getVar(akt());
+    varAKt.getVar(akt.ptr());
 }
 
 void Wacomm::uv2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array4<double>& u, Array4<double>& v) {
@@ -146,40 +146,48 @@ void Wacomm::uv2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array4<doubl
                 for (int i=0; i< xi_u; i++)
                 {
 
-                    if ( j>=0 && i>=0 && j < eta_rho && i < xi_rho && mask_rho(j,i) > 0.0 )
+                    if ( j>=0 && i>=0 && j < eta_rho && i < xi_rho && mask_rho.at(j,i) > 0.0 )
                     {
-                        if ( j>=0 && i>=0 && j<eta_u && i <xi_u && mask_u(j,i) > 0.0 )
+                        if ( j>=0 && i>=0 && j<eta_u && i <xi_u && mask_u.at(j,i) > 0.0 )
                         {
-                            uw1=u(t,k,j,i);
+                            uw1=u.at(t,k,j,i);
                         } else {
                             uw1=0.0;
                         }
-                        if ( j>0 && i>=0 && j<eta_u && i <xi_u && mask_u(j-1,i) > 0.0 )
+                        if ( j>0 && i>=0 && j<eta_u && i <xi_u && mask_u.at(j-1,i) > 0.0 )
                         {
-                            uw2=u(t,k,j-1,i);
+                            uw2=u.at(t,k,j-1,i);
                         } else
                         {
                             uw2=0.0;
                         }
-                        if ( j>=0 && i>=0 && j<eta_v && i <xi_v && mask_v(j,i) > 0.0 )
+                        if ( j>=0 && i>=0 && j<eta_v && i <xi_v && mask_v.at(j,i) > 0.0 )
                         {
-                            vw1=v(t,k,j,i);
+                            vw1=v.at(t,k,j,i);
                         } else
                         {
                             vw1=0.0;
                         }
-                        if ( j>=0 && i>0 && j<eta_v && i <xi_v && mask_v(j,i-1) > 0.0 )
+                        if ( j>=0 && i>0 && j<eta_v && i <xi_v && mask_v.at(j,i-1) > 0.0 )
                         {
-                            vw2=v(t,k,j,i-1);
+                            vw2=v.at(t,k,j,i-1);
                         } else
                         {
                             vw2=0.0;
                         }
+                        /*
                         ucomp(t,k,j,i)=0.5*(uw1+uw2);
                         vcomp(t,k,j,i)=0.5*(vw1+vw2);
+                         */
+                        ucomp.at(t,k,j,i,0.5*(uw1+uw2));
+                        vcomp.at(t,k,j,i,0.5*(vw1+vw2));
                     } else {
+                        /*
                         ucomp(t,k,j,i)=0.0;
                         vcomp(t,k,j,i)=0.0;
+                         */
+                        ucomp.at(t,k,j,i,0.0);
+                        vcomp.at(t,k,j,i,0.0);
                     }
                 }
             }
@@ -207,38 +215,45 @@ void Wacomm::wakt2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array4<dou
             for (int j=0; j < eta_v; j++) {
                 for (int i=0; i< xi_u; i++) {
 
-                    if ( j>=0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho(j,i) > 0.0 )
+                    if ( j>=0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho.at(j,i) > 0.0 )
                     {
-                        if ( j>=0 && i>0 && j<eta_rho && i <xi_rho && mask_rho(j,i-1) > 0.0 )
+                        if ( j>=0 && i>0 && j<eta_rho && i <xi_rho && mask_rho.at(j,i-1) > 0.0 )
                         {
-                            ww1=w(t, k,j,i-1);
-                            aktw1=akt(t, k,j,i-1);
+                            ww1=w.at(t, k,j,i-1);
+                            aktw1=akt.at(t, k,j,i-1);
                         } else {
                             ww1=0.0;
                             aktw1=0.0;
                         }
 
-                        if ( j>0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho(j-1,i) > 0.0 ) {
-                            ww2=w(t, k,j-1,i);
-                            aktw2=akt(t, k,j-1,i);
+                        if ( j>0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho.at(j-1,i) > 0.0 ) {
+                            ww2=w.at(t, k,j-1,i);
+                            aktw2=akt.at(t, k,j-1,i);
                         } else {
                             ww2=0.0;
                             aktw2=0.0;
                         }
 
-                        if ( j>0 && i>0 && j<eta_rho && i <xi_rho && mask_rho(j-1,i-1) > 0.0 ) {
-                            ww3=w(t, k, j-1,i-1);
-                            aktw3=akt(t, k, j-1,i-1);
+                        if ( j>0 && i>0 && j<eta_rho && i <xi_rho && mask_rho.at(j-1,i-1) > 0.0 ) {
+                            ww3=w.at(t, k, j-1,i-1);
+                            aktw3=akt.at(t, k, j-1,i-1);
                         } else {
                             ww3=0.0;
                             aktw3=0.0;
                         }
-
-                        wcomp(t,k,j,i)=0.25*(ww1+ww2+ww3+w(t,k,j,i));
-                        aktcomp(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt(t,k,j,i));
+                        /*
+                        wcomp(t,k,j,i)=0.25*(ww1+ww2+ww3+w.at(t,k,j,i));
+                        aktcomp(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt.at(t,k,j,i));
+                         */
+                        wcomp.at(t,k,j,i,0.25*(ww1+ww2+ww3+w.at(t,k,j,i)));
+                        aktcomp.at(t,k,j,i,0.25*(aktw1+aktw2+aktw3+akt.at(t,k,j,i)));
                     } else {
+                        /*
                         wcomp(t,k,j,i)=0.0;
                         aktcomp(t,k,j,i)=0.0;
+                         */
+                        wcomp.at(t,k,j,i,0.0);
+                        aktcomp.at(t,k,j,i,0.0);
                     }
                 }
             }
