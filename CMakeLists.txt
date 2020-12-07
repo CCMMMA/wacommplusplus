@@ -127,7 +127,7 @@ target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${
 
 ExternalProject_Add(
         wacomm_data
-        PREFIX "wacomm-data"
+        PREFIX "wacomm-data-prefix"
         URL https://neptunia.uniparthenope.it/data/wacomm-data.tar.gz
         CONFIGURE_COMMAND ""
         BUILD_COMMAND ""
@@ -135,6 +135,6 @@ ExternalProject_Add(
 )
 
 
-add_custom_target(data mv ${CMAKE_BINARY_DIR}/wacomm-data/src/wacomm-data/*)
+add_custom_target(data mv ${CMAKE_BINARY_DIR}/wacomm-data-prefix/src/wacomm_data/* ${CMAKE_BINARY_DIR}/)
 
 add_dependencies(data wacomm_data)
