@@ -241,9 +241,18 @@ namespace Array {
 #endif
 
         T& operator [] (int ix) const {__check(ix,size,1,1); return v[ix];}
+
+        /*Removed operator redefinition for ()
         T& operator () (int ix) const {__check(ix,size,1,1); return v[ix];}
         T* operator () () const {return v;}
         operator T* () const {return v;}
+        */
+
+        void at (int ix, T a) const {__check(ix,size,1,1); v[ix]=a;}
+
+        T& at (int ix) const {__check(ix,size,1,1); return v[ix];}
+
+        T* ptr() const {return v;}
 
         array1<T> operator + (int i) const {return array1<T>(size-i,v+i);}
 
@@ -459,6 +468,7 @@ namespace Array {
             return array1<T>(ny,this->v+ix*ny);
         }
 #endif
+/*
         T& operator () (int ix, int iy) const {
             __check(ix,nx,2,1);
             __check(iy,ny,2,2);
@@ -469,6 +479,25 @@ namespace Array {
             return this->v[i];
         }
         T* operator () () const {return this->v;}
+*/
+        void at(int ix, int iy, T a) const {
+            __check(ix,nx,2,1);
+            __check(iy,ny,2,2);
+            this->v[ix*ny+iy]=a;
+        }
+
+        T& at(int ix, int iy) const {
+            __check(ix,nx,2,1);
+            __check(iy,ny,2,2);
+            return this->v[ix*ny+iy];
+        }
+
+        T& at(int i) const {
+            __check(i,this->size,2,0);
+            return this->v[i];
+        }
+
+        T* ptr() const {return this->v;}
 
         array2<T>& operator = (T a) {this->Load(a); return *this;}
         array2<T>& operator = (T *a) {this->Load(a); return *this;}
@@ -581,6 +610,7 @@ namespace Array {
             __check(ix,nx,3,1);
             return array2<T>(ny,nz,this->v+ix*nyz);
         }
+        /*
         T& operator () (int ix, int iy, int iz) const {
             __check(ix,nx,3,1);
             __check(iy,ny,3,2);
@@ -592,6 +622,27 @@ namespace Array {
             return this->v[i];
         }
         T* operator () () const {return this->v;}
+         */
+
+        void at(int ix, int iy, int iz, T a) const {
+            __check(ix,nx,3,1);
+            __check(iy,ny,3,2);
+            __check(iz,nz,3,3);
+            this->v[ix*nyz+iy*nz+iz]=a;
+        }
+
+        T& at(int ix, int iy, int iz) const {
+            __check(ix,nx,3,1);
+            __check(iy,ny,3,2);
+            __check(iz,nz,3,3);
+            return this->v[ix*nyz+iy*nz+iz];
+        }
+
+        T& at(int i) const {
+            __check(i,this->size,3,0);
+            return this->v[i];
+        }
+        T* ptr() const {return this->v;}
 
         array3<T>& operator = (T a) {this->Load(a); return *this;}
         array3<T>& operator = (T *a) {this->Load(a); return *this;}
@@ -700,6 +751,7 @@ namespace Array {
             __check(ix,nx,3,1);
             return array3<T>(ny,nz,nw,this->v+ix*nyzw);
         }
+        /*
         T& operator () (int ix, int iy, int iz, int iw) const {
             __check(ix,nx,4,1);
             __check(iy,ny,4,2);
@@ -712,6 +764,30 @@ namespace Array {
             return this->v[i];
         }
         T* operator () () const {return this->v;}
+         */
+
+        void at(int ix, int iy, int iz, int iw, T a) const {
+            __check(ix,nx,4,1);
+            __check(iy,ny,4,2);
+            __check(iz,nz,4,3);
+            __check(iw,nw,4,4);
+            this->v[ix*nyzw+iy*nzw+iz*nw+iw] = a;
+        }
+
+        T& at(int ix, int iy, int iz, int iw) const {
+            __check(ix,nx,4,1);
+            __check(iy,ny,4,2);
+            __check(iz,nz,4,3);
+            __check(iw,nw,4,4);
+            return this->v[ix*nyzw+iy*nzw+iz*nw+iw];
+        }
+
+        T& at(int i) const {
+            __check(i,this->size,4,0);
+            return this->v[i];
+        }
+
+        T* ptr() const {return this->v;}
 
         array4<T>& operator = (T a) {this->Load(a); return *this;}
         array4<T>& operator = (T *a) {this->Load(a); return *this;}
@@ -829,6 +905,7 @@ namespace Array {
             __check(ix,nx,4,1);
             return array4<T>(ny,nz,nw,nv,this->v+ix*nyzwv);
         }
+        /*
         T& operator () (int ix, int iy, int iz, int iw, int iv) const {
             __check(ix,nx,5,1);
             __check(iy,ny,5,2);
@@ -842,6 +919,31 @@ namespace Array {
             return this->v[i];
         }
         T* operator () () const {return this->v;}
+        */
+
+        void at(int ix, int iy, int iz, int iw, int iv, T a) const {
+            __check(ix,nx,5,1);
+            __check(iy,ny,5,2);
+            __check(iz,nz,5,3);
+            __check(iw,nw,5,4);
+            __check(iv,nv,5,5);
+            this->v[ix*nyzwv+iy*nzwv+iz*nwv+iw*nv+iv]=a;
+        }
+
+        T& at(int ix, int iy, int iz, int iw, int iv) const {
+            __check(ix,nx,5,1);
+            __check(iy,ny,5,2);
+            __check(iz,nz,5,3);
+            __check(iw,nw,5,4);
+            __check(iv,nv,5,5);
+            return this->v[ix*nyzwv+iy*nzwv+iz*nwv+iw*nv+iv];
+        }
+
+        T& at(int i) const {
+            __check(i,this->size,5,0);
+            return this->v[i];
+        }
+        T* ptr() const {return this->v;}
 
         array5<T>& operator = (T a) {this->Load(a); return *this;}
         array5<T>& operator = (T *a) {this->Load(a); return *this;}
@@ -970,11 +1072,16 @@ namespace Array {
 #else
         typedef Array1<T> opt;
 #endif
-
         T& operator [] (int ix) const {__check(ix,this->size,ox,1,1); return voff[ix];}
+/*
         T& operator () (int i) const {__check(i,this->size,0,1,1); return this->v[i];}
         T* operator () () const {return this->v;}
         operator T* () const {return this->v;}
+*/
+        void at (int i, T a) const {__check(i,this->size,0,1,1);  this->v[i]=a;}
+
+        T& at (int i) const {__check(i,this->size,0,1,1); return this->v[i];}
+        T* ptr() const {return this->v;}
 
         Array1<T> operator + (int i) const {return Array1<T>(this->size-i,this->v+i,ox);}
         void Set(T *a) {this->v=a; Offsets(); this->clear(this->allocated);}
@@ -1051,6 +1158,7 @@ namespace Array {
         }
 #endif
 
+        /*
         T& operator () (int ix, int iy) const {
             __check(ix,this->nx,ox,2,1);
             __check(iy,this->ny,oy,2,2);
@@ -1061,6 +1169,27 @@ namespace Array {
             return this->v[i];
         }
         T* operator () () const {return this->v;}
+        */
+
+        void at(int ix, int iy, T a) const {
+            __check(ix,this->nx,ox,2,1);
+            __check(iy,this->ny,oy,2,2);
+            voff[ix*(int) this->ny+iy]=a;
+        }
+
+        T& at(int ix, int iy) const {
+            __check(ix,this->nx,ox,2,1);
+            __check(iy,this->ny,oy,2,2);
+            return voff[ix*(int) this->ny+iy];
+        }
+
+        T& at(int i) const {
+            __check(i,this->size,0,2,0);
+            return this->v[i];
+        }
+
+        T* ptr () const {return this->v;}
+
         void Set(T *a) {this->v=a; Offsets(); this->clear(this->allocated);}
 
         Array2<T>& operator = (T a) {this->Load(a); return *this;}
@@ -1070,7 +1199,7 @@ namespace Array {
             __checkEqual(this->ny,A.Ny(),2,2);
             __checkEqual(ox,A.Ox(),2,1);
             __checkEqual(oy,A.Oy(),2,2);
-            this->Load(A());
+            this->Load(A.ptr());
             A.Purge();
             return *this;
         }
@@ -1136,6 +1265,8 @@ namespace Array {
             __check(ix,this->nx,ox,3,1);
             return Array2<T>(this->ny,this->nz,vtemp+ix*(int) this->nyz,oy,oz);
         }
+
+        /*
         T& operator () (int ix, int iy, int iz) const {
             __check(ix,this->nx,ox,3,1);
             __check(iy,this->ny,oy,3,2);
@@ -1147,6 +1278,27 @@ namespace Array {
             return this->v[i];
         }
         T* operator () () const {return this->v;}
+         */
+
+        void at(int ix, int iy, int iz, T a) const {
+            __check(ix,this->nx,ox,3,1);
+            __check(iy,this->ny,oy,3,2);
+            __check(iz,this->nz,oz,3,3);
+            voff[ix*(int) this->nyz+iy*(int) this->nz+iz]=a;
+        }
+
+        T& at(int ix, int iy, int iz) const {
+            __check(ix,this->nx,ox,3,1);
+            __check(iy,this->ny,oy,3,2);
+            __check(iz,this->nz,oz,3,3);
+            return voff[ix*(int) this->nyz+iy*(int) this->nz+iz];
+        }
+        T& at(int i) const {
+            __check(i,this->size,0,3,0);
+            return this->v[i];
+        }
+        T* ptr() const {return this->v;}
+
         void Set(T *a) {this->v=a; Offsets(); this->clear(this->allocated);}
 
         Array3<T>& operator = (T a) {this->Load(a); return *this;}
@@ -1234,6 +1386,8 @@ namespace Array {
             return Array3<T>(this->ny,this->nz,this->nw,vtemp+ix*(int) this->nyzw,
                              oy,oz,ow);
         }
+
+        /*
         T& operator () (int ix, int iy, int iz, int iw) const {
             __check(ix,this->nx,ox,4,1);
             __check(iy,this->ny,oy,4,2);
@@ -1246,6 +1400,29 @@ namespace Array {
             return this->v[i];
         }
         T* operator () () const {return this->v;}
+        */
+
+        void at(int ix, int iy, int iz, int iw, T a) const {
+            __check(ix,this->nx,ox,4,1);
+            __check(iy,this->ny,oy,4,2);
+            __check(iz,this->nz,oz,4,3);
+            __check(iw,this->nw,ow,4,4);
+            voff[ix*(int) this->nyzw+iy*(int) this->nzw+iz*(int) this->nw+iw] = a;
+        }
+
+        T& at(int ix, int iy, int iz, int iw) const {
+            __check(ix,this->nx,ox,4,1);
+            __check(iy,this->ny,oy,4,2);
+            __check(iz,this->nz,oz,4,3);
+            __check(iw,this->nw,ow,4,4);
+            return voff[ix*(int) this->nyzw+iy*(int) this->nzw+iz*(int) this->nw+iw];
+        }
+        T& at(int i) const {
+            __check(i,this->size,0,4,0);
+            return this->v[i];
+        }
+        T* ptr() const {return this->v;}
+
         void Set(T *a) {this->v=a; Offsets(); this->clear(this->allocated);}
 
         Array4<T>& operator = (T a) {this->Load(a); return *this;}
@@ -1260,7 +1437,7 @@ namespace Array {
             __checkEqual(oy,A.Oy(),4,2);
             __checkEqual(oz,A.Oz(),4,3);
             __checkEqual(ow,A.O4(),4,4);
-            this->Load(A());
+            this->Load(A.ptr());
             A.Purge();
             return *this;
         }
@@ -1277,7 +1454,7 @@ namespace Array {
             __checkEqual(oy,0,4,2);
             __checkEqual(oz,0,4,3);
             __checkEqual(ow,0,4,4);
-            this->Load(A());
+            this->Load(A.ptr());
             A.Purge();
             return *this;
         }
@@ -1344,6 +1521,7 @@ namespace Array {
             return Array4<T>(this->ny,this->nz,this->nw,this->nv,
                              vtemp+ix*(int) this->nyzwv,oy,oz,ow,ov);
         }
+        /*
         T& operator () (int ix, int iy, int iz, int iw, int iv) const {
             __check(ix,this->nx,ox,5,1);
             __check(iy,this->ny,oy,5,2);
@@ -1358,6 +1536,22 @@ namespace Array {
             return this->v[i];
         }
         T* operator () () const {return this->v;}
+         */
+        T& at(int ix, int iy, int iz, int iw, int iv) const {
+            __check(ix,this->nx,ox,5,1);
+            __check(iy,this->ny,oy,5,2);
+            __check(iz,this->nz,oz,5,3);
+            __check(iw,this->nw,ow,5,4);
+            __check(iv,this->nv,ov,5,5);
+            return voff[ix*(int) this->nyzwv+iy*(int) this->nzwv+iz*(int) this->nwv
+                        +iw*(int) this->nv+iv];
+        }
+        T& at(int i) const {
+            __check(i,this->size,0,5,0);
+            return this->v[i];
+        }
+        T* ptr() const {return this->v;}
+
         void Set(T *a) {this->v=a; Offsets(); this->clear(this->allocated);}
 
         Array5<T>& operator = (T a) {this->Load(a); return *this;}
