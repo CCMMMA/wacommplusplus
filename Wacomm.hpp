@@ -10,6 +10,7 @@
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
 
+#include "Sources.hpp"
 #include "Particles.hpp"
 #include "Array.h"
 
@@ -19,7 +20,7 @@ using namespace Array;
 class Wacomm {
     public:
         Wacomm();
-        Wacomm(string fileName, Particles& particles);
+        Wacomm(string fileName, Sources& sources, Particles& particles);
         ~Wacomm();
 
     private:
@@ -30,6 +31,7 @@ class Wacomm {
         Array4<double> ucomp, vcomp, wcomp;
         Array4<double> aktcomp;
 
+        Sources sources;
         Particles particles;
 
         void load(string fileName,
