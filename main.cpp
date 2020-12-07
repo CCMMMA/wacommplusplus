@@ -1,14 +1,12 @@
 #include <iostream>
-#include <fstream>
-#include <iostream>
-#include <netcdf>
-#include <math.h>
+#include <filesystem>
 #include <stdlib.h> /* getenv */
-#include <sstream>
 #include <string>
 
-using namespace std;
+#include "CommandLine.hpp"
 
+using namespace std;
+namespace fs = std::filesystem;
 
 // log4cplus - https://github.com/log4cplus/log4cplus
 #include "log4cplus/configurator.h"
@@ -25,7 +23,7 @@ std::string getEnvVar(std::string const &key) {
     return val == NULL ? std::string("") : std::string(val);
 }
 
-int main() {
+int main(int argc, char **argv) {
     // Logger configuration
     log4cplus::BasicConfigurator config;
     config.configure();
@@ -40,14 +38,48 @@ int main() {
     logger.setLogLevel(logLevel);
 
     LOG4CPLUS_INFO(logger, "🛈  - WaComM - C++ Version");
+    LOG4CPLUS_INFO(logger,"Current directory: " << fs::current_path());
 
-    string restartFileName="/projects/wacomm/data/input/WACOMM_rst_20201130Z00.txt";
-    string fileName="/projects/wacomm/data/gnu-8.3.1/input/rms3_d03_20201130Z0000.nc";
 
+
+    // This variables can be set via the command line.
+    std::string nameList = "namelist.wacomm";
+    std::string jsonConfig = "wacomm.json";
+    std::string restartFileName = "input/WACOMM_rst_20201130Z00.txt";
+    std::string sourcesFileName = "input/sources.txt";
+    std::string netcdfFileName = "input/rms3_d03_20201130Z0000.nc";
+    bool        oPrintHelp = false;
+
+    // First configure all possible command line options.
+    CommandLine args("WaComM++");
+    args.addArgument({"-n", "--namelist"},   &nameList,   "Fortran style namelist");
+    args.addArgument({"-j", "--json"},  &jsonConfig,  "JSON configuration file");
+    args.addArgument({"-rst", "--restart"},  &restartFileName,  "Restart file");
+    args.addArgument({"-src", "--sources"},  &sourcesFileName,  "Sources file");
+    args.addArgument({"-nc", "--netcdf"},  &netcdfFileName,  "NetCDF file");
+    args.addArgument({"-h", "--help"},     &oPrintHelp,
+      "Print this help. This help message is actually so long "
+      "that it requires a line break!");
+
+    // Then do the actual parsing.
+    try {
+        args.parse(argc, argv);
+    } catch (std::runtime_error const& e) {
+        std::cout << e.what() << std::endl;
+        return -1;
+    }
+
+    // When oPrintHelp was set to true, we print a help message and exit.
+    if (oPrintHelp) {
+        args.printHelp();
+        return 0;
+    }
+
+    LOG4CPLUS_INFO(logger,"Configuration: " << nameList);
 
     //Particles particles(restartFileName);
     Particles particles;
-    Wacomm wacomm(fileName,particles);
+    Wacomm wacomm(netcdfFileName,particles);
 
     // ROMS2Wacomm roms2Wacomm(fileName, ocean_time, ucomp, vcomp, wcomp, aktcomp);
     // Array4<double> conc=wacomm.run(ocean_time, ucomp, vcomp, wcomp, aktcomp);
