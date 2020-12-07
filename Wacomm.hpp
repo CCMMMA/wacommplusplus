@@ -20,30 +20,26 @@ using namespace Array;
 class Wacomm {
     public:
         Wacomm();
-        Wacomm(string fileName, Sources& sources, Particles& particles);
+        Wacomm(double dti, Array4<double>& u, Array4<double>& v, Array4<double>& w, Array4<double> &akt, Sources& sources, Particles& particles);
         ~Wacomm();
+
+        void run();
 
     private:
         log4cplus::Logger logger;
 
-        Array2<double> mask_rho;
+        double dti;
 
-        Array4<double> ucomp, vcomp, wcomp;
-        Array4<double> aktcomp;
+        Array2<double> mask;
+
+        Array4<double> u, v, w;
+        Array4<double> akt;
+        Array4<double> conc;
 
         Sources sources;
         Particles particles;
 
-        void load(string fileName,
-                  Array2<double>& mask_u, Array2<double>& mask_v,
-                  Array4<double>& u, Array4<double>& v, Array4<double>& w,
-                  Array4<double>& akt);
 
-        void uv2rho(Array2<double>& mask_u, Array2<double>& mask_v,
-                    Array4<double>& u, Array4<double>& v);
-
-        void wakt2rho(Array2<double>& mask_u, Array2<double>& mask_v,
-                      Array4<double>& w, Array4<double>& akt);
 };
 
 
