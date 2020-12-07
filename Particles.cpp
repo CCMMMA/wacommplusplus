@@ -29,9 +29,9 @@ Particles::Particles(string fileName) {
         std::istringstream iss(line);
         if (count > 0)
         {
-            double x, y, z, health, tpart;
-            if (!(iss >> x >> y >> z >> health >> tpart )) { break; } // error
-            Particle particle(x,y,z,health,tpart);
+            double k, j, i, health, tpart;
+            if (!(iss >> k >> j >> i >> health >> tpart )) { break; } // error
+            Particle particle(k,j,i,health,tpart);
             push_back(particle);
         }
         count++;
