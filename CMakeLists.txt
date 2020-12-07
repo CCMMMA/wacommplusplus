@@ -111,7 +111,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.dylib)
 endif()
 
-add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h)
+add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h CommandLine.cpp CommandLine.hpp)
 
 # Expicit the dependencies
 add_dependencies(zlib szlib)
@@ -124,3 +124,17 @@ add_dependencies(${PROJECT_NAME} log4cplus)
 
 target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} pthread dl OpenSSL::SSL)
 
+
+ExternalProject_Add(
+        wacomm_data
+        PREFIX "wacomm-data"
+        URL https://neptunia.uniparthenope.it/data/wacomm-data.tar.gz
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND ""
+        INSTALL_COMMAND ""
+)
+
+
+add_custom_target(data mv ${CMAKE_BINARY_DIR}/wacomm-data/src/wacomm-data/*)
+
+add_dependencies(data wacomm_data)
