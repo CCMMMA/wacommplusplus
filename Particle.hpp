@@ -17,20 +17,30 @@
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
+#include "Array.h"
 
 using namespace std;
 
 class Particle {
     public:
-        Particle(double x, double y, double z, double health, double tpart);
+        Particle(double k, double j, double i, double health, double tpart);
         ~Particle();
 
-    private:
+    bool isAlive();
+
+    void move(int i, Array::Array2<double> array2, Array::Array3<double> u, Array::Array3<double> v,
+              Array::Array3<double> w, Array::Array3<double> akt);
+
+    double k();
+    double j();
+    double i();
+
+private:
         log4cplus::Logger logger;
 
-        double _x;
-        double _y;
-        double _z;
+        double _k;
+        double _j;
+        double _i;
         double _health;
         double _tpart;
         double _pstatus;
