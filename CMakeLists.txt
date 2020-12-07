@@ -7,8 +7,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Include the support to external projects
 include(ExternalProject)
 
+# OpenSSL is needed for building dependences
+find_package(OpenSSL REQUIRED)
+
 # Set the external install location
 set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
+
+set(NETCDFCXXLIBS_PARAMS "-lnetcdf -lhdf5_hl -lhdf5 -lm -lz -lcurl")
 
 # Add to the includes
 include_directories(SYSTEM ${EXTERNAL_INSTALL_LOCATION}/include)
@@ -20,7 +25,7 @@ ExternalProject_Add(szlib
         URL https://support.hdfgroup.org/ftp/lib-external/szip/2.1.1/src/szip-2.1.1.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/
+        CONFIGURE_COMMAND ./configure CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}
         BUILD_COMMAND make
         INSTALL_COMMAND make install
         )
@@ -72,8 +77,7 @@ ExternalProject_Add(netcdf
         URL https://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-c-4.7.4.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        set(LIBS_PARAMS "-lhdf5_hl -lhdf5 -lm -lz -lcurl")
-        CONFIGURE_COMMAND ./configure LIBS=${LIBS_PARAMS} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}  --enable-shared --enable-netcdf-4 --enable-dap --enable-byterange --enable-erange-fill
+        CONFIGURE_COMMAND ./configure CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}  --enable-shared --enable-netcdf-4 --enable-dap --enable-byterange --enable-erange-fill
         INSTALL_COMMAND make install
         )
 set(LIBNETCDF ${EXTERNAL_INSTALL_LOCATION}/lib/libnetcdf.a)
@@ -85,8 +89,7 @@ ExternalProject_Add(netcdfcxx
         URL https://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-cxx4-4.3.1.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        set(LIBS_PARAMS "-lnetcdf -lhdf5_hl -lhdf5 -lm -lz -lcurl")
-        CONFIGURE_COMMAND ./configure LIBS=${LIBS_PARAMS} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}   --enable-shared
+        CONFIGURE_COMMAND ./configure LIBS=${NETCDFCXXLIBS_PARAMS} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}   --enable-shared
         INSTALL_COMMAND make install
         )
 set(LIBNETCDFCXX ${EXTERNAL_INSTALL_LOCATION}/lib/libnetcdf_c++4.a)
@@ -119,5 +122,5 @@ add_dependencies(netcdfcxx netcdf )
 add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
 
-target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} pthread dl )
+target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} pthread dl OpenSSL::SSL)
 
