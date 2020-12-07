@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+# Data
+*.nc
+WACOMM_rst_*
+namelist.wacomm
