@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
     // This variables can be set via the command line.
     std::string nameList = "namelist.wacomm";
     std::string jsonConfig = "wacomm.json";
-    std::string restartFileName = "input/WACOMM_rst_20201130Z00.txt";
+    std::string restartFileName = "WACOMM_rst_20201130Z00.txt";
     std::string sourcesFileName = "input/sources.txt";
     std::string netcdfFileName = "input/rms3_d03_20201130Z0000.nc";
     bool        oPrintHelp = false;
@@ -79,14 +79,18 @@ int main(int argc, char **argv) {
 
     LOG4CPLUS_INFO(logger,"Configuration: " << nameList);
 
-    //Particles particles(restartFileName);
-    Particles particles;
+    Particles particles(restartFileName);
+    //Particles particles;
     //Sources sources(sourcesFileName);
     Sources sources;
     ROMS2Wacomm roms2Wacomm(netcdfFileName);
     roms2Wacomm.process();
     double dti=30.0;
-    Wacomm wacomm(dti,roms2Wacomm.u(), roms2Wacomm.v(), roms2Wacomm.w(),roms2Wacomm.akt(), sources, particles);
+    Wacomm wacomm(dti,
+                  roms2Wacomm.Mask(),
+                  roms2Wacomm.U(),
+                  roms2Wacomm.V(), roms2Wacomm.W(),roms2Wacomm.AKT(),
+                  sources, particles);
     wacomm.run();
 
     // ROMS2Wacomm roms2Wacomm(fileName, ocean_time, ucomp, vcomp, wcomp, aktcomp);

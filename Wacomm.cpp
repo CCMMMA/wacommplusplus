@@ -6,26 +6,19 @@
 
 
 
-Wacomm::Wacomm() {
+
+
+Wacomm::Wacomm(double dti,
+               Array2<double> &mask,
+               Array4<double> &u, Array4<double> &v, Array4<double> &w, Array4<double> &akt,
+               Sources &sources, Particles &particles) :
+               dti(dti),
+               mask(mask),
+               u(u),v(v),w(w),akt(akt),
+               sources(sources), particles(particles) {
     log4cplus::BasicConfigurator config;
     config.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
-}
-
-Wacomm::Wacomm(double dti, Array4<double>& u, Array4<double>& v, Array4<double>& w, Array4<double> &akt, Sources& sources, Particles& particles) {
-    log4cplus::BasicConfigurator config;
-    config.configure();
-    logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
-
-    this->dti = dti;
-
-    this->sources=sources;
-    this->particles=particles;
-
-    this->u = u;
-    this->v = v;
-    this->w = w;
-    this->akt = akt;
 
     size_t ocean_time=u.Nx();
     size_t s_rho=u.Ny();
@@ -45,22 +38,27 @@ Wacomm::Wacomm(double dti, Array4<double>& u, Array4<double>& v, Array4<double>&
 
 void Wacomm::run()
 {
-    for(Source source: sources) {
-        source.emit(particles);
-    }
-
     size_t ocean_time=u.Nx();
-    for (int ocean_time_idx=0; ocean_time_idx<ocean_time; ocean_time++) {
 
+    for (int ocean_time_idx=0; ocean_time_idx<ocean_time; ocean_time_idx++) {
+        LOG4CPLUS_INFO(logger,"Running on:" << ocean_time_idx);
+        LOG4CPLUS_INFO(logger,"Sources:" << sources.size());
+        for(Source source: sources) {
+            source.emit(particles);
+        }
+
+        LOG4CPLUS_INFO(logger,"Particles:" << particles.size());
         for (Particle particle: particles) {
             particle.move(ocean_time_idx, mask, u[ocean_time_idx], v[ocean_time_idx], w[ocean_time_idx], akt[ocean_time_idx]);
         }
 
+        LOG4CPLUS_INFO(logger,"Saving restart:" << "");
         particles.save("");
 
+        LOG4CPLUS_INFO(logger,"Evaluate concentration");
         for (Particle particle: particles) {
             if (particle.isAlive()) {
-                conc(ocean_time_idx, particle.k(), particle.j(), particle.i())++;
+                conc(ocean_time_idx, particle.K(), particle.J(), particle.I())++;
             }
         }
     }

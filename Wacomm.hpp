@@ -19,8 +19,8 @@ using namespace Array;
 
 class Wacomm {
     public:
-        Wacomm();
-        Wacomm(double dti, Array4<double>& u, Array4<double>& v, Array4<double>& w, Array4<double> &akt, Sources& sources, Particles& particles);
+
+        Wacomm(double dti, Array2<double> &mask, Array4<double> &u, Array4<double> &v, Array4<double> &w, Array4<double> &akt, Sources &sources, Particles &particles);
         ~Wacomm();
 
         void run();
@@ -30,14 +30,14 @@ class Wacomm {
 
         double dti;
 
-        Array2<double> mask;
+        Array2<double> &mask;
 
-        Array4<double> u, v, w;
-        Array4<double> akt;
+        Array4<double> &u, &v, &w;
+        Array4<double> &akt;
         Array4<double> conc;
 
-        Sources sources;
-        Particles particles;
+        Sources &sources;
+        Particles &particles;
 
 
 };

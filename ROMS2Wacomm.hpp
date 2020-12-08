@@ -21,17 +21,18 @@ using namespace netCDF;
 
 class ROMS2Wacomm {
 public:
-    ROMS2Wacomm();
-    ROMS2Wacomm(string fileName);
+    ROMS2Wacomm(string &fileName);
 
     ~ROMS2Wacomm();
 
     void process();
 
-    Array4<double> u();
-    Array4<double> v();
-    Array4<double> w();
-    Array4<double> akt();
+    Array2<double> &Mask();
+
+    Array4<double> &U();
+    Array4<double> &V();
+    Array4<double> &W();
+    Array4<double> &AKT();
 
 private:
     log4cplus::Logger logger;
@@ -41,13 +42,7 @@ private:
     Array4<double> ucomp, vcomp, wcomp;
     Array4<double> aktcomp;
 
-    string fileName;
-
-
-    void load(string fileName,
-              Array2<double>& mask_u, Array2<double>& mask_v,
-              Array4<double>& u, Array4<double>& v, Array4<double>& w,
-              Array4<double>& akt);
+    string &fileName;
 
     void uv2rho(Array2<double>& mask_u, Array2<double>& mask_v,
                 Array4<double>& u, Array4<double>& v);

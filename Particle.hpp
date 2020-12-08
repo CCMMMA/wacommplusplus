@@ -31,19 +31,19 @@ class Particle {
     void move(int i, Array::Array2<double> array2, Array::Array3<double> u, Array::Array3<double> v,
               Array::Array3<double> w, Array::Array3<double> akt);
 
-    double k();
-    double j();
-    double i();
+    double K();
+    double J();
+    double I();
 
 private:
         log4cplus::Logger logger;
 
-        double _k;
-        double _j;
-        double _i;
-        double _health;
-        double _tpart;
-        double _pstatus;
+        double k;
+        double j;
+        double i;
+        double health;
+        double tpart;
+        double pstatus;
 };
 
 

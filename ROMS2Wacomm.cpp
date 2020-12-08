@@ -4,25 +4,20 @@
 
 #include "ROMS2Wacomm.hpp"
 
-ROMS2Wacomm::ROMS2Wacomm() {
+
+Array2<double>& ROMS2Wacomm::Mask() { return  mask_rho; }
+
+Array4<double>& ROMS2Wacomm::U() { return  ucomp; }
+Array4<double>& ROMS2Wacomm::V() { return vcomp; }
+Array4<double>& ROMS2Wacomm::W() { return wcomp; }
+Array4<double>& ROMS2Wacomm::AKT() { return aktcomp; }
+
+ROMS2Wacomm::ROMS2Wacomm(string &fileName): fileName(fileName) {
     log4cplus::BasicConfigurator config;
     config.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
-    fileName="";
-}
 
-Array4<double> ROMS2Wacomm::u() { return  ucomp; }
-Array4<double> ROMS2Wacomm::v() { return vcomp; }
-Array4<double> ROMS2Wacomm::w() { return wcomp; }
-Array4<double> ROMS2Wacomm::akt() { return aktcomp; }
-
-ROMS2Wacomm::ROMS2Wacomm(string fileName) {
-    log4cplus::BasicConfigurator config;
-    config.configure();
-    logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
-
-    this->fileName=fileName;
 }
 
 void ROMS2Wacomm::process()
@@ -214,6 +209,10 @@ void ROMS2Wacomm::wakt2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array
             }
         }
     }
+}
+
+ROMS2Wacomm::~ROMS2Wacomm() {
+
 }
 
 

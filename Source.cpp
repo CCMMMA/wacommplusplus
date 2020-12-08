@@ -18,3 +18,7 @@ Source::~Source()
 {
 
 }
+
+void Source::emit(Particles &particles) {
+
+}
