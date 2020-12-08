@@ -8,16 +8,22 @@
 
 
 
-Wacomm::Wacomm(double dti,
+Wacomm::Wacomm(Config &config,
+               Array::Array1<double> &depth, Array::Array2<double> &zeta,
+               Array::Array2<double> &lon, Array::Array2<double> &lat,
                Array2<double> &mask,
-               Array4<double> &u, Array4<double> &v, Array4<double> &w, Array4<double> &akt,
+               Array4<double> &u, Array4<double> &v, Array4<double> &w,
+               Array4<double> &akt,
                Sources &sources, Particles &particles) :
-               dti(dti),
+               config(config),
+               depth(depth),zeta(zeta),
+               lon(lon),lat(lat),
                mask(mask),
                u(u),v(v),w(w),akt(akt),
                sources(sources), particles(particles) {
-    log4cplus::BasicConfigurator config;
-    config.configure();
+
+    log4cplus::BasicConfigurator basicConfig;
+    basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
     size_t ocean_time=u.Nx();
@@ -49,7 +55,12 @@ void Wacomm::run()
 
         LOG4CPLUS_INFO(logger,"Particles:" << particles.size());
         for (Particle particle: particles) {
-            particle.move(ocean_time_idx, mask, u[ocean_time_idx], v[ocean_time_idx], w[ocean_time_idx], akt[ocean_time_idx]);
+            particle.move(config,
+                          ocean_time_idx,
+                          depth, zeta,
+                          lon, lat,
+                          mask,
+                          u, v, w, akt);
         }
 
         LOG4CPLUS_INFO(logger,"Saving restart:" << "");

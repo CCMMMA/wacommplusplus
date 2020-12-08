@@ -20,7 +20,13 @@ using namespace Array;
 class Wacomm {
     public:
 
-        Wacomm(double dti, Array2<double> &mask, Array4<double> &u, Array4<double> &v, Array4<double> &w, Array4<double> &akt, Sources &sources, Particles &particles);
+        Wacomm(Config &config,
+               Array::Array1<double> &depth, Array::Array2<double> &zeta,
+               Array::Array2<double> &lon, Array::Array2<double> &lat,
+               Array2<double> &mask,
+               Array4<double> &u, Array4<double> &v, Array4<double> &w,
+               Array4<double> &akt,
+               Sources &sources, Particles &particles);
         ~Wacomm();
 
         void run();
@@ -28,7 +34,13 @@ class Wacomm {
     private:
         log4cplus::Logger logger;
 
-        double dti;
+        Config &config;
+
+        Array1<double> &depth;
+        Array2<double> &zeta;
+
+        Array2<double> &lon;
+        Array2<double> &lat;
 
         Array2<double> &mask;
 
