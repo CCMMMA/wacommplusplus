@@ -27,8 +27,8 @@ std::string getEnvVar(std::string const &key) {
 
 int main(int argc, char **argv) {
     // Logger configuration
-    log4cplus::BasicConfigurator config;
-    config.configure();
+    log4cplus::BasicConfigurator basicConfig;
+    basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
     // Set the logging level
@@ -45,8 +45,7 @@ int main(int argc, char **argv) {
 
 
     // This variables can be set via the command line.
-    std::string nameList = "namelist.wacomm";
-    std::string jsonConfig = "wacomm.json";
+    std::string configFile = "namelist.wacomm";
     std::string restartFileName = "WACOMM_rst_20201130Z00.txt";
     std::string sourcesFileName = "input/sources.txt";
     std::string netcdfFileName = "input/rms3_d03_20201130Z0000.nc";
@@ -54,8 +53,7 @@ int main(int argc, char **argv) {
 
     // First configure all possible command line options.
     CommandLine args("WaComM++");
-    args.addArgument({"-n", "--namelist"},   &nameList,   "Fortran style namelist");
-    args.addArgument({"-j", "--json"},  &jsonConfig,  "JSON configuration file");
+    args.addArgument({"-c", "--config"},   &configFile,   "Fortran style namelist or JSON configuration file");
     args.addArgument({"-rst", "--restart"},  &restartFileName,  "Restart file");
     args.addArgument({"-src", "--sources"},  &sourcesFileName,  "Sources file");
     args.addArgument({"-nc", "--netcdf"},  &netcdfFileName,  "NetCDF file");
@@ -77,16 +75,19 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    LOG4CPLUS_INFO(logger,"Configuration: " << nameList);
+    LOG4CPLUS_INFO(logger,"Configuration: " << configFile);
+
+    Config config(configFile);
 
     Particles particles(restartFileName);
-    //Particles particles;
-    //Sources sources(sourcesFileName);
     Sources sources;
+
     ROMS2Wacomm roms2Wacomm(netcdfFileName);
     roms2Wacomm.process();
-    double dti=30.0;
-    Wacomm wacomm(dti,
+
+    Wacomm wacomm(config,
+                  roms2Wacomm.Depth(), roms2Wacomm.Zeta(),
+                  roms2Wacomm.Lon(), roms2Wacomm.Lat(),
                   roms2Wacomm.Mask(),
                   roms2Wacomm.U(),
                   roms2Wacomm.V(), roms2Wacomm.W(),roms2Wacomm.AKT(),
