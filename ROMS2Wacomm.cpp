@@ -4,6 +4,10 @@
 
 #include "ROMS2Wacomm.hpp"
 
+Array1<double>& ROMS2Wacomm::Depth() { return  depth; }
+Array2<double>& ROMS2Wacomm::Zeta() { return  zeta; }
+Array2<double>& ROMS2Wacomm::Lon() { return  lon; }
+Array2<double>& ROMS2Wacomm::Lat() { return  lat; }
 
 Array2<double>& ROMS2Wacomm::Mask() { return  mask_rho; }
 
@@ -13,8 +17,8 @@ Array4<double>& ROMS2Wacomm::W() { return wcomp; }
 Array4<double>& ROMS2Wacomm::AKT() { return aktcomp; }
 
 ROMS2Wacomm::ROMS2Wacomm(string &fileName): fileName(fileName) {
-    log4cplus::BasicConfigurator config;
-    config.configure();
+    log4cplus::BasicConfigurator basicConfig;
+    basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
 

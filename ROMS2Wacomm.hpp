@@ -27,6 +27,11 @@ public:
 
     void process();
 
+    Array1<double> &Depth();
+    Array2<double> &Zeta();
+    Array2<double> &Lon();
+    Array2<double> &Lat();
+
     Array2<double> &Mask();
 
     Array4<double> &U();
@@ -37,7 +42,11 @@ public:
 private:
     log4cplus::Logger logger;
 
+    Array1<double> depth;
+    Array2<double> zeta;
     Array2<double> mask_rho;
+    Array2<double> lon;
+    Array2<double> lat;
 
     Array4<double> ucomp, vcomp, wcomp;
     Array4<double> aktcomp;
