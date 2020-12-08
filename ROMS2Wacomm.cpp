@@ -31,12 +31,16 @@ void ROMS2Wacomm::process()
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, NcFile::read);
 
+    // Retrieve the variable named "depth"
+    //NcVar varDepth=dataFile.getVar("depth");
+    //size_t s_rho = varDepth.getDim(0).getSize();
+    //depth.Allocate(s_rho);
+    //varDepth.getVar(depth());
+
     // Retrieve the variable named "mask_rho"
     NcVar varMaskRho=dataFile.getVar("mask_rho");
-
     size_t eta_rho = varMaskRho.getDim(0).getSize();
     size_t xi_rho = varMaskRho.getDim(1).getSize();
-
     mask_rho.Allocate(eta_rho,xi_rho);
     varMaskRho.getVar(mask_rho());
 
@@ -47,13 +51,30 @@ void ROMS2Wacomm::process()
     Array2<double> mask_u(eta_u,xi_u);
     varMaskU.getVar(mask_u());
 
-
     // Retrieve the variable named "mask_v"
     NcVar varMaskV=dataFile.getVar("mask_v");
     size_t eta_v = varMaskV.getDim(0).getSize();
     size_t xi_v = varMaskV.getDim(1).getSize();
     Array2<double> mask_v(eta_v,xi_v);
     varMaskV.getVar(mask_v());
+
+
+
+    // Retrieve the variable named "lat_rho"
+    NcVar varLatRho=dataFile.getVar("lat_rho");
+    lat.Allocate(eta_rho,xi_rho);
+    varLatRho.getVar(lat());
+
+    // Retrieve the variable named "lon_rho"
+    NcVar varLonRho=dataFile.getVar("lon_rho");
+    lon.Allocate(eta_rho,xi_rho);
+    varLonRho.getVar(lon());
+
+
+    // Retrieve the variable named "zeta"
+    NcVar varZeta=dataFile.getVar("zeta");
+    zeta.Allocate(eta_rho,xi_rho);
+    varMaskV.getVar(zeta());
 
     // Retrieve the variable named "u"
     NcVar varU=dataFile.getVar("u");

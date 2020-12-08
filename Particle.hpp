@@ -43,6 +43,10 @@ class Particle {
     double J();
     double I();
 
+    int iK();
+    int iJ();
+    int iI();
+
     double gen();
 
 private:
@@ -55,7 +59,12 @@ private:
         double tpart;
         double pstatus;
 
+        double sgn(double a);
+        double mod(double a, double p);
+        double sign(double a, double b);
 
+        int time;
+        double health0;
 };
 
 

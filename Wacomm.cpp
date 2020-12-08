@@ -63,13 +63,17 @@ void Wacomm::run()
                           u, v, w, akt);
         }
 
+        // Remove dead particles
+        particles.erase(std::remove_if(particles.begin(), particles.end(),
+                               [](Particle particle) { return !particle.isAlive(); }), particles.end());
+
         LOG4CPLUS_INFO(logger,"Saving restart:" << "");
         particles.save("");
 
         LOG4CPLUS_INFO(logger,"Evaluate concentration");
         for (Particle particle: particles) {
             if (particle.isAlive()) {
-                conc(ocean_time_idx, particle.K(), particle.J(), particle.I())++;
+                conc(ocean_time_idx, particle.iK(), particle.iJ(), particle.iI())++;
             }
         }
     }

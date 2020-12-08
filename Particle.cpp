@@ -189,10 +189,18 @@ void Particle::move(Config &config,
     }
 }
 
-double Particle::K() { return k; }
-double Particle::J() { return j; }
-double Particle::I() { return i; }
+double Particle::K()  { return k; }
+double Particle::J()  { return j; }
+double Particle::I()  { return i; }
+
+int Particle::iK()  { return (int)(round(k));}
+int Particle::iJ()  { return (int)(round(j));}
+int Particle::iI()  { return (int)(round(i));}
 
 double Particle::gen() { return 0; }
+
+double Particle::sgn(double a) { return (a > 0) - (a < 0); }
+double Particle::mod(double a, double p) { return a-p*(int)(a/p); }
+double Particle::sign(double a, double b) { return abs(a)*sgn(b); }
 
 
