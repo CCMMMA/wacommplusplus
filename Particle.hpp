@@ -18,8 +18,11 @@
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
 #include "Array.h"
+#include "Config.hpp"
 
 using namespace std;
+
+
 
 class Particle {
     public:
@@ -28,12 +31,19 @@ class Particle {
 
     bool isAlive();
 
-    void move(int i, Array::Array2<double> array2, Array::Array3<double> u, Array::Array3<double> v,
-              Array::Array3<double> w, Array::Array3<double> akt);
+    void move(Config &config,
+              int ocean_time_idx,
+              Array::Array1<double> &depth, Array::Array2<double> &zeta,
+              Array::Array2<double> &lon, Array::Array2<double> &lat,
+              Array::Array2<double> &mask,
+              Array::Array4<double> &u, Array::Array4<double> &v, Array::Array4<double> &w,
+              Array::Array4<double> &akt);
 
     double K();
     double J();
     double I();
+
+    double gen();
 
 private:
         log4cplus::Logger logger;
@@ -44,6 +54,8 @@ private:
         double health;
         double tpart;
         double pstatus;
+
+
 };
 
 
