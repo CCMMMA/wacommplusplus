@@ -19,10 +19,10 @@ using namespace std;
 class Sources: public vector<Source> {
 public:
     Sources();
-    Sources(string fileName);
+    Sources(string &fileName);
     ~Sources();
 
-    void save(string fileName);
+    void save(string &fileName);
 
 private:
     log4cplus::Logger logger;
