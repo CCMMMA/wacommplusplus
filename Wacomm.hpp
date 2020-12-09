@@ -6,6 +6,7 @@
 #define WACOMMPLUSPLUS_WACOMM_HPP
 
 // log4cplus - https://github.com/log4cplus/log4cplus
+#include <memory>
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
@@ -17,15 +18,12 @@
 using namespace std;
 using namespace Array;
 
+class ROMS2Wacomm;
 class Wacomm {
     public:
 
-        Wacomm(Config &config,
-               Array::Array1<double> &depth, Array::Array2<double> &zeta,
-               Array::Array2<double> &lon, Array::Array2<double> &lat,
-               Array2<double> &mask,
-               Array4<double> &u, Array4<double> &v, Array4<double> &w,
-               Array4<double> &akt,
+        Wacomm(const Config &config,
+               std::shared_ptr<ROMS2Wacomm> roms2Wacomm,
                Sources &sources, Particles &particles);
         ~Wacomm();
 
@@ -34,7 +32,8 @@ class Wacomm {
     private:
         log4cplus::Logger logger;
 
-        Config &config;
+        Config config;
+        std::shared_ptr<ROMS2Wacomm> roms2Wacomm_;
 
         Array1<double> &depth;
         Array2<double> &zeta;

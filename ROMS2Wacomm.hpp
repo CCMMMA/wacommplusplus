@@ -19,6 +19,7 @@ using namespace std;
 using namespace Array;
 using namespace netCDF;
 
+class Wacomm;
 class ROMS2Wacomm {
 public:
     ROMS2Wacomm(string &fileName);
@@ -27,19 +28,8 @@ public:
 
     void process();
 
-    Array1<double> &Depth();
-    Array2<double> &Zeta();
-    Array2<double> &Lon();
-    Array2<double> &Lat();
-
-    Array2<double> &Mask();
-
-    Array4<double> &U();
-    Array4<double> &V();
-    Array4<double> &W();
-    Array4<double> &AKT();
-
 private:
+    friend class Wacomm;
     log4cplus::Logger logger;
 
     Array1<double> depth;

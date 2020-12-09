@@ -4,24 +4,25 @@
 
 #include "Wacomm.hpp"
 
+#include <utility>
+#include "ROMS2Wacomm.hpp"
 
-
-
-
-Wacomm::Wacomm(Config &config,
-               Array::Array1<double> &depth, Array::Array2<double> &zeta,
-               Array::Array2<double> &lon, Array::Array2<double> &lat,
-               Array2<double> &mask,
-               Array4<double> &u, Array4<double> &v, Array4<double> &w,
-               Array4<double> &akt,
+Wacomm::Wacomm(const Config &config,
+               std::shared_ptr<ROMS2Wacomm> roms2Wacomm,
                Sources &sources, Particles &particles) :
                config(config),
-               depth(depth),zeta(zeta),
-               lon(lon),lat(lat),
-               mask(mask),
-               u(u),v(v),w(w),akt(akt),
-               sources(sources), particles(particles) {
-
+               roms2Wacomm_(std::move(roms2Wacomm)),
+               depth(roms2Wacomm_->depth),
+               zeta(roms2Wacomm_->zeta),
+               lon(roms2Wacomm_->lon),
+               lat(roms2Wacomm_->lat),
+               mask(roms2Wacomm_->mask_rho),
+               u(roms2Wacomm_->ucomp),
+               v(roms2Wacomm_->vcomp),
+               w(roms2Wacomm_->wcomp),
+               akt(roms2Wacomm_->aktcomp),
+               sources(sources),
+               particles(particles) {
     log4cplus::BasicConfigurator basicConfig;
     basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));

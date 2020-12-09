@@ -5,7 +5,7 @@
 #ifndef WACOMMPLUSPLUS_SOURCES_HPP
 #define WACOMMPLUSPLUS_SOURCES_HPP
 
-#import <fstream>
+#include <fstream>
 
 // log4cplus - https://github.com/log4cplus/log4cplus
 #include "log4cplus/configurator.h"

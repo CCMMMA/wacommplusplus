@@ -82,16 +82,10 @@ int main(int argc, char **argv) {
     Particles particles(restartFileName);
     Sources sources;
 
-    ROMS2Wacomm roms2Wacomm(netcdfFileName);
-    roms2Wacomm.process();
+    auto roms2Wacomm = std::make_shared<ROMS2Wacomm>(netcdfFileName);
+    roms2Wacomm->process();
 
-    Wacomm wacomm(config,
-                  roms2Wacomm.Depth(), roms2Wacomm.Zeta(),
-                  roms2Wacomm.Lon(), roms2Wacomm.Lat(),
-                  roms2Wacomm.Mask(),
-                  roms2Wacomm.U(),
-                  roms2Wacomm.V(), roms2Wacomm.W(),roms2Wacomm.AKT(),
-                  sources, particles);
+    Wacomm wacomm(config, roms2Wacomm, sources, particles);
     wacomm.run();
 
     // ROMS2Wacomm roms2Wacomm(fileName, ocean_time, ucomp, vcomp, wcomp, aktcomp);
