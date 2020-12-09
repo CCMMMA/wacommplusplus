@@ -2,6 +2,7 @@
 // Created by Raffaele Montella on 12/5/20.
 //
 
+#include <cfloat>
 #include "Particle.hpp"
 #include "Config.hpp"
 
@@ -197,10 +198,19 @@ int Particle::iK()  { return (int)(round(k));}
 int Particle::iJ()  { return (int)(round(j));}
 int Particle::iI()  { return (int)(round(i));}
 
-double Particle::gen() { return 0; }
+/* The random generator should be initialized only one time */
+double Particle::gen()
+{
+    std::random_device randomDevice;
+    std::mt19937 randomGenerator=std::mt19937 (randomDevice());
+    std::uniform_real_distribution<double> randomDistribution=std::uniform_real_distribution<double>(0, std::nextafter(1, DBL_MAX));
+    return randomDistribution(randomGenerator);
+}
 
 double Particle::sgn(double a) { return (a > 0) - (a < 0); }
 double Particle::mod(double a, double p) { return a-p*(int)(a/p); }
 double Particle::sign(double a, double b) { return abs(a)*sgn(b); }
+
+
 
 

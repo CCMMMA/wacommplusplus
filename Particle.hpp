@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <random>
 #include <netcdf>
 #include <math.h>
 #include <stdlib.h> /* getenv */
@@ -27,6 +28,8 @@ using namespace std;
 class Particle {
     public:
         Particle(double k, double j, double i, double health, double tpart);
+        //Particle(Particle const &particle);
+
         ~Particle();
 
     bool isAlive();
@@ -65,6 +68,8 @@ private:
 
         int time;
         double health0;
+
+
 };
 
 
