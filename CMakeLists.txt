@@ -4,6 +4,13 @@ project(wacommplusplus)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(LIBOMP "")
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    message(STATUS "Found OpenMP")
+    set(LIBOMP OpenMP::OpenMP_CXX)
+endif()
+
 # Include the support to external projects
 include(ExternalProject)
 
@@ -144,7 +151,7 @@ add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
 add_dependencies(${PROJECT_NAME} random)
 
-target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json)
+target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} ${LIBOMP} pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json)
 
 
 ExternalProject_Add(
