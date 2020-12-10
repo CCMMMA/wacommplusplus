@@ -5,33 +5,25 @@
 #include "Wacomm.hpp"
 
 #include <utility>
-#include "ROMS2Wacomm.hpp"
+#include "ROMSAdapter.hpp"
 
-Wacomm::Wacomm(const Config &config,
-               std::shared_ptr<ROMS2Wacomm> roms2Wacomm,
-               Sources &sources, Particles &particles) :
-               config(config),
-               roms2Wacomm_(std::move(roms2Wacomm)),
-               depth(roms2Wacomm_->depth),
-               zeta(roms2Wacomm_->zeta),
-               lon(roms2Wacomm_->lon),
-               lat(roms2Wacomm_->lat),
-               mask(roms2Wacomm_->mask_rho),
-               u(roms2Wacomm_->ucomp),
-               v(roms2Wacomm_->vcomp),
-               w(roms2Wacomm_->wcomp),
-               akt(roms2Wacomm_->aktcomp),
-               sources(sources),
-               particles(particles) {
+Wacomm::Wacomm(std::shared_ptr<Config> config,
+               std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
+               std::shared_ptr<Sources> sources,
+               std::shared_ptr<Particles> particles) :
+               config(std::move(config)),
+               oceanModelAdapter(std::move(oceanModelAdapter)),
+               sources(std::move(sources)),
+               particles(std::move(particles)) {
     log4cplus::BasicConfigurator basicConfig;
     basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
-    size_t ocean_time=u.Nx();
-    size_t s_rho=u.Ny();
-    size_t s_w=w.Ny();
-    size_t eta_rho=mask.Nx();
-    size_t xi_rho=mask.Ny();
+    size_t ocean_time=oceanModelAdapter->U()->Nx();
+    size_t s_rho=oceanModelAdapter->U()->Ny();
+    size_t s_w=oceanModelAdapter->W()->Ny();
+    size_t eta_rho=oceanModelAdapter->Mask()->Nx();
+    size_t xi_rho=oceanModelAdapter->Mask()->Ny();
 
 
     LOG4CPLUS_INFO(logger,"ocean_time:" + std::to_string(ocean_time));
@@ -45,34 +37,31 @@ Wacomm::Wacomm(const Config &config,
 
 void Wacomm::run()
 {
-    size_t ocean_time=u.Nx();
+    size_t ocean_time=oceanModelAdapter->U()->Nx();
 
     for (int ocean_time_idx=0; ocean_time_idx<ocean_time; ocean_time_idx++) {
         LOG4CPLUS_INFO(logger,"Running on:" << ocean_time_idx);
-        LOG4CPLUS_INFO(logger,"Sources:" << sources.size());
-        for(Source source: sources) {
+        LOG4CPLUS_INFO(logger,"Sources:" << sources->size());
+        for(Source source: *sources) {
             source.emit(particles);
         }
 
-        LOG4CPLUS_INFO(logger,"Particles:" << particles.size());
-        for (Particle particle: particles) {
+        LOG4CPLUS_INFO(logger,"Particles:" << particles->size());
+        for (Particle particle: *particles) {
             particle.move(config,
                           ocean_time_idx,
-                          depth, zeta,
-                          lon, lat,
-                          mask,
-                          u, v, w, akt);
+                          oceanModelAdapter);
         }
 
         // Remove dead particles
-        particles.erase(std::remove_if(particles.begin(), particles.end(),
-                               [](Particle particle) { return !particle.isAlive(); }), particles.end());
+        particles->erase(std::remove_if(particles->begin(), particles->end(),
+                               [](Particle particle) { return !particle.isAlive(); }), particles->end());
 
         LOG4CPLUS_INFO(logger,"Saving restart:" << "");
-        particles.save("");
+        particles->save("");
 
         LOG4CPLUS_INFO(logger,"Evaluate concentration");
-        for (Particle particle: particles) {
+        for (Particle particle: *particles) {
             if (particle.isAlive()) {
                 conc(ocean_time_idx, particle.iK(), particle.iJ(), particle.iI())++;
             }

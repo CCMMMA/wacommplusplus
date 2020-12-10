@@ -22,7 +22,7 @@ public:
     Source(int id, int j, int i, int start, int end, int particlesPerHour, int mode);
     ~Source();
 
-    void emit(Particles &particles);
+    void emit(std::shared_ptr<Particles> particles);
 };
 
 

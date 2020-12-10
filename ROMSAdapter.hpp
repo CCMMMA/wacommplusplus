@@ -2,8 +2,8 @@
 // Created by Raffaele Montella on 07/12/20.
 //
 
-#ifndef WACOMMPLUSPLUS_ROMS2WACOMM_HPP
-#define WACOMMPLUSPLUS_ROMS2WACOMM_HPP
+#ifndef WACOMMPLUSPLUS_ROMSADAPTER_HPP
+#define WACOMMPLUSPLUS_ROMSADAPTER_HPP
 
 #include <string>
 #include "netcdf"
@@ -14,41 +14,37 @@
 #include "log4cplus/loggingmacros.h"
 
 #include "Array.h"
+#include "OceanModelAdapter.hpp"
 
 using namespace std;
 using namespace Array;
 using namespace netCDF;
 
 class Wacomm;
-class ROMS2Wacomm {
+class ROMSAdapter: public OceanModelAdapter {
 public:
-    ROMS2Wacomm(string &fileName);
+    ROMSAdapter(string &fileName);
 
-    ~ROMS2Wacomm();
+    ~ROMSAdapter();
 
     void process();
 
 private:
-    friend class Wacomm;
+
     log4cplus::Logger logger;
 
-    Array1<double> depth;
-    Array2<double> zeta;
-    Array2<double> mask_rho;
-    Array2<double> lon;
-    Array2<double> lat;
 
-    Array4<double> ucomp, vcomp, wcomp;
-    Array4<double> aktcomp;
+
+
 
     string &fileName;
 
-    void uv2rho(Array2<double>& mask_u, Array2<double>& mask_v,
+    void uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
                 Array4<double>& u, Array4<double>& v);
 
-    void wakt2rho(Array2<double>& mask_u, Array2<double>& mask_v,
+    void wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
                   Array4<double>& w, Array4<double>& akt);
 };
 
 
-#endif //WACOMMPLUSPLUS_ROMS2WACOMM_HPP
+#endif //WACOMMPLUSPLUS_ROMSADAPTER_HPP

@@ -19,6 +19,6 @@ Source::~Source()
 
 }
 
-void Source::emit(Particles &particles) {
+void Source::emit(std::shared_ptr<Particles> particles) {
 
 }

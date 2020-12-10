@@ -20,6 +20,7 @@
 #include "log4cplus/loggingmacros.h"
 #include "Array.h"
 #include "Config.hpp"
+#include "OceanModelAdapter.hpp"
 
 using namespace std;
 
@@ -34,13 +35,9 @@ class Particle {
 
     bool isAlive();
 
-    void move(Config &config,
+    void move(std::shared_ptr<Config> config,
               int ocean_time_idx,
-              Array::Array1<double> &depth, Array::Array2<double> &zeta,
-              Array::Array2<double> &lon, Array::Array2<double> &lat,
-              Array::Array2<double> &mask,
-              Array::Array4<double> &u, Array::Array4<double> &v, Array::Array4<double> &w,
-              Array::Array4<double> &akt);
+              std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
 
     double K();
     double J();

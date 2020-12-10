@@ -16,7 +16,7 @@ namespace fs = std::filesystem;
 #include "Wacomm.hpp"
 #include "Particles.hpp"
 #include "Sources.hpp"
-#include "ROMS2Wacomm.hpp"
+#include "ROMSAdapter.hpp"
 
 log4cplus::Logger logger;
 
@@ -77,18 +77,17 @@ int main(int argc, char **argv) {
 
     LOG4CPLUS_INFO(logger,"Configuration: " << configFile);
 
-    Config config(configFile);
+    auto config = std::make_shared<Config>(configFile);
+    auto particles = std::make_shared<Particles>(restartFileName);
+    auto sources = std::make_shared<Sources>();
 
-    Particles particles(restartFileName);
-    Sources sources;
-
-    auto roms2Wacomm = std::make_shared<ROMS2Wacomm>(netcdfFileName);
+    auto roms2Wacomm = std::make_shared<ROMSAdapter>(netcdfFileName);
     roms2Wacomm->process();
 
-    Wacomm wacomm(config, roms2Wacomm, sources, particles);
+    Wacomm wacomm(config, roms2Wacomm , sources, particles);
     wacomm.run();
 
-    // ROMS2Wacomm roms2Wacomm(fileName, ocean_time, ucomp, vcomp, wcomp, aktcomp);
+    // ROMSAdapter roms2Wacomm(fileName, ocean_time, ucomp, vcomp, wcomp, aktcomp);
     // Array4<double> conc=wacomm.run(ocean_time, ucomp, vcomp, wcomp, aktcomp);
     // Results results(conc);
     // results.saveAsNetCDF(concFileName);

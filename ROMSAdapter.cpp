@@ -2,15 +2,15 @@
 // Created by Raffaele Montella on 07/12/20.
 //
 
-#include "ROMS2Wacomm.hpp"
+#include "ROMSAdapter.hpp"
 
-ROMS2Wacomm::ROMS2Wacomm(string &fileName): fileName(fileName) {
+ROMSAdapter::ROMSAdapter(string &fileName): fileName(fileName) {
     log4cplus::BasicConfigurator basicConfig;
     basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 }
 
-void ROMS2Wacomm::process()
+void ROMSAdapter::process()
 {
     LOG4CPLUS_INFO(logger,"Loading:"+fileName);
 
@@ -27,7 +27,7 @@ void ROMS2Wacomm::process()
     NcVar varMaskRho=dataFile.getVar("mask_rho");
     size_t eta_rho = varMaskRho.getDim(0).getSize();
     size_t xi_rho = varMaskRho.getDim(1).getSize();
-    mask_rho.Allocate(eta_rho,xi_rho);
+    Array2<double>mask_rho(eta_rho,xi_rho);
     varMaskRho.getVar(mask_rho());
 
     // Retrieve the variable named "mask_u"
@@ -48,18 +48,18 @@ void ROMS2Wacomm::process()
 
     // Retrieve the variable named "lat_rho"
     NcVar varLatRho=dataFile.getVar("lat_rho");
-    lat.Allocate(eta_rho,xi_rho);
-    varLatRho.getVar(lat());
+    Array2<double> lat_rho(eta_rho,xi_rho);
+    varLatRho.getVar(lat_rho());
 
     // Retrieve the variable named "lon_rho"
     NcVar varLonRho=dataFile.getVar("lon_rho");
-    lon.Allocate(eta_rho,xi_rho);
-    varLonRho.getVar(lon());
+    Array2<double> lon_rho(eta_rho,xi_rho);
+    varLonRho.getVar(lon_rho());
 
 
     // Retrieve the variable named "zeta"
     NcVar varZeta=dataFile.getVar("zeta");
-    zeta.Allocate(eta_rho,xi_rho);
+    Array2<double> zeta(eta_rho,xi_rho);
     varMaskV.getVar(zeta());
 
     // Retrieve the variable named "u"
@@ -85,20 +85,33 @@ void ROMS2Wacomm::process()
     Array4<double> akt(ocean_time,s_w,eta_rho,xi_rho);
     varAKt.getVar(akt());
 
-    ucomp.Allocate(ocean_time,s_rho,eta_rho,xi_rho);
-    vcomp.Allocate(ocean_time,s_rho,eta_rho,xi_rho);
-    wcomp.Allocate(ocean_time,s_w,eta_rho,xi_rho);
-    aktcomp.Allocate(ocean_time,s_w,eta_rho,xi_rho);
+    LOG4CPLUS_INFO(logger,"Loaded!");
 
+    this->Mask()->Allocate(eta_rho,xi_rho);
+    this->Lon()->Allocate(eta_rho,xi_rho);
+    this->Lat()->Allocate(eta_rho,xi_rho);
+    this->U()->Allocate(ocean_time,s_rho,eta_rho,xi_rho);
+    this->V()->Allocate(ocean_time,s_rho,eta_rho,xi_rho);
+    this->W()->Allocate(ocean_time,s_w,eta_rho,xi_rho);
+    this->AKT()->Allocate(ocean_time,s_w,eta_rho,xi_rho);
 
+    LOG4CPLUS_INFO(logger,"Interpolation...");
 
-    uv2rho(mask_u, mask_v, u,v);
-    wakt2rho(mask_u, mask_v, w, akt);
+    uv2rho(mask_rho, mask_u, mask_v, u,v);
+    wakt2rho(mask_rho,mask_u, mask_v, w, akt);
 
+    for(int j=0; j<eta_rho; j++) {
+        for(int i=0; i<xi_rho;i ++) {
+            this->Mask()->operator()(j,i)=mask_rho(j,i);
+            this->Lat()->operator()(j,i)=lat_rho(j,i);
+            this->Lon()->operator()(j,i)=lon_rho(j,i);
+        }
+    }
 
+    LOG4CPLUS_INFO(logger,"...done!");
 }
 
-void ROMS2Wacomm::uv2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array4<double>& u, Array4<double>& v) {
+void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v, Array4<double>& u, Array4<double>& v) {
     double uw1, uw2, vw1, vw2;
 
     LOG4CPLUS_INFO(logger,"uv2rho");
@@ -151,11 +164,11 @@ void ROMS2Wacomm::uv2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array4<
                             vw2=0.0;
                         }
 
-                        ucomp(t,k,j,i)=0.5*(uw1+uw2);
-                        vcomp(t,k,j,i)=0.5*(vw1+vw2);
+                        this->U()->operator ()(t,k,j,i)=0.5*(uw1+uw2);
+                        this->V()->operator ()(t,k,j,i)=0.5*(vw1+vw2);
                     } else {
-                        ucomp(t,k,j,i)=0.0;
-                        vcomp(t,k,j,i)=0.0;
+                        this->U()->operator ()(t,k,j,i)=0.0;
+                        this->V()->operator ()(t,k,j,i)=0.0;
                     }
                 }
             }
@@ -163,7 +176,7 @@ void ROMS2Wacomm::uv2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array4<
     }
 }
 
-void ROMS2Wacomm::wakt2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array4<double>& w, Array4<double>& akt ) {
+void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v, Array4<double>& w, Array4<double>& akt ) {
     double ww1, ww2, ww3, aktw1, aktw2, aktw3;
 
     LOG4CPLUS_INFO(logger,"wakt2rho");
@@ -208,13 +221,13 @@ void ROMS2Wacomm::wakt2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array
                             aktw3=0.0;
                         }
 
-                        wcomp(t,k,j,i)=0.25*(ww1+ww2+ww3+w(t,k,j,i));
-                        aktcomp(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt(t,k,j,i));
+                        this->W()->operator ()(t,k,j,i)=0.25*(ww1+ww2+ww3+w(t,k,j,i));
+                        this->AKT()->operator ()(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt(t,k,j,i));
 
                     } else {
 
-                        wcomp(t,k,j,i)=0.0;
-                        aktcomp(t,k,j,i)=0.0;
+                        this->W()->operator ()(t,k,j,i)=0.0;
+                        this->AKT()->operator ()(t,k,j,i)=0.0;
                     }
                 }
             }
@@ -222,7 +235,7 @@ void ROMS2Wacomm::wakt2rho(Array2<double>& mask_u, Array2<double>& mask_v, Array
     }
 }
 
-ROMS2Wacomm::~ROMS2Wacomm() {
+ROMSAdapter::~ROMSAdapter() {
 
 }
 
