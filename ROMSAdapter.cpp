@@ -17,12 +17,6 @@ void ROMSAdapter::process()
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, NcFile::read);
 
-    // Retrieve the variable named "depth"
-    //NcVar varDepth=dataFile.getVar("depth");
-    //size_t s_rho = varDepth.getDim(0).getSize();
-    //depth.Allocate(s_rho);
-    //varDepth.getVar(depth());
-
     // Retrieve the variable named "mask_rho"
     NcVar varMaskRho=dataFile.getVar("mask_rho");
     size_t eta_rho = varMaskRho.getDim(0).getSize();
@@ -44,8 +38,6 @@ void ROMSAdapter::process()
     Array2<double> mask_v(eta_v,xi_v);
     varMaskV.getVar(mask_v());
 
-
-
     // Retrieve the variable named "lat_rho"
     NcVar varLatRho=dataFile.getVar("lat_rho");
     Array2<double> lat_rho(eta_rho,xi_rho);
@@ -56,11 +48,20 @@ void ROMSAdapter::process()
     Array2<double> lon_rho(eta_rho,xi_rho);
     varLonRho.getVar(lon_rho());
 
+    // Retrieve the variable named "lat_v"
+    NcVar varLatV=dataFile.getVar("lat_v");
+    Array2<double> lat_v(eta_v,xi_v);
+    varLatV.getVar(lat_v());
 
-    // Retrieve the variable named "zeta"
-    NcVar varZeta=dataFile.getVar("zeta");
-    Array2<double> zeta(eta_rho,xi_rho);
-    varMaskV.getVar(zeta());
+    // Retrieve the variable named "lon_u"
+    NcVar varLonU=dataFile.getVar("lon_u");
+    Array2<double> lon_u(eta_u,xi_u);
+    varLonU.getVar(lon_u());
+
+    // Retrieve the variable named "h"
+    NcVar varH=dataFile.getVar("h");
+    Array2<double> h(eta_rho,xi_rho);
+    varH.getVar(h());
 
     // Retrieve the variable named "u"
     NcVar varU=dataFile.getVar("u");
@@ -85,28 +86,107 @@ void ROMSAdapter::process()
     Array4<double> akt(ocean_time,s_w,eta_rho,xi_rho);
     varAKt.getVar(akt());
 
+    // Retrieve the variable named "s_w"
+    NcVar varSW=dataFile.getVar("s_rho");
+    varSW.getDim(0).getSize();
+    Array1<double> sW(s_w);
+    varSW.getVar(sW());
+
+    // Retrieve the variable named "s_rho"
+    NcVar varSRho=dataFile.getVar("s_rho");
+    varSRho.getDim(0).getSize();
+    Array1<double> sRho(s_rho);
+    varSRho.getVar(sRho());
+
+    // Retrieve the variable named "ocean_time"
+    NcVar varOceanTime=dataFile.getVar("ocean_time");
+    varOceanTime.getDim(0).getSize();
+    Array1<double> oceanTime(ocean_time);
+    varOceanTime.getVar(oceanTime());
+
+    // Retrieve the variable named "zeta"
+    NcVar varZeta=dataFile.getVar("zeta");
+    Array3<double> zeta(ocean_time,eta_rho,xi_rho);
+    varZeta.getVar(zeta());
+
     LOG4CPLUS_INFO(logger,"Loaded!");
 
-    this->Mask()->Allocate(eta_rho,xi_rho);
-    this->Lon()->Allocate(eta_rho,xi_rho);
-    this->Lat()->Allocate(eta_rho,xi_rho);
-    this->U()->Allocate(ocean_time,s_rho,eta_rho,xi_rho);
-    this->V()->Allocate(ocean_time,s_rho,eta_rho,xi_rho);
-    this->W()->Allocate(ocean_time,s_w,eta_rho,xi_rho);
-    this->AKT()->Allocate(ocean_time,s_w,eta_rho,xi_rho);
+    this->OceanTime().Allocate(ocean_time);
+    this->Depth().Allocate(s_w);
+    this->SRho().Allocate(s_rho);
+    this->Mask().Allocate(eta_rho,xi_rho);
+    this->Lon().Allocate(eta_rho,xi_rho);
+    this->Lat().Allocate(eta_rho,xi_rho);
+    this->LonRad().Allocate(eta_u,xi_u);
+    this->LatRad().Allocate(eta_v,xi_v);
+    this->H().Allocate(eta_rho,xi_rho);
+    this->Zeta().Allocate(ocean_time,eta_rho,xi_rho);
+    this->U().Allocate(ocean_time,s_rho,eta_rho,xi_rho);
+    this->V().Allocate(ocean_time,s_rho,eta_rho,xi_rho);
+    this->W().Allocate(ocean_time,s_w,eta_rho,xi_rho);
+    this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho);
 
-    LOG4CPLUS_INFO(logger,"Interpolation...");
+    LOG4CPLUS_INFO(logger,"Interpolation 2D / 3D...");
 
     uv2rho(mask_rho, mask_u, mask_v, u,v);
     wakt2rho(mask_rho,mask_u, mask_v, w, akt);
 
-    for(int j=0; j<eta_rho; j++) {
-        for(int i=0; i<xi_rho;i ++) {
-            this->Mask()->operator()(j,i)=mask_rho(j,i);
-            this->Lat()->operator()(j,i)=lat_rho(j,i);
-            this->Lon()->operator()(j,i)=lon_rho(j,i);
+    LOG4CPLUS_INFO(logger,"Copying 1D ...");
+    for(int ocean_time_idx=0; ocean_time_idx<ocean_time;ocean_time_idx++) {
+        this->OceanTime()(ocean_time_idx)=oceanTime(ocean_time_idx);
+    }
+
+    for(int k=0; k<s_rho;k++) {
+        this->SRho()(k)=sRho(k);
+    }
+
+    for(int k=0; k<s_w;k++) {
+        if (k<s_rho) {
+            this->Depth()(k) = sW(k + 1) - sW(k);
+        } else {
+            this->Depth()(k)=this->Depth()(k-1);
         }
     }
+
+    LOG4CPLUS_INFO(logger,"Copying 2D...");
+    #pragma omp for collapse(2)
+    for(int j=0; j<eta_rho; j++) {
+        for(int i=0; i<xi_rho;i ++) {
+            this->Mask()(j,i)=mask_rho(j,i);
+            this->Lat()(j,i)=lat_rho(j,i);
+            this->Lon()(j,i)=lon_rho(j,i);
+            this->H()(j,i)=h(j,i);
+        }
+    }
+
+    LOG4CPLUS_INFO(logger,"Copying 3D...");
+    for(int ocean_time_idx=0; ocean_time_idx<ocean_time;ocean_time_idx++) {
+        #pragma omp for collapse(2)
+        for (int j = 0; j < eta_rho; j++) {
+            for (int i = 0; i < xi_rho; i++) {
+                this->Zeta()(ocean_time_idx, j, i) = zeta(ocean_time_idx,j, i);
+            }
+        }
+    }
+
+    LOG4CPLUS_INFO(logger,"Convert lon in radiants...");
+    // lon_u, lat_v in radiants
+    #pragma omp for collapse(2)
+    for ( int j=0; j<eta_u;j++) {
+        for (int i=0;i<xi_u;i++) {
+            this->LonRad()(j,i)=0.0174533*lon_u(j,i);
+        }
+    }
+
+    LOG4CPLUS_INFO(logger,"Convert lat in radiants...");
+    #pragma omp for collapse(2)
+    for ( int j=0; j<eta_v;j++) {
+        for (int i=0;i<xi_v;i++) {
+            this->LatRad()(j,i)=0.0174533*lat_v(j,i);
+        }
+    }
+
+
 
     LOG4CPLUS_INFO(logger,"...done!");
 }
@@ -127,6 +207,7 @@ void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array
 
     for (int t=0; t < ocean_time; t++)
     {
+        #pragma omp for collapse(3)
         for (int k=0; k < s_rho; k++)
         {
             for (int j=0; j < eta_v; j++)
@@ -164,11 +245,11 @@ void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array
                             vw2=0.0;
                         }
 
-                        this->U()->operator ()(t,k,j,i)=0.5*(uw1+uw2);
-                        this->V()->operator ()(t,k,j,i)=0.5*(vw1+vw2);
+                        this->U()(t,k,j,i)=0.5*(uw1+uw2);
+                        this->V()(t,k,j,i)=0.5*(vw1+vw2);
                     } else {
-                        this->U()->operator ()(t,k,j,i)=0.0;
-                        this->V()->operator ()(t,k,j,i)=0.0;
+                        this->U()(t,k,j,i)=0.0;
+                        this->V()(t,k,j,i)=0.0;
                     }
                 }
             }
@@ -190,6 +271,7 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
 
 
     for (int t=0; t < ocean_time; t++) {
+        #pragma omp for collapse(3)
         for (int k=0; k < s_w; k++) {
             for (int j=0; j < eta_v; j++) {
                 for (int i=0; i< xi_u; i++) {
@@ -221,13 +303,13 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
                             aktw3=0.0;
                         }
 
-                        this->W()->operator ()(t,k,j,i)=0.25*(ww1+ww2+ww3+w(t,k,j,i));
-                        this->AKT()->operator ()(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt(t,k,j,i));
+                        this->W()(t,k,j,i)=0.25*(ww1+ww2+ww3+w(t,k,j,i));
+                        this->AKT()(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt(t,k,j,i));
 
                     } else {
 
-                        this->W()->operator ()(t,k,j,i)=0.0;
-                        this->AKT()->operator ()(t,k,j,i)=0.0;
+                        this->W()(t,k,j,i)=0.0;
+                        this->AKT()(t,k,j,i)=0.0;
                     }
                 }
             }
