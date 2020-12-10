@@ -7,40 +7,17 @@
 OceanModelAdapter::OceanModelAdapter() {
 }
 
-std::shared_ptr<Array1<double>> OceanModelAdapter::Depth() {
-    return std::shared_ptr<Array1<double>>(&depth);
-}
-
-std::shared_ptr<Array2<double>> OceanModelAdapter::Zeta() {
-    return std::shared_ptr<Array2<double>>(&zeta);
-}
-
-std::shared_ptr<Array2<double>> OceanModelAdapter::Mask() {
-    return std::shared_ptr<Array2<double>>(&mask);
-}
-
-std::shared_ptr<Array2<double>> OceanModelAdapter::Lon() {
-    return std::shared_ptr<Array2<double>>(&lon);
-}
-
-std::shared_ptr<Array2<double>> OceanModelAdapter::Lat() {
-    return std::shared_ptr<Array2<double>>(&lat);
-}
-
-std::shared_ptr<Array4<double>> OceanModelAdapter::U() {
-    return std::shared_ptr<Array4<double>>(&u);
-}
-
-std::shared_ptr<Array4<double>> OceanModelAdapter::V() {
-    return std::shared_ptr<Array4<double>>(&v);
-}
-
-std::shared_ptr<Array4<double>> OceanModelAdapter::W() {
-    return std::shared_ptr<Array4<double>>(&w);
-}
-
-std::shared_ptr<Array4<double>> OceanModelAdapter::AKT() {
-    return std::shared_ptr<Array4<double>>(&akt);
-}
-
-
+Array1<double> &OceanModelAdapter::OceanTime() { return oceanTime; }
+Array1<double> &OceanModelAdapter::Depth() { return depth; }
+Array1<double> &OceanModelAdapter::SRho() { return sRho; }
+Array2<double> &OceanModelAdapter::H() { return h; }
+Array2<double> &OceanModelAdapter::Mask() { return mask; }
+Array2<double> &OceanModelAdapter::Lon() { return lon; }
+Array2<double> &OceanModelAdapter::Lat() { return lat; }
+Array2<double> &OceanModelAdapter::LonRad() { return lonRad; }
+Array2<double> &OceanModelAdapter::LatRad() { return latRad; }
+Array3<double> &OceanModelAdapter::Zeta() { return zeta; }
+Array4<double> &OceanModelAdapter::U() { return u; }
+Array4<double> &OceanModelAdapter::V() { return v; }
+Array4<double> &OceanModelAdapter::W() { return w; }
+Array4<double> &OceanModelAdapter::AKT() { return akt; }
