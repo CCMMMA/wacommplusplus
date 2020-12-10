@@ -34,6 +34,7 @@ private:
     double survprob;
     double tau0;
 
+    void setDefault();
     void fromNamelist(ifstream &ifs);
     void formJson(ifstream &ifs);
 };

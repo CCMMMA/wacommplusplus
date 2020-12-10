@@ -9,6 +9,8 @@ Config::Config() {
 }
 
 Config::Config(string &fileName) {
+    setDefault();
+
     log4cplus::BasicConfigurator basicConfig;
     basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -19,7 +21,15 @@ Config::Config(string &fileName) {
 }
 
 Config::~Config() {
+    setDefault();
+}
 
+
+void Config::setDefault() {
+    deltat=3600;
+    dti=30;
+    tau0=86400.0;
+    survprob=1.0e-4;
 }
 
 void Config::fromNamelist(ifstream &ifs) {
