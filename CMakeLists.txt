@@ -34,6 +34,14 @@ if(NOT json_POPULATED)
     add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
+ExternalProject_Add(random
+        GIT_REPOSITORY https://github.com/effolkronium/random.git
+        TIMEOUT 360
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
+        BUILD_COMMAND make
+        INSTALL_COMMAND make install
+)
+
 ExternalProject_Add(szlib
         URL https://support.hdfgroup.org/ftp/lib-external/szip/2.1.1/src/szip-2.1.1.tar.gz
         TIMEOUT 360
@@ -124,7 +132,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.dylib)
 endif()
 
-add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h CommandLine.cpp CommandLine.hpp Source.cpp Source.hpp Sources.cpp Sources.hpp ROMS2Wacomm.cpp ROMS2Wacomm.hpp Config.cpp Config.hpp)
+add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h CommandLine.cpp CommandLine.hpp Source.cpp Source.hpp Sources.cpp Sources.hpp ROMSAdapter.cpp ROMSAdapter.hpp Config.cpp Config.hpp OceanModelAdapter.cpp OceanModelAdapter.hpp)
 
 # Expicit the dependencies
 add_dependencies(zlib szlib)
@@ -134,6 +142,7 @@ add_dependencies(netcdf hdf5 )
 add_dependencies(netcdfcxx netcdf )
 add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
+add_dependencies(${PROJECT_NAME} random)
 
 target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json)
 
