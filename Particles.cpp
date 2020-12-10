@@ -32,8 +32,12 @@ Particles::Particles(string fileName) {
         if (count > 0)
         {
             double k, j, i, health, tpart;
-            if (!(iss >> k >> j >> i >> health >> tpart )) { break; } // error
-            Particle particle(k,j,i,health,tpart);
+            if (!(iss >> i >> j >> k >> health >> tpart )) { break; } // error
+
+            if (k<0) k=0;
+            if (j<0) j=0;
+            if (i<0) i=0;
+            Particle particle(k, j, i, health, tpart);
             push_back(particle);
         }
         count++;
