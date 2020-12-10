@@ -43,6 +43,7 @@ class Wacomm {
         Array4<double> conc;
 
 
+    void save(Array4<double> &conc);
 };
 
 
