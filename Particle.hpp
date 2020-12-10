@@ -33,21 +33,23 @@ class Particle {
 
         ~Particle();
 
-    bool isAlive();
+        bool isAlive();
 
-    void move(std::shared_ptr<Config> config,
-              int ocean_time_idx,
-              std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
+        void move(std::shared_ptr<Config> config,
+                  int ocean_time_idx,
+                  std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
 
-    double K();
-    double J();
-    double I();
+        double K();
+        double J();
+        double I();
 
-    int iK();
-    int iJ();
-    int iI();
+        int iK();
+        int iJ();
+        int iI();
 
-    double gen();
+        double gen();
+
+        std::string to_string();
 
 private:
         log4cplus::Logger logger;
