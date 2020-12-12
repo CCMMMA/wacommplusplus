@@ -18,21 +18,30 @@ using namespace std;
 class Config {
 public:
     Config();
-    Config(string &fileName);
+    explicit Config(string &fileName);
     ~Config();
 
-    double Survprob();
-    double Tau0();
-    double Dti();
-    double Deltat();
+    void setDry(bool value);
+    [[nodiscard]] bool isDry() const;
+
+    [[nodiscard]] double ReductionCoefficient() const;
+    [[nodiscard]] double Survprob() const;
+    [[nodiscard]] double Tau0() const;
+    [[nodiscard]] double Dti() const;
+    [[nodiscard]] double Deltat() const;
+    [[nodiscard]]double SedimentationVelocity() const;
 
 private:
     log4cplus::Logger logger;
 
-    double deltat;
-    double dti;
-    double survprob;
-    double tau0;
+    bool dry{};
+
+    double deltat{};
+    double dti{};
+    double survprob{};
+    double tau0{};
+    double sv{};
+    double crid{};
 
     void setDefault();
     void fromNamelist(ifstream &ifs);
