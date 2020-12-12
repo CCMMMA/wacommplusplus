@@ -40,10 +40,7 @@ class Wacomm {
         std::shared_ptr<Sources> sources;
         std::shared_ptr<Particles> particles;
 
-        Array4<double> conc;
-
-
-    void save(Array4<double> &conc);
+        void save(Array4<float> &conc);
 };
 
 
