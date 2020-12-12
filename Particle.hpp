@@ -29,44 +29,48 @@ using namespace std;
 class Particle {
     public:
         Particle(double k, double j, double i, double health, double tpart);
-        //Particle(Particle const &particle);
+        Particle(double k, double j, double i);
 
         ~Particle();
 
-        bool isAlive();
+        bool isAlive() const;
 
-        void move(std::shared_ptr<Config> config,
-                  int ocean_time_idx,
-                  std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
+        void move(const std::shared_ptr<Config>& config, int ocean_time_idx,
+                  const std::shared_ptr<OceanModelAdapter>& oceanModelAdapter);
 
-        double K();
-        double J();
-        double I();
+        double K() const;
+        double J() const;
+        double I() const;
 
-        int iK();
-        int iJ();
-        int iI();
+        double Health() const;
+        double TPart() const;
 
-        double gen();
+        int KasInt() const;
+        int JasInt() const;
+        int IasInt() const;
 
-        std::string to_string();
+        static double gen();
+
+        std::string to_string() const;
 
 private:
         log4cplus::Logger logger;
+
+
 
         double k;
         double j;
         double i;
         double health;
         double tpart;
-        double pstatus;
+        double pstatus{};
 
-        double sgn(double a);
-        double mod(double a, double p);
-        double sign(double a, double b);
+        static double sgn(double a);
+        static double mod(double a, double p);
+        static double sign(double a, double b);
 
-        int time;
-        double health0;
+        int time{};
+        double health0{};
 
 
 };
