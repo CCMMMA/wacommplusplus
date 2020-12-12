@@ -84,15 +84,10 @@ int main(int argc, char **argv) {
     auto roms2Wacomm = std::make_shared<ROMSAdapter>(netcdfFileName);
     roms2Wacomm->process();
 
+    config->setDry(false);
     Wacomm wacomm(config, roms2Wacomm , sources, particles);
     wacomm.run();
 
-    // ROMSAdapter roms2Wacomm(fileName, ocean_time, ucomp, vcomp, wcomp, aktcomp);
-    // Array4<double> conc=wacomm.run(ocean_time, ucomp, vcomp, wcomp, aktcomp);
-    // Results results(conc);
-    // results.saveAsNetCDF(concFileName);
-    // Restart restart(particles);
-    // restart.saveAsTextfile(restartFileName);
     return 0;
 
 }
