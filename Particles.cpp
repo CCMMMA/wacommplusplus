@@ -33,10 +33,6 @@ Particles::Particles(string fileName) {
         {
             double k, j, i, health, tpart;
             if (!(iss >> i >> j >> k >> health >> tpart )) { break; } // error
-
-            if (k<0) k=0;
-            if (j<0) j=0;
-            if (i<0) i=0;
             Particle particle(k, j, i, health, tpart);
             push_back(particle);
         }
@@ -45,10 +41,15 @@ Particles::Particles(string fileName) {
 
 }
 
-void Particles::save(string fileName)
+void Particles::save(const string& fileName)
 {
-
+    std::ofstream outfile(fileName);
+    int count = size();
+    outfile << "\t" << count << endl;
+    for(int idx=0; idx<count; idx++) {
+        Particle particle = at(idx);
+        outfile << particle.to_string() << endl;
+    }
 }
 
-Particles::~Particles() {
-}
+Particles::~Particles() = default;

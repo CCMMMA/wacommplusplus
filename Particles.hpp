@@ -21,11 +21,10 @@ public:
     Particles(string fileName);
     ~Particles();
 
-    void save(string fileName);
+    void save(const string& fileName);
 
 private:
     log4cplus::Logger logger;
-
 };
 
 
