@@ -9,20 +9,24 @@
 #include "Particles.hpp"
 
 class Source {
-private:
-    int _id;
-    int _j;
-    int _i;
-    int _start;
-    int _end;
-    int _particlesPerHour;
-    int _mode;
-
 public:
-    Source(int id, int j, int i, int start, int end, int particlesPerHour, int mode);
+    Source(int id, double k, double j, double i, int start, int end, int particlesPerHour, int mode);
     ~Source();
 
     void emit(std::shared_ptr<Particles> particles);
+private:
+    log4cplus::Logger logger;
+
+    int id;
+    double k;
+    double j;
+    double i;
+    int start;
+    int end;
+    int particlesPerHour;
+    int mode;
+
+
 };
 
 
