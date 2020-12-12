@@ -972,7 +972,7 @@ namespace Array {
 #endif
 
         T& operator [] (int ix) const {__check(ix,this->size,ox,1,1); return voff[ix];}
-        T& operator () (int i) const {__check(i,this->size,0,1,1); return this->v[i];}
+        T& operator () (int i) const {__check(i,this->size,ox,1,1); return voff[i];}
         T* operator () () const {return this->v;}
         operator T* () const {return this->v;}
 
