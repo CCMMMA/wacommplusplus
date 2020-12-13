@@ -12,11 +12,19 @@ Source::Source(int id, double k, double j, double i, int start, int end, int par
 
 Source::~Source() = default;
 
-void Source::emit(std::shared_ptr<Particles> particles) {
+void Source::emit(std::shared_ptr<Particles> particles, double tpart) {
     // Check if the source is active
     if (mode > 0) {
         for (int i=0; i<particlesPerHour;i++) {
-            particles->push_back(Particle(k,j,i));
+            particles->push_back(Particle(
+                    k+ gen()*0.5 - 0.25,
+                    j+ gen()*0.5 - 0.25,
+                    i+ gen()*0.5 - 0.25, tpart));
         }
     }
+}
+
+double Source::gen()
+{
+    return Random::get<double>(0.0, 1.0);
 }
