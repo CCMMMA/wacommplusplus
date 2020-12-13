@@ -40,10 +40,10 @@ private:
     string &fileName;
 
     void uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
-                Array4<double>& u, Array4<double>& v);
+                Array4<float>& u, Array4<float>& v);
 
     void wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
-                  Array4<double>& w, Array4<double>& akt);
+                  Array4<float>& w, Array4<float>& akt);
 };
 
 
