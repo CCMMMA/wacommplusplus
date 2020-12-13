@@ -16,9 +16,8 @@ Particle::Particle(double k, double j, double i,
 
 }
 
-Particle::Particle(double k, double j, double i): k(k), j(j), i(i){
+Particle::Particle(double k, double j, double i, double tpart): k(k), j(j), i(i), tpart(tpart){
     health=health0;
-    tpart=0;
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 }
 
@@ -86,7 +85,7 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         auto kI=(int)k; double kF=k-kI;
 
         // Get the integer part and the fraction part of particle j
-        auto jI=(int)i; double jF=j-jI;
+        auto jI=(int)j; double jF=j-jI;
 
         // Get the integer part and the fraction part of particle i
         auto iI=(int)i; double iF=i-iI;
@@ -141,43 +140,50 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         // The particle is alive!
         // Perform the bilinear interpolation (2D) in order to get
         // the u component of the current field in the particle position.
-        double u1=oceanModelAdapter->U()(ocean_time_idx,   kI,    jI,    iI)    *(1.0-iF)  *(1.0-jF);
-        double u2=oceanModelAdapter->U()(ocean_time_idx,   kI,    jI+1,  iI)    *(1.0-iF)  *     jF;
-        double u3=oceanModelAdapter->U()(ocean_time_idx,   kI,    jI+1,  iI+1)  *     iF   *     jF;
-        double u4=oceanModelAdapter->U()(ocean_time_idx,   kI,    jI  ,  iI+1)  *     iF   *(1.0-jF);
+        float u1=oceanModelAdapter->U()(ocean_time_idx,   kI,    jI,    iI)    *(1.0-iF)  *(1.0-jF);
+        float u2=oceanModelAdapter->U()(ocean_time_idx,   kI,    jI+1,  iI)    *(1.0-iF)  *     jF;
+        float u3=oceanModelAdapter->U()(ocean_time_idx,   kI,    jI+1,  iI+1)  *     iF   *     jF;
+        float u4=oceanModelAdapter->U()(ocean_time_idx,   kI,    jI  ,  iI+1)  *     iF   *(1.0-jF);
 
         // The current u component in the particle position
-        double uu=u1+u2+u3+u4;
+        float uu=u1+u2+u3+u4;
 
         LOG4CPLUS_DEBUG(logger, "uu:" << uu);
 
         // Perform the bilinear interpolation (2D) in order to get
         // the v component of the current field in the particle position.
-        double v1=oceanModelAdapter->V()(ocean_time_idx,    kI, jI,     iI)     *(1.0-iF)   *(1.0-jF);
-        double v2=oceanModelAdapter->V()(ocean_time_idx,    kI, jI+1,   iI)     *(1.0-iF)   *     jF;
-        double v3=oceanModelAdapter->V()(ocean_time_idx,    kI, jI+1,   iI+1)   *     iF    *     jF;
-        double v4=oceanModelAdapter->V()(ocean_time_idx,    kI, jI,     iI+1)   *     iF    *(1.0-jF);
+        float v1=oceanModelAdapter->V()(ocean_time_idx,    kI, jI,     iI)     *(1.0-iF)   *(1.0-jF);
+        float v2=oceanModelAdapter->V()(ocean_time_idx,    kI, jI+1,   iI)     *(1.0-iF)   *     jF;
+        float v3=oceanModelAdapter->V()(ocean_time_idx,    kI, jI+1,   iI+1)   *     iF    *     jF;
+        float v4=oceanModelAdapter->V()(ocean_time_idx,    kI, jI,     iI+1)   *     iF    *(1.0-jF);
 
         // The current v component in the particle position
-        double vv=v1+v2+v3+v4;
+        float vv=v1+v2+v3+v4;
 
         LOG4CPLUS_DEBUG(logger, "vv:" << vv );
 
 
+        // 0,0,690,533
 
         // Perform the bilinear interpolation (3D) in order to get
         // the w component of the current field in the particle position.
-        double w1=oceanModelAdapter->W()(ocean_time_idx,    kI,     jI,     iI)     *(1.0-iF)  *(1.0-jF)  *(1.0-kF);
-        double w2=oceanModelAdapter->W()(ocean_time_idx,    kI,     jI+1,   iI)     *(1.0-iF)  *     jF   *(1.0-kF);
-        double w3=oceanModelAdapter->W()(ocean_time_idx,    kI,     jI+1,   iI+1)   *     iF   *     jF   *(1.0-kF);
-        double w4=oceanModelAdapter->W()(ocean_time_idx,    kI,     jI,     iI+1)   *     iF   *(1.0-jF)  *(1.0-kF);
-        double w5=oceanModelAdapter->W()(ocean_time_idx,    kI-1,   jI,     iI)     *(1.0-iF)  *(1.0-jF)  *     kF;
-        double w6=oceanModelAdapter->W()(ocean_time_idx,    kI-1,   jI+1,   iI)     *(1.0-iF)  *     jF   *     kF;
-        double w7=oceanModelAdapter->W()(ocean_time_idx,    kI-1,   jI+1,   iI+1)   *     iF   *     jF   *     kF;
-        double w8=oceanModelAdapter->W()(ocean_time_idx,    kI-1,   jI,     iI+1)   *     iF   *(1.0-jF)  *     kF;
+        float w1=oceanModelAdapter->W()(ocean_time_idx,    kI,     jI,     iI);
+        if (w1!=fillValue) w1=w1*(1.0-iF)  *(1.0-jF)  *(1.0-kF); else w1=0;
+        float w2=oceanModelAdapter->W()(ocean_time_idx,    kI,     jI+1,   iI);
+        if (w2!=fillValue) w2=w2*(1.0-iF)  *     jF   *(1.0-kF); else w2=0;
+        float w3=oceanModelAdapter->W()(ocean_time_idx,    kI,     jI+1,   iI+1);
+        if (w2!=fillValue) w2=w3*     iF   *     jF   *(1.0-kF); else w3=0;
+        float w4=oceanModelAdapter->W()(ocean_time_idx,    kI,     jI,     iI+1);
+        if (w4!=fillValue) w4=w4*     iF   *(1.0-jF)  *(1.0-kF); else w4=0;
+
+
+        float w5=oceanModelAdapter->W()(ocean_time_idx,kI-1, jI, iI);if (w5!=fillValue) {w5=w5*(1.0-iF)*(1.0-jF)*kF;} else {w5=0;}
+        float w6=oceanModelAdapter->W()(ocean_time_idx,kI-1,jI+1,iI); if (w6!=fillValue) {w6=w6*(1.0-iF)*jF*kF;} else {w6=0;}
+        float w7=oceanModelAdapter->W()(ocean_time_idx,kI-1,jI+1,iI+1); if (w7!=fillValue) {w7=w7*iF*jF*kF;} else {w7=0;}
+        float w8=oceanModelAdapter->W()(ocean_time_idx, kI-1, jI, iI+1); if (w8!=fillValue) {w8=w8*iF*(1.0-jF)*kF;} else {w8=0;}
 
         // The current w component in the particle position
-        double ww=w1+w2+w3+w4+w5+w6+w7+w8;
+        float ww=w1+w2+w3+w4+w5+w6+w7+w8;
 
         LOG4CPLUS_DEBUG(logger, "ww:" << ww);
 
@@ -185,18 +191,29 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
 
         // Perform the bilinear interpolation (3D) in order to get
         // the akt in the particle position.
-        double a1=oceanModelAdapter->AKT()(ocean_time_idx,  kI,     jI,     iI)     *(1.0-iF)   *(1.0-jF)   *(1.0-kF);
-        double a2=oceanModelAdapter->AKT()(ocean_time_idx,  kI,     jI+1,   iI)     *(1.0-iF)   *     jF    *(1.0-kF);
-        double a3=oceanModelAdapter->AKT()(ocean_time_idx,  kI,     jI+1,   iI+1)   *     iF    *     jF    *(1.0-kF);
-        double a4=oceanModelAdapter->AKT()(ocean_time_idx,  kI,     jI,     iI+1)   *     iF    *(1.0-jF)   *(1.0-kF);
-        double a5=oceanModelAdapter->AKT()(ocean_time_idx,  kI-1,   jI,     iI)     *(1.0-iF)   *(1.0-jF)   *kF;
-        double a6=oceanModelAdapter->AKT()(ocean_time_idx,  kI-1,   jI+1,   iI)     *(1.0-iF)   *     jF    *kF;
-        double a7=oceanModelAdapter->AKT()(ocean_time_idx,  kI-1,   jI+1,   iI+1)   *iF         *     jF    *kF;
-        double a8=oceanModelAdapter->AKT()(ocean_time_idx,  kI-1,   jI,     iI+1)   *iF         *(1.0-jF)   *kF;
+        float a1=oceanModelAdapter->AKT()(ocean_time_idx,  kI,     jI,     iI);
+        if (a1!=fillValue) a1=a1*(1.0-iF)   *(1.0-jF)   *(1.0-kF); else a1=0;
+        float a2=oceanModelAdapter->AKT()(ocean_time_idx,  kI,     jI+1,   iI);
+        if (a2!=fillValue) a2=a2*(1.0-iF)   *     jF    *(1.0-kF);else a2=0;
+        float a3=oceanModelAdapter->AKT()(ocean_time_idx,  kI,     jI+1,   iI+1);
+        if (a3!=fillValue) a3=a3*     iF    *     jF    *(1.0-kF);else a3=0;
+        float a4=oceanModelAdapter->AKT()(ocean_time_idx,  kI,     jI,     iI+1);
+        if (a4!=fillValue) a4=a4 *     iF    *(1.0-jF)   *(1.0-kF);else a4=0;
 
+        float a5=oceanModelAdapter->AKT()(ocean_time_idx,  kI-1,   jI,     iI);
+        if (a5!=fillValue) a5=a5*(1.0-iF)*(1.0-jF)*kF; else a5=0;
+
+        float a6=oceanModelAdapter->AKT()(ocean_time_idx,  kI-1,   jI+1,   iI);
+        if (a6!=fillValue) a6=a6*(1.0-iF)*jF*kF; else a6=0;
+
+        float a7=oceanModelAdapter->AKT()(ocean_time_idx,  kI-1,   jI+1,   iI+1) ;
+        if (a7!=fillValue) a7=a7*iF*jF*kF; else a7=0;
+
+        float a8=oceanModelAdapter->AKT()(ocean_time_idx,kI-1,jI,iI+1);
+        if (a8!=fillValue) a8=a8*iF*(1.0-jF)*kF; else a8=0;
 
         // The AKT at the particle position.
-        double aa=a1+a2+a3+a4+a5+a6+a7+a8;
+        float aa=a1+a2+a3+a4+a5+a6+a7+a8;
 
         LOG4CPLUS_DEBUG(logger, "aa:" << aa);
 
@@ -205,6 +222,11 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         double djleap=vv*dti;
         double dkleap=(sv+ww)*dti;
 
+        // Calculation of sigma profile
+        // sigmaPROF=sigma(Ixx,Iyy)*(1-Zdet/(-H(Ixx,Iyy))) ! Here is H
+        //double sigmaProf=oceanModelAdapter->sigma()(jI, iI)*(1-kdet/(-oceanModelAdapter->H()(jI,iI)))
+        double sigmaprof=3.46*(1+k/s_w);
+
         // Extract 3 pseudorandom numbers
         double gi=0,gj=0,gk=0;
         for (int a=0;a<12;a++) {
@@ -212,11 +234,6 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
             gj=gj+gen()-0.5;
             gk=gk+gen()-0.5;
         }
-
-        // Calculation of sigma control
-        // sigmaPROF=sigma(Ixx,Iyy)*(1-Zdet/(-H(Ixx,Iyy))) ! Here is H
-        //double sigmaProf=oceanModelAdapter->sigma()(jI, iI)*(1-kdet/(-oceanModelAdapter->H()(jI,iI)))
-        double sigmaprof=3.46*(1+kdet/s_w);
 
         // Random leap
         double rileap=gi*sigmaprof;
@@ -229,52 +246,66 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         double kleap=dkleap+rkleap;
 
         LOG4CPLUS_DEBUG(logger, "kleap:" << kleap << " jleap:" << jleap << " ileap:" << ileap );
-        double d1,d2,dist;
+        double d1,d2,dd,jidist, kdist;
 
+        // Calculate the distance in radiants of latitude between the grid cell where is
+        // currently located the particle and the next one.
         d1=(oceanModelAdapter->LatRad()(jI+1,iI)-oceanModelAdapter->LatRad()(jI,iI));
+
+        // Calculate the distance in radiants of longitude between the grid cell where is
+        // currently located the particle and the next one.
         d2=(oceanModelAdapter->LonRad()(jI,iI+1)-oceanModelAdapter->LonRad()(jI,iI));
-        d1=pow(sin(0.5*d1),2) +
+
+        // Calculate the grid cell diagonal horizontal size using the Haversine method
+        // https://www.movable-type.co.uk/scripts/latlong.html
+        dd=pow(sin(0.5*d1),2) +
                 pow(sin(0.5*d2),2)*
                 cos(oceanModelAdapter->LatRad()(jI+1,iI))*
                 cos(oceanModelAdapter->LatRad()(jI,iI));
-        dist=2.0*atan2(pow(d1,.5),pow(1.0-d1,.5))*6371.0;
-        idet=i+0.001*ileap/dist;
+        jidist=2.0*atan2(pow(dd,.5),pow(1.0-dd,.5))*6371.0;
 
-        d1=(oceanModelAdapter->LatRad()(jI+1,iI)-oceanModelAdapter->LatRad()(jI,iI));
-        d2=(oceanModelAdapter->LonRad()(jI,iI+1)-oceanModelAdapter->LonRad()(jI,iI));
-        d1=pow(sin(0.5*d1),2) +
-                pow(sin(0.5*d2),2)*
-                cos(oceanModelAdapter->LatRad()(jI+1,iI))*
-                cos(oceanModelAdapter->LatRad()(jI,iI));
-        dist=2.0*atan2(sqrt(d1),pow(1.0-d1,.5))*6371.0;
-        jdet=j+0.001*jleap/dist;
-
-        //printf("depth:%f, zeta:%f\n",depth[kI],zeta[jI][iI]);
-        dist=oceanModelAdapter->Depth()(kI)*oceanModelAdapter->Zeta()(ocean_time_idx,jI,iI);
-        if (dist<=0) dist=1e-4;
-        //printf("dist:%f, kleap:%f\n",dist,kleap);
-        if ( abs(kleap) > abs(dist) ) {
-            kleap=sign(dist,kleap);
+        // Calculate a vertical distance
+        double depth=oceanModelAdapter->Depth()(kI);
+        double hcbz=oceanModelAdapter->HCorrectedByZeta(ocean_time_idx,jI,iI);
+        //cout << "jI:" << jI << " iI:" << iI << " depth(" << kI <<"):"<<depth<< " hcbz:"<< hcbz << endl;
+        kdist=oceanModelAdapter->Depth()(kI)*oceanModelAdapter->HCorrectedByZeta(ocean_time_idx,jI,iI);
+        if ( abs(kleap) > abs(kdist) ) {
+            kleap=sign(kdist,kleap);
         }
-        kdet=k+kleap/dist;
 
+
+
+        // Calculate the new particle j candidate
+        jdet=j+0.001*jleap/jidist;
+
+        // Calculate the new particle i candidate
+        idet=i+0.001*ileap/jidist;
+
+        // Calculate the new particle k candidate
+        kdet=k+kleap/kdist;
+
+        // Reflect if out-of-column
         // Check if the new k have to be limited by the sealfoor
-        if ( kdet >= s_w ) {
+        if ( kdet < (-(int)s_w+2)) {
             // Limit it on the bottom
-            kdet=s_w-1;
+            kdet=2.0*(-(int)s_w+2)-kdet;
         }
 
-        // Check if the new k have to be limited by the surface
-        if ( kdet < 0. ) {
+        // Check if the new k have to be limited by the seafloor
+        if ( kdet > 0. ) {
             // Limit it on the surface
-            kdet=0;
+            kdet=-kdet;
         }
 
-        //printf("kdet:%f jdet:%f idet:%f\n",kdet,jdet,idet);
+        // Reflect if crossed the coastline
 
+        // Calculate the integer part of the j and i candidates
         int jdetI=(int)(jdet);
         int idetI=(int)(idet);
+
+        // Check if the candidate new particle position is on land (mask=0)
         if ( oceanModelAdapter->Mask()(jdetI,idetI) <= 0.0 ) {
+            // Reflect the particle
             if ( idetI < iI ) {
                 idet=(double)iI + abs(i-idet);
             } else if ( idetI > iI ) {
@@ -292,11 +323,11 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         j=jdet;
         k=kdet;
 
-        // Add the integration time to the time
-        time=time+dti;
+        // Update the paticle age
+        tpart=tpart+dti;
 
         // Decay the particle
-        health=health0*exp(-time/tau0);
+        health=health0*exp(-tpart/tau0);
     }
 }
 
@@ -308,17 +339,19 @@ int Particle::KasInt() const  { return (int)(round(k));}
 int Particle::JasInt() const { return (int)(round(j));}
 int Particle::IasInt() const { return (int)(round(i));}
 
-/* The random generator should be initialized only one time */
-double Particle::gen()
-{
-    std::random_device randomDevice;
-    auto randomGenerator=std::mt19937 (randomDevice());
-    std::uniform_real_distribution<double> randomDistribution=std::uniform_real_distribution<double>(0, std::nextafter(1, DBL_MAX));
-    return randomDistribution(randomGenerator);
-}
+// Returns a single pseudorandom number from the uniform distribution over the range [0,1[.
+// https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html
+double Particle::gen() { return Random::get<double>(0.0, 1.0); }
 
+// Returns -1 if a < 0 and 1 if a > 0
 double Particle::sgn(double a) { return (a > 0) - (a < 0); }
+
+// Computes the remainder of the division of a by p.
+// https://gcc.gnu.org/onlinedocs/gfortran/MOD.html
 double Particle::mod(double a, double p) { return a-p*(int)(a/p); }
+
+// Returns the value of a with the sign of b.
+// https://gcc.gnu.org/onlinedocs/gfortran/SIGN.html
 double Particle::sign(double a, double b) { return abs(a)*sgn(b); }
 
 std::string Particle::to_string() const {

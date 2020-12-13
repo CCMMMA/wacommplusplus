@@ -14,6 +14,11 @@
 #include <sstream>
 #include <string>
 
+// random https://github.com/effolkronium/random
+#include "effolkronium/random.hpp"
+// get base random alias which is auto seeded and has static API and internal state
+using Random = effolkronium::random_static;
+
 // log4cplus - https://github.com/log4cplus/log4cplus
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
@@ -29,7 +34,7 @@ using namespace std;
 class Particle {
     public:
         Particle(double k, double j, double i, double health, double tpart);
-        Particle(double k, double j, double i);
+        Particle(double k, double j, double i, double tpart);
 
         ~Particle();
 
@@ -63,14 +68,15 @@ private:
         double i;
         double health;
         double tpart;
-        double pstatus{};
+        double pstatus;
 
         static double sgn(double a);
         static double mod(double a, double p);
         static double sign(double a, double b);
 
-        int time{};
-        double health0{};
+        double health0=1;
+
+        float fillValue=9.99999993E+36;
 
 
 };
