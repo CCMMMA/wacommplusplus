@@ -33,7 +33,7 @@ void Wacomm::run()
     LOG4CPLUS_INFO(logger,"s_rho:" + std::to_string(s_rho));
     LOG4CPLUS_INFO(logger,"eta_rho:" + std::to_string(eta_rho) + " xi_rho:" + std::to_string(xi_rho));
 
-    Array4<float> conc(ocean_time,s_rho,eta_rho,xi_rho);
+    Array4<float> conc(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
     std::memset(conc(), 0, ocean_time*s_rho*eta_rho*xi_rho);
 
     if (!config->isDry()) {
@@ -69,8 +69,10 @@ void Wacomm::run()
 
             LOG4CPLUS_INFO(logger, "Evaluate concentration");
             for (const Particle &particle: *particles) {
-                conc(ocean_time_idx, particle.KasInt(), particle.JasInt(), particle.IasInt()) =
-                        conc(ocean_time_idx, particle.KasInt(), particle.JasInt(), particle.IasInt()) + 1;
+                int k=(int)round(particle.K());
+                int j=(int)round(particle.J());
+                int i=(int)round(particle.I());
+                conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i)+ 1;
             }
         }
     }

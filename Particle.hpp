@@ -50,10 +50,6 @@ class Particle {
         double Health() const;
         double TPart() const;
 
-        int KasInt() const;
-        int JasInt() const;
-        int IasInt() const;
-
         static double gen();
 
         std::string to_string() const;

@@ -335,10 +335,6 @@ double Particle::K() const  { return k; }
 double Particle::J() const { return j; }
 double Particle::I() const { return i; }
 
-int Particle::KasInt() const  { return (int)(round(k));}
-int Particle::JasInt() const { return (int)(round(j));}
-int Particle::IasInt() const { return (int)(round(i));}
-
 // Returns a single pseudorandom number from the uniform distribution over the range [0,1[.
 // https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html
 double Particle::gen() { return Random::get<double>(0.0, 1.0); }
