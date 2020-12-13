@@ -18,7 +18,11 @@ Array2<double> &OceanModelAdapter::Lat() { return lat; }
 Array2<double> &OceanModelAdapter::LonRad() { return lonRad; }
 Array2<double> &OceanModelAdapter::LatRad() { return latRad; }
 Array3<float> &OceanModelAdapter::Zeta() { return zeta; }
-Array4<double> &OceanModelAdapter::U() { return u; }
-Array4<double> &OceanModelAdapter::V() { return v; }
-Array4<double> &OceanModelAdapter::W() { return w; }
-Array4<double> &OceanModelAdapter::AKT() { return akt; }
+Array4<float> &OceanModelAdapter::U() { return u; }
+Array4<float> &OceanModelAdapter::V() { return v; }
+Array4<float> &OceanModelAdapter::W() { return w; }
+Array4<float> &OceanModelAdapter::AKT() { return akt; }
+
+double OceanModelAdapter::HCorrectedByZeta(int ocean_time, int j, int i) {
+    return h(j,i)+zeta(ocean_time,j,i);
+}

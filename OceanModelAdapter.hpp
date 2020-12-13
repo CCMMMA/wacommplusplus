@@ -20,6 +20,8 @@ class OceanModelAdapter {
 public:
     OceanModelAdapter();
 
+    double HCorrectedByZeta(int ocean_time, int j, int i);
+
     Array1<double> &OceanTime();
     Array1<double> &SRho();
     Array1<double> &SW();
@@ -33,10 +35,10 @@ public:
     Array2<double> &LatRad();
 
     Array3<float> &Zeta();
-    Array4<double> &U();
-    Array4<double> &V();
-    Array4<double> &W();
-    Array4<double> &AKT();
+    Array4<float> &U();
+    Array4<float> &V();
+    Array4<float> &W();
+    Array4<float> &AKT();
 
 private:
     friend class Wacomm;
@@ -52,8 +54,8 @@ private:
     Array2<double> lonRad;
     Array2<double> latRad;
     Array3<float> zeta;
-    Array4<double> u, v, w;
-    Array4<double> akt;
+    Array4<float> u, v, w;
+    Array4<float> akt;
 };
 
 
