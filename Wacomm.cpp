@@ -43,9 +43,9 @@ void Wacomm::run()
 
             int nSources = sources->size();
 
-            #pragma omp parallel for default(none) shared(nSources)
+            #pragma omp parallel for default(none) shared(nSources, ocean_time_idx)
             for (int idx = 0; idx < nSources; idx++) {
-                sources->at(idx).emit(particles);
+                sources->at(idx).emit(particles, oceanModelAdapter->OceanTime()(ocean_time_idx));
             }
 
             LOG4CPLUS_INFO(logger, "Particles:" << particles->size());
