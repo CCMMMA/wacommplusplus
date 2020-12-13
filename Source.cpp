@@ -28,3 +28,16 @@ double Source::gen()
 {
     return Random::get<double>(0.0, 1.0);
 }
+
+Source::Source() {
+    logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
+}
+
+void Source::Id(string value) { id = value; }
+void Source::K(double value) { k = value; }
+void Source::J(double value) { j = value; }
+void Source::I(double value) { i = value; }
+void Source::Start(int value) { start = value; }
+void Source::End(int value) { end = value; }
+void Source::ParticlesPerHour(int value) { particlesPerHour = value; }
+void Source::Mode(int value) { mode = value; }

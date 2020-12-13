@@ -8,6 +8,8 @@
 #include <string>
 #include <fstream>
 
+#include "Utils.hpp"
+
 using namespace std;
 
 // log4cplus - https://github.com/log4cplus/log4cplus
@@ -43,9 +45,30 @@ private:
     double sv{};
     double crid{};
 
+    vector<string> ncInputs;
+    string ncOutputRoot;
+    double timeStep;
+    int nHour;
+    int startTime;
+    bool useRestart;
+    string restartFile;
+    double restartInterval;
+    bool saveHistory;
+    string historyFile;
+    string initHistoryTime;
+    double historyInterval;
+
     void setDefault();
     void fromNamelist(ifstream &ifs);
-    void formJson(ifstream &ifs);
+    void fromJson(ifstream &ifs);
+
+    void namelistParseIo(ifstream &ifstream);
+
+    void namelistParseChm(ifstream &infile);
+
+    void namelistParseRst(ifstream &infile);
+
+    void namelistParseHst(ifstream &infile);
 };
 
 

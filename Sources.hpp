@@ -27,6 +27,10 @@ public:
 private:
     log4cplus::Logger logger;
 
+    void fromNamelist(ifstream &ifs);
+    void fromJson(ifstream &ifs);
+
+    void namelistParseEms(ifstream &ifstream);
 };
 
 

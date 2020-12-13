@@ -14,14 +14,25 @@ using Random = effolkronium::random_static;
 
 class Source {
 public:
+    Source();
     Source(int id, double k, double j, double i, int start, int end, int particlesPerHour, int mode);
     ~Source();
 
     void emit(std::shared_ptr<Particles> particles, double tpart);
+
+    void Id(string value);
+    void K(double value);
+    void J(double value);
+    void I(double value);
+    void Start(int value);
+    void End(int value);
+    void ParticlesPerHour(int value);
+    void Mode(int value);
+
 private:
     log4cplus::Logger logger;
 
-    int id;
+    string id;
     double k;
     double j;
     double i;
@@ -30,7 +41,7 @@ private:
     int particlesPerHour;
     int mode;
 
-    double gen();
+    static double gen();
 };
 
 
