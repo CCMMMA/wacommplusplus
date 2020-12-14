@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
 
-#include "Wacomm.hpp"
+#include "WacommPlusPlus.hpp"
 #include "Particles.hpp"
 #include "Sources.hpp"
 #include "ROMSAdapter.hpp"
@@ -46,17 +46,11 @@ int main(int argc, char **argv) {
 
     // This variables can be set via the command line.
     std::string configFile = "namelist.wacomm";
-    std::string restartFileName = "WACOMM_rst_20201130Z00.txt";
-    std::string sourcesFileName = "input/sources.txt";
-    std::string netcdfFileName = "input/rms3_d03_20201130Z0000.nc";
     bool        oPrintHelp = false;
 
     // First configure all possible command line options.
     CommandLine args("WaComM++");
     args.addArgument({"-c", "--config"},   &configFile,   "Fortran style namelist or JSON configuration file");
-    args.addArgument({"-rst", "--restart"},  &restartFileName,  "Restart file");
-    args.addArgument({"-src", "--sources"},  &sourcesFileName,  "Sources file");
-    args.addArgument({"-nc", "--netcdf"},  &netcdfFileName,  "NetCDF file");
     args.addArgument({"-h", "--help"},     &oPrintHelp,
       "Print this help. This help message is actually so long "
       "that it requires a line break!");
@@ -78,15 +72,12 @@ int main(int argc, char **argv) {
     LOG4CPLUS_INFO(logger,"Configuration: " << configFile);
 
     auto config = std::make_shared<Config>(configFile);
-    auto particles = std::make_shared<Particles>(restartFileName);
-    auto sources = std::make_shared<Sources>(configFile);
+    config->NumberOfInputs(1);
+    config->UseSources(false);
+    config->Dry(false);
 
-    auto roms2Wacomm = std::make_shared<ROMSAdapter>(netcdfFileName);
-    roms2Wacomm->process();
-
-    config->setDry(false);
-    Wacomm wacomm(config, roms2Wacomm , sources, particles);
-    wacomm.run();
+    WacommPlusPlus wacommPlusPlus(config);
+    wacommPlusPlus.run();
 
     return 0;
 
