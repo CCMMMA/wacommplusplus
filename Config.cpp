@@ -86,6 +86,9 @@ void Config::setDefault() {
 
     // Use sources (defult true)
     useSources = true;
+
+    // Use random leap (defaukt true. use false for model testing versus other imlementations
+    random = true;
 }
 
 void Config::fromNamelist(ifstream &infile) {
@@ -323,6 +326,14 @@ bool Config::UseSources() const {
 
 void Config::UseSources(bool value) {
     useSources=value;
+}
+
+void Config::Random(bool value) {
+    random=value;
+}
+
+bool Config::Random() const {
+    return random;
 }
 
 

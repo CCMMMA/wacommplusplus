@@ -32,6 +32,9 @@ public:
     void UseSources(bool value);
     bool UseSources() const;
 
+    void Random(bool value);
+    bool Random() const;
+
     double ReductionCoefficient() const;
     double Survprob() const;
     double Tau0() const;
@@ -55,6 +58,7 @@ private:
 
     bool dry{};
     bool useSources{};
+    bool random{};
 
     double deltat{};
     double dti{};
