@@ -4,7 +4,7 @@
 
 #include "Source.hpp"
 
-Source::Source(int id, double k, double j, double i, int start, int end, int particlesPerHour, int mode):
+Source::Source(string id, double k, double j, double i, int start, int end, int particlesPerHour, int mode):
     id(id),k(k),j(j),i(i),start(start),end(end),particlesPerHour(particlesPerHour),mode(mode) {
 
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));

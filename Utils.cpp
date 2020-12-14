@@ -51,3 +51,7 @@ std::string Utils::reduce(const std::string& str,
 
     return result;
 }
+
+Utils::~Utils() = default;
+
+Utils::Utils()  = default;

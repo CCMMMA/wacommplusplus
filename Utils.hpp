@@ -7,11 +7,17 @@
 
 
 #include <string>
+#include <fstream>
+#include <iostream>
+#include <vector>
 
 using namespace std;
 
 class Utils {
 public:
+    Utils();
+    ~Utils();
+
     static string trim(const string &str, const string &whitespace);
     static string reduce(const string &str, const string &fill, const string &whitespace);
     static void tokenize(string &str, char delim, vector<string> &out);

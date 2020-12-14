@@ -15,7 +15,7 @@ using Random = effolkronium::random_static;
 class Source {
 public:
     Source();
-    Source(int id, double k, double j, double i, int start, int end, int particlesPerHour, int mode);
+    Source(string id, double k, double j, double i, int start, int end, int particlesPerHour, int mode);
     ~Source();
 
     void emit(std::shared_ptr<Particles> particles, double tpart);
