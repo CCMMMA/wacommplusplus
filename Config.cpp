@@ -6,7 +6,7 @@
 
 Config::Config() = default;
 
-Config::Config(string &fileName) {
+Config::Config(string &fileName): configFile(fileName) {
     setDefault();
 
     log4cplus::BasicConfigurator basicConfig;
@@ -22,6 +22,7 @@ Config::Config(string &fileName) {
         // the configuration is a fortran style namelist
         fromNamelist(infile);
     }
+    LOG4CPLUS_INFO(logger, "...done!");
 
 }
 
@@ -82,6 +83,9 @@ void Config::setDefault() {
 
     // Save history each seconds (default 3600, 1h)
     historyInterval = 3600;
+
+    // Use sources (defult true)
+    useSources = true;
 }
 
 void Config::fromNamelist(ifstream &infile) {
@@ -110,6 +114,8 @@ void Config::fromNamelist(ifstream &infile) {
 
 void Config::namelistParseIo(ifstream &infile) {
     std::string line;
+
+    LOG4CPLUS_INFO(logger, "Parsing io section");
 
     // Start the input/output section
     while (std::getline(infile, line))
@@ -150,6 +156,8 @@ void Config::namelistParseIo(ifstream &infile) {
 void Config::namelistParseChm(ifstream &infile) {
     std::string line;
 
+    LOG4CPLUS_INFO(logger, "Parsing chm section");
+
     // Start the Chem section
     while (std::getline(infile, line))
     {
@@ -176,6 +184,8 @@ void Config::namelistParseChm(ifstream &infile) {
 void Config::namelistParseRst(ifstream &infile) {
     std::string line;
 
+    LOG4CPLUS_INFO(logger, "Parsing rst section");
+
     // Start the Restart section
     while (std::getline(infile, line))
     {
@@ -198,7 +208,7 @@ void Config::namelistParseRst(ifstream &infile) {
                     this->useRestart=false;
                 }
             } else if (key == "restartfile") {
-                this->restartFile = keyValues.at(1);
+                this->restartFile = Utils::trim(keyValues.at(1)," '\t\r");;
             } else if (key == "interval") {
                 this->restartInterval = stod(keyValues.at(1));
             }
@@ -208,6 +218,8 @@ void Config::namelistParseRst(ifstream &infile) {
 
 void Config::namelistParseHst(ifstream &infile) {
     std::string line;
+
+    LOG4CPLUS_INFO(logger, "Parsing hst section");
 
     // Start the History section
     while (std::getline(infile, line))
@@ -261,16 +273,56 @@ double Config::SedimentationVelocity() const {
     return sv;
 }
 
-bool Config::isDry() const {
+bool Config::Dry() const {
     return dry;
 }
 
-void Config::setDry(bool value) {
+void Config::Dry(bool value) {
     dry=value;
 }
 
 double Config::ReductionCoefficient() const {
     return crid;
+}
+
+string Config::RestartFile() const {
+    return restartFile;
+}
+
+bool Config::UseRestart() const {
+    return useRestart;
+}
+
+string &Config::ConfigFile() {
+    return configFile;
+}
+
+vector<string> &Config::NcInputs() {
+    return ncInputs;
+}
+
+void Config::StartTimeIndex(int value) {
+    startTime=value;
+}
+
+int Config::StartTimeIndex() {
+    return startTime;
+}
+
+void Config::NumberOfInputs(int value) {
+    nHour=value;
+}
+
+int Config::NumberOfInputs() {
+    return nHour;
+}
+
+bool Config::UseSources() const {
+    return useSources;
+}
+
+void Config::UseSources(bool value) {
+    useSources=value;
 }
 
 

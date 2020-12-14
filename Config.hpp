@@ -23,20 +23,38 @@ public:
     explicit Config(string &fileName);
     ~Config();
 
-    void setDry(bool value);
-    [[nodiscard]] bool isDry() const;
+    string &ConfigFile();
+    vector<string> &NcInputs();
 
-    [[nodiscard]] double ReductionCoefficient() const;
-    [[nodiscard]] double Survprob() const;
-    [[nodiscard]] double Tau0() const;
-    [[nodiscard]] double Dti() const;
-    [[nodiscard]] double Deltat() const;
-    [[nodiscard]]double SedimentationVelocity() const;
+    void Dry(bool value);
+    bool Dry() const;
+
+    void UseSources(bool value);
+    bool UseSources() const;
+
+    double ReductionCoefficient() const;
+    double Survprob() const;
+    double Tau0() const;
+    double Dti() const;
+    double Deltat() const;
+    double SedimentationVelocity() const;
+
+    bool UseRestart() const;
+    string RestartFile() const;
+
+    void StartTimeIndex(int value);
+    int StartTimeIndex();
+
+    void NumberOfInputs(int value);
+    int NumberOfInputs();
 
 private:
     log4cplus::Logger logger;
 
+    string configFile;
+
     bool dry{};
+    bool useSources{};
 
     double deltat{};
     double dti{};
