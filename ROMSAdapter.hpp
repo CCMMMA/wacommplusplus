@@ -27,15 +27,10 @@ public:
 
     ~ROMSAdapter();
 
-    void process();
+    void process() override;
 
 private:
-
     log4cplus::Logger logger;
-
-
-
-
 
     string &fileName;
 
