@@ -20,6 +20,8 @@ class OceanModelAdapter {
 public:
     OceanModelAdapter();
 
+    virtual void process();
+
     double HCorrectedByZeta(int ocean_time, int j, int i);
 
     Array1<double> &OceanTime();
@@ -41,7 +43,9 @@ public:
     Array4<float> &AKT();
 
 private:
-    friend class Wacomm;
+    log4cplus::Logger logger;
+
+    friend class WacommPlusPlus;
 
     Array1<double> oceanTime;
     Array1<double> s_rho;

@@ -5,6 +5,7 @@
 #include "OceanModelAdapter.hpp"
 
 OceanModelAdapter::OceanModelAdapter() {
+    logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 }
 
 Array1<double> &OceanModelAdapter::OceanTime() { return oceanTime; }
@@ -26,3 +27,10 @@ Array4<float> &OceanModelAdapter::AKT() { return akt; }
 double OceanModelAdapter::HCorrectedByZeta(int ocean_time, int j, int i) {
     return h(j,i)+zeta(ocean_time,j,i);
 }
+
+void OceanModelAdapter::process() {
+    LOG4CPLUS_ERROR(logger,"OceanModelAdapter::process must be implemented in a concrete adapter!");
+    exit(-1);
+}
+
+
