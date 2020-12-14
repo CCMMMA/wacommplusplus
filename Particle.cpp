@@ -229,10 +229,12 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
 
         // Extract 3 pseudorandom numbers
         double gi=0,gj=0,gk=0;
-        for (int a=0;a<12;a++) {
-            gi=gi+gen()-0.5;
-            gj=gj+gen()-0.5;
-            gk=gk+gen()-0.5;
+        if (config->Random()) {
+            for (int a = 0; a < 12; a++) {
+                gi = gi + gen() - 0.5;
+                gj = gj + gen() - 0.5;
+                gk = gk + gen() - 0.5;
+            }
         }
 
         // Random leap
