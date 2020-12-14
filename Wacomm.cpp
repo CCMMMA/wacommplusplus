@@ -21,7 +21,7 @@ Wacomm::Wacomm(std::shared_ptr<Config> config,
 
 void Wacomm::run()
 {
-    LOG4CPLUS_INFO(logger,"Dry mode:" << config->isDry() );
+    LOG4CPLUS_INFO(logger,"Dry mode:" << config->Dry() );
 
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
     size_t s_rho=oceanModelAdapter->SRho().Nx();
@@ -36,7 +36,7 @@ void Wacomm::run()
     Array4<float> conc(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
     std::memset(conc(), 0, ocean_time*s_rho*eta_rho*xi_rho);
 
-    if (!config->isDry()) {
+    if (!config->Dry()) {
         for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
             LOG4CPLUS_INFO(logger, "Running on:" << ocean_time_idx);
             LOG4CPLUS_INFO(logger, "Sources:" << sources->size());

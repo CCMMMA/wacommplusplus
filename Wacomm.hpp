@@ -32,6 +32,8 @@ class Wacomm {
         void run();
 
     private:
+        friend class Wacomm;
+
         log4cplus::Logger logger;
 
         std::shared_ptr<Config> config;
