@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
 
     auto config = std::make_shared<Config>(configFile);
     auto particles = std::make_shared<Particles>(restartFileName);
-    auto sources = std::make_shared<Sources>();
+    auto sources = std::make_shared<Sources>(configFile);
 
     auto roms2Wacomm = std::make_shared<ROMSAdapter>(netcdfFileName);
     roms2Wacomm->process();

@@ -16,11 +16,12 @@ Sources::Sources(string &fileName) {
 
     LOG4CPLUS_INFO(logger, "Reading sources file:" + fileName);
 
+    std::ifstream infile(fileName);
     if(fileName.substr(fileName.find_last_of(".") + 1) == "json") {
         // The configuration is a json
     } else {
         // the configuration is a fortran style namelist
-        std::ifstream infile(fileName);
+        fromNamelist(infile);
     }
 }
 
