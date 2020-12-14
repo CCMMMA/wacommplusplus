@@ -4,7 +4,7 @@ WaComM++ is a steroidized version of WaComM - Water quality Community Model.
 # Compiling
 1) Clone the repository
 ```bash
-git clone git clone https://github.com/CCMMMA/wacommplusplus.git
+git clone https://github.com/CCMMMA/wacommplusplus.git
 ```
 2) Enter the project directory
 ```bash
