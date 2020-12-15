@@ -7,6 +7,8 @@
 
 // log4cplus - https://github.com/log4cplus/log4cplus
 #include <memory>
+#include <cstring>
+
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
