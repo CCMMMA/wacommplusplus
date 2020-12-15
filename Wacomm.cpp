@@ -51,10 +51,16 @@ void Wacomm::run()
             LOG4CPLUS_INFO(logger, "Particles:" << particles->size());
 
             int nParticles = particles->size();
+            std::vector<int> iterations(omp_get_max_threads(), 0);
 
-            #pragma omp parallel for default(none) shared(ocean_time_idx, nParticles)
+            #pragma omp parallel for default(none) shared(iterations, particles, ocean_time_idx, nParticles)
             for (int idx = 0; idx < nParticles; idx++) {
                 particles->at(idx).move(config, ocean_time_idx, oceanModelAdapter);
+                iterations[omp_get_thread_num()]++;
+            }
+            int thread_index=0;
+            for (const auto i : iterations) {
+                LOG4CPLUS_INFO(logger, "Thread " << thread_index++ << " -> " << i << " Particles");
             }
 
             // Remove dead particles

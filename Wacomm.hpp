@@ -13,6 +13,8 @@
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
 
+#include <omp.h>
+
 #include "Sources.hpp"
 #include "Particles.hpp"
 #include "Array.h"
@@ -34,7 +36,7 @@ class Wacomm {
         void run();
 
     private:
-        friend class Wacomm;
+        friend class WacommPlusPlus;
 
         log4cplus::Logger logger;
 
