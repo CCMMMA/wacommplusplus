@@ -20,7 +20,11 @@ find_package(OpenSSL REQUIRED)
 # Set the external install location
 set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
 
-set(NETCDFCXXLIBS_PARAMS "-lnetcdf -lhdf5_hl -lhdf5 -lm -lz -lcurl")
+set(NETCDFCXXLIBS_PARAMS "")
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(NETCDFCXXLIBS_PARAMS "-lnetcdf -lhdf5_hl -lhdf5 -lm -lz -lcurl")
+endif()
+
 
 # Add to the includes
 include_directories(SYSTEM ${EXTERNAL_INSTALL_LOCATION}/include)
