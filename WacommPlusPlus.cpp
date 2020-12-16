@@ -35,8 +35,11 @@ void WacommPlusPlus::run() {
             romsAdapter.process();
             shared_ptr<OceanModelAdapter> oceanModelAdapter;
             oceanModelAdapter = make_shared<OceanModelAdapter>(romsAdapter);
+            string inputFilename="input.nc";
+            oceanModelAdapter->saveAsNetCDF(inputFilename);
             Wacomm wacomm(config, oceanModelAdapter, sources, particles);
             wacomm.run();
         }
+        idx++;
     }
 }
