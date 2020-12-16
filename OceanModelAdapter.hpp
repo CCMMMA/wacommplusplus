@@ -11,14 +11,18 @@
 #include "log4cplus/loggingmacros.h"
 
 #include "Array.h"
+#include "netcdf"
 
 using namespace Array;
 using namespace std;
+using namespace netCDF;
 
 class OceanModelAdapter {
 
 public:
     OceanModelAdapter();
+
+    void saveAsNetCDF(std::string &fileName);
 
     virtual void process();
 
@@ -27,20 +31,21 @@ public:
     Array1<double> &OceanTime();
     Array1<double> &SRho();
     Array1<double> &SW();
-    Array1<double> &Depth();
-    Array2<double> &H();
+
 
     Array2<double> &Mask();
     Array2<double> &Lon();
     Array2<double> &Lat();
-    Array2<double> &LonRad();
-    Array2<double> &LatRad();
 
-    Array3<float> &Zeta();
-    Array4<float> &U();
-    Array4<float> &V();
-    Array4<float> &W();
-    Array4<float> &AKT();
+    Array2<double> *LonRad();
+    Array2<double> *LatRad();
+    Array1<double> *Depth();
+    Array2<double> *H();
+    Array3<float> *Zeta();
+    Array4<float> *U();
+    Array4<float> *V();
+    Array4<float> *W();
+    Array4<float> *AKT();
 
 private:
     log4cplus::Logger logger;
@@ -48,8 +53,8 @@ private:
     friend class WacommPlusPlus;
 
     Array1<double> oceanTime;
-    Array1<double> s_rho;
-    Array1<double> s_w;
+    Array1<double> sRho;
+    Array1<double> sW;
     Array1<double> depth;
     Array2<double> h;
     Array2<double> mask;
