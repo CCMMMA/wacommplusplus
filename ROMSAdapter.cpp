@@ -104,7 +104,7 @@ void ROMSAdapter::process()
 
     // Retrieve the variable named "zeta"
     NcVar varZeta=dataFile.getVar("zeta");
-    Array3<double> zeta(ocean_time,eta_rho,xi_rho);
+    Array3<float> zeta(ocean_time,eta_rho,xi_rho);
     varZeta.getVar(zeta());
 
     LOG4CPLUS_INFO(logger,"Loaded!");
@@ -112,18 +112,18 @@ void ROMSAdapter::process()
     this->OceanTime().Allocate(ocean_time);
     this->SRho().Allocate(s_rho, -(int)s_rho+1);
     this->SW().Allocate(s_w, -(int)s_w+1);
-    this->Depth().Allocate(s_w,-(int)s_w+2);
+    this->Depth()->Allocate(s_w,-(int)s_w+2);
     this->Mask().Allocate(eta_rho,xi_rho);
     this->Lon().Allocate(eta_rho,xi_rho);
     this->Lat().Allocate(eta_rho,xi_rho);
-    this->LonRad().Allocate(eta_rho,xi_rho);
-    this->LatRad().Allocate(eta_rho,xi_rho);
-    this->H().Allocate(eta_rho,xi_rho);
-    this->Zeta().Allocate(ocean_time,eta_rho,xi_rho);
-    this->U().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
-    this->V().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
-    this->W().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
-    this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
+    this->LonRad()->Allocate(eta_rho,xi_rho);
+    this->LatRad()->Allocate(eta_rho,xi_rho);
+    this->H()->Allocate(eta_rho,xi_rho);
+    this->Zeta()->Allocate(ocean_time,eta_rho,xi_rho);
+    this->U()->Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
+    this->V()->Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
+    this->W()->Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
+    this->AKT()->Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
 
     LOG4CPLUS_INFO(logger,"Copying 1D ...");
 
@@ -140,45 +140,26 @@ void ROMSAdapter::process()
     }
 
     for(int k=-(int)s_w+2; k<=0;k++) {
-        this->Depth()(k)=sW(k)-sW(k-1);
+        this->Depth()->operator()(k)=sW(k)-sW(k-1);
     }
 
     LOG4CPLUS_INFO(logger,"Copying 2D...");
-    /*
-    #pragma omp for collapse(2)
-    for(int j=0; j<eta_rho; j++) {
-        for(int i=0; i<xi_rho;i ++) {
-            this->Mask()(j,i)=mask_rho(j,i);
-            this->Lat()(j,i)=lat_rho(j,i);
-            this->Lon()(j,i)=lon_rho(j,i);
-            this->H()(j,i)=h(j,i);
-        }
-    }
-    */
+
     memcpy( this->Mask(), mask_rho(), eta_rho*xi_rho*sizeof(double) );
     memcpy( this->Lat(), lat_rho(), eta_rho*xi_rho*sizeof(double) );
     memcpy( this->Lon(), lon_rho(), eta_rho*xi_rho*sizeof(double) );
-    memcpy( this->H(), h(), eta_rho*xi_rho*sizeof(double) );
+    memcpy( this->H()->operator double *(), h(), eta_rho*xi_rho*sizeof(double) );
 
     LOG4CPLUS_INFO(logger,"Copying 3D...");
-    /*
-    #pragma omp for collapse(3)
-    for(int ocean_time_idx=0; ocean_time_idx<ocean_time;ocean_time_idx++) {
-        for (int j = 0; j < eta_rho; j++) {
-            for (int i = 0; i < xi_rho; i++) {
-                this->Zeta()(ocean_time_idx, j, i) = zeta(ocean_time_idx,j, i);
-            }
-        }
-    }
-    */
-    memcpy( this->Zeta(), zeta(), ocean_time*eta_rho*xi_rho*sizeof(float) );
+
+    memcpy( this->Zeta()->operator float *(), zeta(), ocean_time*eta_rho*xi_rho*sizeof(float) );
 
     LOG4CPLUS_INFO(logger,"Convert lon in radiants...");
     // lon_u, lat_v in radiants
     #pragma omp for collapse(2)
     for ( int j=0; j<eta_rho;j++) {
         for (int i=0;i<xi_rho;i++) {
-            this->LonRad()(j,i)=0.0174533*lon_rho(j,i);
+            this->LonRad()->operator()(j,i)=0.0174533*lon_rho(j,i);
         }
     }
 
@@ -186,7 +167,7 @@ void ROMSAdapter::process()
     #pragma omp for collapse(2)
     for ( int j=0; j<eta_rho;j++) {
         for (int i=0;i<xi_rho;i++) {
-            this->LatRad()(j,i)=0.0174533*lat_rho(j,i);
+            this->LatRad()->operator()(j,i)=0.0174533*lat_rho(j,i);
         }
     }
 
@@ -197,8 +178,8 @@ void ROMSAdapter::process()
     //LOG4CPLUS_INFO(logger,"Interpolation 3D...");
 
     //wakt2rho(mask_rho,mask_u, mask_v, w, akt);
-    memcpy( this->W(), w(), ocean_time*s_w*eta_rho*xi_rho*sizeof(float) );
-    memcpy( this->AKT(), akt(), ocean_time*s_w*eta_rho*xi_rho*sizeof(float) );
+    memcpy( this->W()->operator float *(), w(), ocean_time*s_w*eta_rho*xi_rho*sizeof(float) );
+    memcpy( this->AKT()->operator float *(), akt(), ocean_time*s_w*eta_rho*xi_rho*sizeof(float) );
 
     LOG4CPLUS_INFO(logger,"...done!");
 }
@@ -258,11 +239,11 @@ void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array
                             vw2=0.0;
                         }
 
-                        this->U()(t,k,j,i)=0.5*(uw1+uw2);
-                        this->V()(t,k,j,i)=0.5*(vw1+vw2);
+                        this->U()->operator()(t,k,j,i)=0.5*(uw1+uw2);
+                        this->V()->operator()(t,k,j,i)=0.5*(vw1+vw2);
                     } else {
-                        this->U()(t,k,j,i)=0.0;
-                        this->V()(t,k,j,i)=0.0;
+                        this->U()->operator()(t,k,j,i)=0.0;
+                        this->V()->operator()(t,k,j,i)=0.0;
                     }
                 }
             }
@@ -317,13 +298,13 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
                             aktw3=0.0;
                         }
 
-                        this->W()(t,k,j,i)=0.25*(ww1+ww2+ww3+w(t,k,j,i));
-                        this->AKT()(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt(t,k,j,i));
+                        this->W()->operator()(t,k,j,i)=0.25*(ww1+ww2+ww3+w(t,k,j,i));
+                        this->AKT()->operator()(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt(t,k,j,i));
 
                     } else {
 
-                        this->W()(t,k,j,i)=0.0;
-                        this->AKT()(t,k,j,i)=0.0;
+                        this->W()->operator()(t,k,j,i)=0.0;
+                        this->AKT()->operator()(t,k,j,i)=0.0;
                     }
                 }
             }
@@ -331,9 +312,7 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
     }
 }
 
-ROMSAdapter::~ROMSAdapter() {
-
-}
+ROMSAdapter::~ROMSAdapter() = default;
 
 
 
