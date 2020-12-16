@@ -38,7 +38,8 @@ void Wacomm::run()
 
     if (!config->Dry()) {
         for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
-            LOG4CPLUS_INFO(logger, "Running on:" << ocean_time_idx);
+            LOG4CPLUS_INFO(logger, "Running on:" << omp_get_max_threads() << " threads.");
+            LOG4CPLUS_INFO(logger, "Input step:" << ocean_time_idx);
             LOG4CPLUS_INFO(logger, "Sources:" << sources->size());
 
             int nSources = sources->size();
@@ -155,7 +156,7 @@ void Wacomm::save(Array4<float> &conc) {
     hVar.putAtt("units","meter");
     hVar.putAtt("coordinates","lon_rho lat_rho");
     hVar.putAtt("field","bath, scalar");
-    hVar.putVar(oceanModelAdapter->H()());
+    hVar.putVar(oceanModelAdapter->H()->operator()());
 
     vector<NcDim> oceanTimeEtaRhoXiRhoDims;
     oceanTimeEtaRhoXiRhoDims.push_back(oceanTimeDim);
@@ -169,7 +170,7 @@ void Wacomm::save(Array4<float> &conc) {
     hZeta.putAtt("coordinates","lon_rho lat_rho ocean_time");
     hZeta.putAtt("field","free-surface, scalar, series");
     hZeta.putAtt("_FillValue",ncFloat, 9.99999993e+36);
-    hZeta.putVar(oceanModelAdapter->Zeta()());
+    hZeta.putVar(oceanModelAdapter->Zeta()->operator()());
 
 
     vector<NcDim> oceanTimeSRhoEtaRhoXiRhoDims;
@@ -181,7 +182,7 @@ void Wacomm::save(Array4<float> &conc) {
     NcVar concVar = dataFile.addVar("conc", ncFloat, oceanTimeSRhoEtaRhoXiRhoDims);
     concVar.putAtt("long_name","concentration_of_suspended_matter_in_sea_water");
     concVar.putAtt("units","1");
-    concVar.putAtt("coordinates","lon_rho lat_rho s_rho");
+    concVar.putAtt("coordinates","lon_rho lat_rho s_rho ocean_time");
     concVar.putAtt("field","");
     concVar.putAtt("time","ocean_time");
     concVar.putVar(conc());
