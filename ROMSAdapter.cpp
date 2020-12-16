@@ -175,11 +175,9 @@ void ROMSAdapter::process()
 
     uv2rho(mask_rho, mask_u, mask_v, u,v);
 
-    //LOG4CPLUS_INFO(logger,"Interpolation 3D...");
+    LOG4CPLUS_INFO(logger,"Interpolation 3D...");
+    wakt2rho(mask_rho,mask_u, mask_v, w, akt);
 
-    //wakt2rho(mask_rho,mask_u, mask_v, w, akt);
-    memcpy( this->W()->operator float *(), w(), ocean_time*s_w*eta_rho*xi_rho*sizeof(float) );
-    memcpy( this->AKT()->operator float *(), akt(), ocean_time*s_w*eta_rho*xi_rho*sizeof(float) );
 
     LOG4CPLUS_INFO(logger,"...done!");
 }
@@ -253,7 +251,7 @@ void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array
 
 void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
                            Array4<float>& w, Array4<float>& akt ) {
-    double ww1, ww2, ww3, aktw1, aktw2, aktw3;
+    double ww0, ww1, ww2, ww3, aktw0, aktw1, aktw2, aktw3;
 
     LOG4CPLUS_INFO(logger,"wakt2rho");
 
@@ -265,7 +263,7 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
     size_t xi_rho = mask_rho.Ny();
 
 
-    #pragma omp for collapse(4)
+    //#pragma omp for collapse(4)
     for (int t=0; t < ocean_time; t++) {
         for (int k=(-(int)s_w+1); k <= 0; k++) {
             for (int j=0; j < eta_v; j++) {
@@ -273,10 +271,20 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
 
                     if ( j>=0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho(j,i) > 0.0 )
                     {
+                        ww0 = w(t,k,j,i);
+                        aktw0 = akt(t,k,j,i);
+
+
+                        if (ww0 >= 9.99e36) ww0=0;
+                        if (aktw0 >= 9.99e36) aktw0=0;
+
                         if ( j>=0 && i>0 && j<eta_rho && i <xi_rho && mask_rho(j,i-1) > 0.0 )
                         {
                             ww1=w(t, k,j,i-1);
                             aktw1=akt(t, k,j,i-1);
+
+                            if (ww1 >= 9.99e36) ww1=0;
+                            if (aktw1 >= 9.99e36) aktw1=0;
                         } else {
                             ww1=0.0;
                             aktw1=0.0;
@@ -285,6 +293,9 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
                         if ( j>0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho(j-1,i) > 0.0 ) {
                             ww2=w(t, k,j-1,i);
                             aktw2=akt(t, k,j-1,i);
+
+                            if (ww2 >= 9.99e36) ww2=0;
+                            if (aktw2 >= 9.99e36) aktw2=0;
                         } else {
                             ww2=0.0;
                             aktw2=0.0;
@@ -293,13 +304,16 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
                         if ( j>0 && i>0 && j<eta_rho && i <xi_rho && mask_rho(j-1,i-1) > 0.0 ) {
                             ww3=w(t, k, j-1,i-1);
                             aktw3=akt(t, k, j-1,i-1);
+
+                            if (ww3 >= 9.99e36) ww3=0;
+                            if (aktw3 >= 9.99e36) aktw3=0;
                         } else {
                             ww3=0.0;
                             aktw3=0.0;
                         }
 
-                        this->W()->operator()(t,k,j,i)=0.25*(ww1+ww2+ww3+w(t,k,j,i));
-                        this->AKT()->operator()(t,k,j,i)=0.25*(aktw1+aktw2+aktw3+akt(t,k,j,i));
+                        this->W()->operator()(t,k,j,i)=0.25*(ww0+ww1+ww2+ww3);
+                        this->AKT()->operator()(t,k,j,i)=0.25*(aktw0+aktw1+aktw2+aktw3);
 
                     } else {
 
@@ -311,6 +325,8 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
         }
     }
 }
+
+
 
 ROMSAdapter::~ROMSAdapter() = default;
 
