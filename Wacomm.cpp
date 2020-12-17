@@ -34,7 +34,17 @@ void Wacomm::run()
     LOG4CPLUS_INFO(logger,"eta_rho:" + std::to_string(eta_rho) + " xi_rho:" + std::to_string(xi_rho));
 
     Array4<float> conc(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
-    std::memset(conc(), 0, ocean_time*s_rho*eta_rho*xi_rho);
+    //std::memset(conc(), 0, ocean_time*s_rho*eta_rho*xi_rho);
+    #pragma omp for collapse(4)
+    for (int t=0;t<ocean_time;t++) {
+        for (int k=-(int)s_rho+1; k<=0; k++) {
+            for (int j=0; j<eta_rho; j++) {
+                for (int i=0; i<xi_rho; i++) {
+                    conc(t,k,j,i)=0;
+                }
+            }
+        }
+    }
 
     if (!config->Dry()) {
         for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
@@ -80,6 +90,16 @@ void Wacomm::run()
                 int j=(int)round(particle.J());
                 int i=(int)round(particle.I());
                 conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i)+ 1;
+            }
+            #pragma omp for collapse(3)
+            for (int k=-(int)s_rho+1; k<=0; k++) {
+                for (int j=0; j<eta_rho; j++) {
+                    for (int i=0; i<xi_rho; i++) {
+                        if (oceanModelAdapter->Mask()(j,i)!=1) {
+                            conc(ocean_time_idx, k, j, i) = 1e37;
+                        }
+                    }
+                }
             }
         }
     }
@@ -185,6 +205,7 @@ void Wacomm::save(Array4<float> &conc) {
     concVar.putAtt("coordinates","lon_rho lat_rho s_rho ocean_time");
     concVar.putAtt("field","");
     concVar.putAtt("time","ocean_time");
+    concVar.putAtt("_FillValue",ncFloat, 9.99999993e+36);
     concVar.putVar(conc());
 
 }
