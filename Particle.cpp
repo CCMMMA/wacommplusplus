@@ -167,20 +167,14 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
 
         // Perform the bilinear interpolation (3D) in order to get
         // the w component of the current field in the particle position.
-        float w1=oceanModelAdapter->W()->operator()(ocean_time_idx,    kI,     jI,     iI);
-        if (w1!=fillValue) w1=w1*(1.0-iF)  *(1.0-jF)  *(1.0-kF); else w1=0;
-        float w2=oceanModelAdapter->W()->operator()(ocean_time_idx,    kI,     jI+1,   iI);
-        if (w2!=fillValue) w2=w2*(1.0-iF)  *     jF   *(1.0-kF); else w2=0;
-        float w3=oceanModelAdapter->W()->operator()(ocean_time_idx,    kI,     jI+1,   iI+1);
-        if (w2!=fillValue) w2=w3*     iF   *     jF   *(1.0-kF); else w3=0;
-        float w4=oceanModelAdapter->W()->operator()(ocean_time_idx,    kI,     jI,     iI+1);
-        if (w4!=fillValue) w4=w4*     iF   *(1.0-jF)  *(1.0-kF); else w4=0;
-
-
-        float w5=oceanModelAdapter->W()->operator()(ocean_time_idx,kI-1, jI, iI);if (w5!=fillValue) {w5=w5*(1.0-iF)*(1.0-jF)*kF;} else {w5=0;}
-        float w6=oceanModelAdapter->W()->operator()(ocean_time_idx,kI-1,jI+1,iI); if (w6!=fillValue) {w6=w6*(1.0-iF)*jF*kF;} else {w6=0;}
-        float w7=oceanModelAdapter->W()->operator()(ocean_time_idx,kI-1,jI+1,iI+1); if (w7!=fillValue) {w7=w7*iF*jF*kF;} else {w7=0;}
-        float w8=oceanModelAdapter->W()->operator()(ocean_time_idx, kI-1, jI, iI+1); if (w8!=fillValue) {w8=w8*iF*(1.0-jF)*kF;} else {w8=0;}
+        float w1=oceanModelAdapter->W()->operator()(ocean_time_idx,    kI,     jI,     iI)*(1.0-iF)  *(1.0-jF)  *(1.0-kF);
+        float w2=oceanModelAdapter->W()->operator()(ocean_time_idx,    kI,     jI+1,   iI)*(1.0-iF)  *     jF   *(1.0-kF);
+        float w3=oceanModelAdapter->W()->operator()(ocean_time_idx,    kI,     jI+1,   iI+1)*     iF   *     jF   *(1.0-kF);
+        float w4=oceanModelAdapter->W()->operator()(ocean_time_idx,    kI,     jI,     iI+1)*     iF   *(1.0-jF)  *(1.0-kF);
+        float w5=oceanModelAdapter->W()->operator()(ocean_time_idx,kI-1, jI, iI)*(1.0-iF)*(1.0-jF)*kF;
+        float w6=oceanModelAdapter->W()->operator()(ocean_time_idx,kI-1,jI+1,iI)*(1.0-iF)*jF*kF;
+        float w7=oceanModelAdapter->W()->operator()(ocean_time_idx,kI-1,jI+1,iI+1)*iF*jF*kF;
+        float w8=oceanModelAdapter->W()->operator()(ocean_time_idx, kI-1, jI, iI+1)*iF*(1.0-jF)*kF;
 
         // The current w component in the particle position
         float ww=w1+w2+w3+w4+w5+w6+w7+w8;
@@ -191,26 +185,14 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
 
         // Perform the bilinear interpolation (3D) in order to get
         // the akt in the particle position.
-        float a1=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI,     jI,     iI);
-        if (a1!=fillValue) a1=a1*(1.0-iF)   *(1.0-jF)   *(1.0-kF); else a1=0;
-        float a2=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI,     jI+1,   iI);
-        if (a2!=fillValue) a2=a2*(1.0-iF)   *     jF    *(1.0-kF);else a2=0;
-        float a3=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI,     jI+1,   iI+1);
-        if (a3!=fillValue) a3=a3*     iF    *     jF    *(1.0-kF);else a3=0;
-        float a4=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI,     jI,     iI+1);
-        if (a4!=fillValue) a4=a4 *     iF    *(1.0-jF)   *(1.0-kF);else a4=0;
-
-        float a5=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI-1,   jI,     iI);
-        if (a5!=fillValue) a5=a5*(1.0-iF)*(1.0-jF)*kF; else a5=0;
-
-        float a6=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI-1,   jI+1,   iI);
-        if (a6!=fillValue) a6=a6*(1.0-iF)*jF*kF; else a6=0;
-
-        float a7=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI-1,   jI+1,   iI+1) ;
-        if (a7!=fillValue) a7=a7*iF*jF*kF; else a7=0;
-
-        float a8=oceanModelAdapter->AKT()->operator()(ocean_time_idx,kI-1,jI,iI+1);
-        if (a8!=fillValue) a8=a8*iF*(1.0-jF)*kF; else a8=0;
+        float a1=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI,     jI,     iI)*(1.0-iF)   *(1.0-jF)   *(1.0-kF);
+        float a2=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI,     jI+1,   iI)*(1.0-iF)   *     jF    *(1.0-kF);
+        float a3=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI,     jI+1,   iI+1)*     iF    *     jF    *(1.0-kF);
+        float a4=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI,     jI,     iI+1)*     iF    *(1.0-jF)   *(1.0-kF);
+        float a5=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI-1,   jI,     iI)*(1.0-iF)*(1.0-jF)*kF;
+        float a6=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI-1,   jI+1,   iI)*(1.0-iF)*jF*kF;
+        float a7=oceanModelAdapter->AKT()->operator()(ocean_time_idx,  kI-1,   jI+1,   iI+1)*iF*jF*kF; ;
+        float a8=oceanModelAdapter->AKT()->operator()(ocean_time_idx,kI-1,jI,iI+1)*iF*(1.0-jF)*kF;
 
         // The AKT at the particle position.
         float aa=a1+a2+a3+a4+a5+a6+a7+a8;
