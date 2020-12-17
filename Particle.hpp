@@ -64,7 +64,6 @@ private:
         double i;
         double health;
         double tpart;
-        double pstatus;
 
         static double sgn(double a);
         static double mod(double a, double p);

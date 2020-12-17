@@ -71,7 +71,7 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         // Check of the particle health is less than its probability to survive
         if (health<survprob) {
             // The particle is dead
-            pstatus=0;
+            health=-1;
             // No reason to continue, exit the integration loop
             break;
         }
@@ -90,31 +90,26 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         // Get the integer part and the fraction part of particle i
         auto iI=(int)i; double iF=i-iI;
 
-        // Checl if the particle is out of the domain
+        // Check if the particle is out of the domain
         if (jI<0 || iI<0 || jI>=eta_rho|| iI>=xi_rho) {
 
             // Set the particle health
             health=-1;
 
-            // The particle is dead
-            pstatus=0;
-
             // no reason to continue,  exit the integration loop
             break;
         }
         // Check if the particle beached
-        if (oceanModelAdapter->Mask()(jI,iI)<1) {
+        if (oceanModelAdapter->Mask()(jI,iI)<=0) {
 
             // Set the particle health
             health=-1;
 
-            // The particle is dead
-            pstatus=0;
-
             // no reason to continue,  exit the integration loop
             break;
         }
-/*
+
+        /*
         // Check if the particle jumped outside the water :-)
         if (k>0) {
             // The particle must stay in the water
@@ -123,19 +118,15 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
 
         // Check if the particle sunk
         if (k>=s_w) {
-            // Set the particle health
-            health=-13;
-
-            // The particle is dead
-            pstatus=0;
+            // Set the particle health as dead
+            health=-1;
 
             // no reason to continue,  exit the integration loop
             break;
         }
-*/
+        */
+
         LOG4CPLUS_DEBUG(logger, this->to_string());
-
-
 
         // The particle is alive!
         // Perform the bilinear interpolation (2D) in order to get
