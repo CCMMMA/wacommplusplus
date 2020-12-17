@@ -162,7 +162,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     oceanTimeSWEtaRhoXiRhoDims.push_back(xiRhoDim);
 
     NcVar wVar = dataFile.addVar("w", ncFloat, oceanTimeSWEtaRhoXiRhoDims);
-    wVar.putAtt("long_name","vertical momentum componen");
+    wVar.putAtt("long_name","vertical momentum component");
     wVar.putAtt("units","meter second-1");
     wVar.putAtt("grid","grid");
     wVar.putAtt("loction","face");
