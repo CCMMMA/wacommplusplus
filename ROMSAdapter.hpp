@@ -40,6 +40,8 @@ private:
     void wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
                   Array4<float>& w, Array4<float>& akt);
 
+    void wakt2wakt(Array2<double>& mask_rho, Array4<float>& w, Array4<float>& akt );
+
 };
 
 

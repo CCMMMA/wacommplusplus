@@ -171,8 +171,8 @@ void ROMSAdapter::process()
     uv2rho(mask_rho, mask_u, mask_v, u,v);
 
     LOG4CPLUS_INFO(logger,"Interpolation 3D...");
-    wakt2rho(mask_rho,mask_u, mask_v, w, akt);
-
+    //wakt2rho(mask_rho,mask_u, mask_v, w, akt);
+    wakt2wakt(mask_rho, w, akt);
 
     LOG4CPLUS_INFO(logger,"...done!");
 }
@@ -324,6 +324,38 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
     }
 }
 
+void ROMSAdapter::wakt2wakt(Array2<double>& mask_rho, Array4<float>& w, Array4<float>& akt ) {
+    float ww0, ww1, ww2, ww3, aktw0, aktw1, aktw2, aktw3;
+
+    LOG4CPLUS_INFO(logger,"wakt2rho");
+
+    size_t ocean_time = w.Nx();
+    size_t s_w = w.Ny();
+    size_t eta_rho = mask_rho.Nx();
+    size_t xi_rho = mask_rho.Ny();
+
+
+    #pragma omp for collapse(4)
+    for (int t=0; t < ocean_time; t++) {
+        for (int k=(-(int)s_w+1); k <= 0; k++) {
+            for (int j=0; j < eta_rho; j++) {
+                for (int i=0; i< xi_rho; i++) {
+
+                    if ( j>=0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho(j,i) > 0.0 )
+                    {
+                        this->W()->operator()(t,k,j,i)=w(t,k,j,i);
+                        this->AKT()->operator()(t,k,j,i)=akt(t,k,j,i);
+
+                    } else {
+
+                        this->W()->operator()(t,k,j,i)=0.0;
+                        this->AKT()->operator()(t,k,j,i)=0.0;
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 ROMSAdapter::~ROMSAdapter() = default;
