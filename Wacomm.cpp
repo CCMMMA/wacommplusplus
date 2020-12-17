@@ -86,10 +86,12 @@ void Wacomm::run()
 
             LOG4CPLUS_INFO(logger, "Evaluate concentration");
             for (const Particle &particle: *particles) {
-                int k=(int)round(particle.K());
-                int j=(int)round(particle.J());
-                int i=(int)round(particle.I());
-                conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i)+ 1;
+                if (particle.isAlive()) {
+                    int k = (int) round(particle.K());
+                    int j = (int) round(particle.J());
+                    int i = (int) round(particle.I());
+                    conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i) + 1;
+                }
             }
             #pragma omp for collapse(3)
             for (int k=-(int)s_rho+1; k<=0; k++) {
