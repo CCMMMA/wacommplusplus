@@ -77,12 +77,13 @@ void ROMSAdapter::process()
     NcVar varW=dataFile.getVar("w");
     size_t s_w = varW.getDim(1).getSize();
     Array4<float> w(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
-    varV.getVar(w());
+    varW.getVar(w());
 
     // Retrieve the variable named "AKt"
     NcVar varAKt=dataFile.getVar("AKt");
     Array4<float> akt(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
     varAKt.getVar(akt());
+
 
     // Retrieve the variable named "s_w"
     NcVar varSW=dataFile.getVar("s_w");
@@ -126,18 +127,21 @@ void ROMSAdapter::process()
     this->AKT()->Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
 
     LOG4CPLUS_INFO(logger,"Copying 1D ...");
-
+/*
     for(int t=0; t<ocean_time;t++) {
         this->OceanTime()(t)=oceanTime(t);
-    }
-
+    }*/
+    memcpy( this->OceanTime(), oceanTime(), ocean_time*sizeof(double) );
+    /*
     for(int k=-(int)s_rho+1; k<=0;k++) {
         this->SRho()(k)=sRho(k);
-    }
-
+    }*/
+    memcpy( this->SRho(), sRho(), s_rho*sizeof(double) );
+    /*
     for(int k=-(int)s_w+1; k<=0;k++) {
         this->SW()(k)=sW(k);
-    }
+    }*/
+    memcpy( this->SW(), sW(), s_w*sizeof(double) );
 
     for(int k=-(int)s_w+2; k<=0;k++) {
         this->Depth()->operator()(k)=sW(k)-sW(k-1);
@@ -151,28 +155,19 @@ void ROMSAdapter::process()
     memcpy( this->H()->operator double *(), h(), eta_rho*xi_rho*sizeof(double) );
 
     LOG4CPLUS_INFO(logger,"Copying 3D...");
-
     memcpy( this->Zeta()->operator float *(), zeta(), ocean_time*eta_rho*xi_rho*sizeof(float) );
 
-    LOG4CPLUS_INFO(logger,"Convert lon in radiants...");
+    LOG4CPLUS_INFO(logger,"Convert lon & lat in radiants...");
     // lon_u, lat_v in radiants
     #pragma omp for collapse(2)
     for ( int j=0; j<eta_rho;j++) {
         for (int i=0;i<xi_rho;i++) {
             this->LonRad()->operator()(j,i)=0.0174533*lon_rho(j,i);
-        }
-    }
-
-    LOG4CPLUS_INFO(logger,"Convert lat in radiants...");
-    #pragma omp for collapse(2)
-    for ( int j=0; j<eta_rho;j++) {
-        for (int i=0;i<xi_rho;i++) {
             this->LatRad()->operator()(j,i)=0.0174533*lat_rho(j,i);
         }
     }
 
     LOG4CPLUS_INFO(logger,"Interpolation 2D...");
-
     uv2rho(mask_rho, mask_u, mask_v, u,v);
 
     LOG4CPLUS_INFO(logger,"Interpolation 3D...");
@@ -184,7 +179,7 @@ void ROMSAdapter::process()
 
 void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
                          Array4<float>& u, Array4<float>& v) {
-    double uw1, uw2, vw1, vw2;
+    float uw1, uw2, vw1, vw2;
 
     LOG4CPLUS_INFO(logger,"uv2rho");
 
@@ -251,7 +246,7 @@ void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array
 
 void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
                            Array4<float>& w, Array4<float>& akt ) {
-    double ww0, ww1, ww2, ww3, aktw0, aktw1, aktw2, aktw3;
+    float ww0, ww1, ww2, ww3, aktw0, aktw1, aktw2, aktw3;
 
     LOG4CPLUS_INFO(logger,"wakt2rho");
 
@@ -263,7 +258,7 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
     size_t xi_rho = mask_rho.Ny();
 
 
-    //#pragma omp for collapse(4)
+    #pragma omp for collapse(4)
     for (int t=0; t < ocean_time; t++) {
         for (int k=(-(int)s_w+1); k <= 0; k++) {
             for (int j=0; j < eta_v; j++) {
@@ -271,20 +266,21 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
 
                     if ( j>=0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho(j,i) > 0.0 )
                     {
+                        /*
                         ww0 = w(t,k,j,i);
                         aktw0 = akt(t,k,j,i);
 
-
                         if (ww0 >= 9.99e36) ww0=0;
                         if (aktw0 >= 9.99e36) aktw0=0;
-
+                        */
                         if ( j>=0 && i>0 && j<eta_rho && i <xi_rho && mask_rho(j,i-1) > 0.0 )
                         {
                             ww1=w(t, k,j,i-1);
                             aktw1=akt(t, k,j,i-1);
-
+                            /*
                             if (ww1 >= 9.99e36) ww1=0;
                             if (aktw1 >= 9.99e36) aktw1=0;
+                             */
                         } else {
                             ww1=0.0;
                             aktw1=0.0;
@@ -293,9 +289,10 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
                         if ( j>0 && i>=0 && j<eta_rho && i <xi_rho && mask_rho(j-1,i) > 0.0 ) {
                             ww2=w(t, k,j-1,i);
                             aktw2=akt(t, k,j-1,i);
-
+                            /*
                             if (ww2 >= 9.99e36) ww2=0;
                             if (aktw2 >= 9.99e36) aktw2=0;
+                             */
                         } else {
                             ww2=0.0;
                             aktw2=0.0;
@@ -304,16 +301,17 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
                         if ( j>0 && i>0 && j<eta_rho && i <xi_rho && mask_rho(j-1,i-1) > 0.0 ) {
                             ww3=w(t, k, j-1,i-1);
                             aktw3=akt(t, k, j-1,i-1);
-
+                            /*
                             if (ww3 >= 9.99e36) ww3=0;
                             if (aktw3 >= 9.99e36) aktw3=0;
+                             */
                         } else {
                             ww3=0.0;
                             aktw3=0.0;
                         }
 
-                        this->W()->operator()(t,k,j,i)=0.25*(ww0+ww1+ww2+ww3);
-                        this->AKT()->operator()(t,k,j,i)=0.25*(aktw0+aktw1+aktw2+aktw3);
+                        this->W()->operator()(t,k,j,i)=0.25*(w(t,k,j,i)+ww1+ww2+ww3);
+                        this->AKT()->operator()(t,k,j,i)=0.25*(akt(t,k,j,i)+aktw1+aktw2+aktw3);
 
                     } else {
 
