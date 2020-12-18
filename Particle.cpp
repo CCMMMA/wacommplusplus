@@ -68,6 +68,12 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
     // For each integration interval
     for (int t=0;t<iint;t++) {
 
+        // Check if the paticle is not yet active
+        if (tpart>(oceanModelAdapter->OceanTime()(ocean_time_idx)+(t*dti))) {
+            // The particle is not already active (already emitted, but not active)
+            break;
+        }
+
         // Check of the particle health is less than its probability to survive
         if (health<survprob) {
             // The particle is dead
