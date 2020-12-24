@@ -4,8 +4,17 @@
 
 #include "Wacomm.hpp"
 
+#include <chrono>
 #include <utility>
 #include "ROMSAdapter.hpp"
+
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 Wacomm::Wacomm(std::shared_ptr<Config> config,
                std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
@@ -23,6 +32,19 @@ void Wacomm::run()
 {
     LOG4CPLUS_INFO(logger,"Dry mode:" << config->Dry() );
 
+    int world_size=1, world_rank=0;
+    int ompMaxThreads=1;
+
+#ifdef USE_MPI
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#endif
+
+#ifdef USE_OMP
+    ompMaxThreads=omp_get_max_threads();
+#endif
+    std::vector<int> iterations(ompMaxThreads, 0);
+
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
     size_t s_rho=oceanModelAdapter->SRho().Nx();
     size_t eta_rho=oceanModelAdapter->Mask().Nx();
@@ -34,7 +56,7 @@ void Wacomm::run()
     LOG4CPLUS_INFO(logger,"eta_rho:" + std::to_string(eta_rho) + " xi_rho:" + std::to_string(xi_rho));
 
     Array4<float> conc(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
-    //std::memset(conc(), 0, ocean_time*s_rho*eta_rho*xi_rho);
+
     #pragma omp for collapse(4)
     for (int t=0;t<ocean_time;t++) {
         for (int k=-(int)s_rho+1; k<=0; k++) {
@@ -48,65 +70,179 @@ void Wacomm::run()
 
     if (!config->Dry()) {
         for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
-            LOG4CPLUS_INFO(logger, "Running on:" << omp_get_max_threads() << " threads.");
-            LOG4CPLUS_INFO(logger, "Input step:" << ocean_time_idx);
-            LOG4CPLUS_INFO(logger, "Sources:" << sources->size());
+            // Record start time
+            auto start = std::chrono::high_resolution_clock::now();
+            int nParticles=particles->size();
 
-            int nSources = sources->size();
 
-            #pragma omp parallel for default(none) shared(nSources, ocean_time_idx)
-            for (int idx = 0; idx < nSources; idx++) {
-                sources->at(idx).emit(particles, oceanModelAdapter->OceanTime()(ocean_time_idx));
+#ifdef USE_MPI
+            std::unique_ptr<int[]> send_counts = std::make_unique<int[]>(world_size);
+            std::unique_ptr<int[]> displs = std::make_unique<int[]>(world_size);
+
+            std::unique_ptr<struct particle_data[]> sendbuf;
+            std::unique_ptr<struct particle_data[]> recvbuf;
+            int itemSize=sizeof(struct particle_data);
+#endif
+
+            //shared_ptr<Particles> pLocalParticles;
+            Particles *pLocalParticles;
+
+            if (world_rank==0) {
+
+                LOG4CPLUS_INFO(logger, "Input step:" << ocean_time_idx);
+                LOG4CPLUS_INFO(logger, "Sources:" << sources->size());
+
+                int nSources = sources->size();
+
+                #pragma omp parallel for default(none) shared(nSources, ocean_time_idx)
+                for (int idx = 0; idx < nSources; idx++) {
+                    sources->at(idx).emit(config, particles, oceanModelAdapter->OceanTime()(ocean_time_idx));
+                }
+
+                LOG4CPLUS_INFO(logger, "Total particles:" << particles->size());
+
+#ifdef USE_MPI
+                size_t elementsPerProcess = particles->size() / world_size;
+                size_t spare = particles->size() % world_size;
+
+                send_counts[0] = (int)((elementsPerProcess + spare));
+                displs[0]=0;
+                LOG4CPLUS_INFO(logger, world_rank << ": send_counts[0]=" << send_counts.get()[0] << " displ[0]=" << displs.get()[0]);
+
+                for (int i = 1; i < world_size; i++) {
+                    send_counts.get()[i] = (int)(elementsPerProcess);//*itemSize);
+                    displs.get()[i]=send_counts.get()[0]*itemSize+elementsPerProcess*(i-1)*itemSize;
+
+                    LOG4CPLUS_INFO(logger, world_rank << ": send_counts[" << i << "]=" << send_counts.get()[i] << " displ[" << i << "]=" << displs.get()[i]);
+                }
+
+                sendbuf=std::make_unique<struct particle_data[]>(particles->size()*itemSize);
+                for (int idx=0;idx<particles->size();idx++) {
+                    sendbuf[idx]=particles->at(idx).data();
+                }
+#endif
             }
 
-            LOG4CPLUS_INFO(logger, "Particles:" << particles->size());
+#ifdef USE_MPI
+            MPI_Bcast(send_counts.get(),world_size,MPI_INT,0,MPI_COMM_WORLD);
+            int elementToProcess=send_counts.get()[world_rank];
+            LOG4CPLUS_INFO(logger, world_rank << ":" << " elementToProcess:" << elementToProcess);
 
-            int nParticles = particles->size();
-            std::vector<int> iterations(omp_get_max_threads(), 0);
+            recvbuf=std::make_unique<particle_data[]>(elementToProcess*itemSize);
 
-            #pragma omp parallel for default(none) shared(iterations, particles, ocean_time_idx, nParticles)
-            for (int idx = 0; idx < nParticles; idx++) {
-                particles->at(idx).move(config, ocean_time_idx, oceanModelAdapter);
+            int mpiError;
+            constexpr std::size_t num_members = 3;
+            int lengths[num_members] = { 1, 1, 1 };
+            MPI_Aint offsets[num_members] = {
+                    offsetof(struct particle_data, k),
+                    offsetof(struct particle_data, j),
+                    offsetof(struct particle_data, i)
+            };
+            MPI_Datatype types[num_members] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
+
+            MPI_Datatype mpiParticleData;
+            MPI_Type_create_struct(num_members, lengths, offsets, types, &mpiParticleData);
+            MPI_Type_commit(&mpiParticleData);
+            mpiError=MPI_Scatterv(sendbuf.get(), send_counts.get(), displs.get(), mpiParticleData,
+                         recvbuf.get(), elementToProcess, mpiParticleData, 0, MPI_COMM_WORLD);
+            LOG4CPLUS_INFO(logger, world_rank << ": mpiError=" << mpiError);
+
+            Particles localParticles;
+            for (int idx=0;idx<elementToProcess;idx++) {
+                Particle particle(recvbuf[idx]);
+                localParticles.push_back(particle);
+            }
+            //pLocalParticles=std::shared_ptr<Particles>(&localParticles);
+            pLocalParticles=&localParticles;
+#else
+            pLocalParticles=particles;
+#endif
+            LOG4CPLUS_INFO(logger, world_rank << ": Using 1/" << world_size << " processes, each on " << ompMaxThreads << " threads.");
+
+            LOG4CPLUS_INFO(logger, world_rank<< ": Local particles:" << pLocalParticles->size());
+
+            // Record start time
+            auto startLocal = std::chrono::high_resolution_clock::now();
+
+            #pragma omp parallel for default(none) shared(iterations, pLocalParticles, ocean_time_idx, nParticles)
+            for (int idx = 0; idx < pLocalParticles->size(); idx++) {
+#ifdef DEBUG
+                LOG4CPLUS_DEBUG(logger, world_rank<< ": Particle " << idx );
+#endif
+                pLocalParticles->at(idx).move(config, ocean_time_idx, oceanModelAdapter);
+#ifdef USE_OMP
                 iterations[omp_get_thread_num()]++;
+#endif
             }
+
+#ifdef USE_OMP
             int thread_index=0;
             for (const auto i : iterations) {
-                LOG4CPLUS_INFO(logger, "Thread " << thread_index++ << " -> " << i << " Particles");
+                LOG4CPLUS_INFO(logger, world_rank << ": Thread " << thread_index++ << " -> " << i << " Particles");
             }
+#endif
+#ifdef USE_MPI
+            for (int idx=0;idx<localParticles.size();idx++) {
+                recvbuf[idx]=localParticles.at(idx).data();
+            }
+            MPI_Gatherv(recvbuf.get(), send_counts.get()[world_rank],mpiParticleData,
+                        sendbuf.get(),send_counts.get(),displs.get(),mpiParticleData,0,MPI_COMM_WORLD);
+            MPI_Type_free(&mpiParticleData);
+#endif
+            // Record end time
+            auto finishLocal = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elapsedLocal = finishLocal - startLocal;
+            LOG4CPLUS_INFO(logger, world_rank<< ": processed "<< pLocalParticles->size() << " in " << elapsedLocal.count() << " seconds.");
 
-            // Remove dead particles
-            particles->erase(std::remove_if(particles->begin(), particles->end(),
-                                            [](const Particle &particle) { return !particle.isAlive(); }),
-                             particles->end());
-
-            LOG4CPLUS_INFO(logger, "Particles:" << particles->size());
-
-            LOG4CPLUS_INFO(logger, "Saving restart:" << "");
-
-
-            LOG4CPLUS_INFO(logger, "Evaluate concentration");
-            for (const Particle &particle: *particles) {
-                if (particle.isAlive()) {
-                    int k = (int) round(particle.K());
-                    int j = (int) round(particle.J());
-                    int i = (int) round(particle.I());
-                    conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i) + 1;
+            if (world_rank==0) {
+#ifdef USE_MPI
+                for (int idx=0;idx<particles->size();idx++) {
+                    particles->at(idx).data(sendbuf[idx]);
                 }
-            }
-            #pragma omp for collapse(3)
-            for (int k=-(int)s_rho+1; k<=0; k++) {
-                for (int j=0; j<eta_rho; j++) {
-                    for (int i=0; i<xi_rho; i++) {
-                        if (oceanModelAdapter->Mask()(j,i)!=1) {
-                            conc(ocean_time_idx, k, j, i) = 1e37;
+#endif
+                // Remove dead particles
+                particles->erase(std::remove_if(particles->begin(), particles->end(),
+                                                [](const Particle &particle) { return !particle.isAlive(); }),
+                                 particles->end());
+
+                LOG4CPLUS_INFO(logger, "Particles:" << particles->size());
+
+                LOG4CPLUS_INFO(logger, "Evaluate concentration");
+                for (const Particle &particle: *particles) {
+                    if (particle.isAlive()) {
+                        int k = (int) round(particle.K());
+                        int j = (int) round(particle.J());
+                        int i = (int) round(particle.I());
+                        conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i) + 1;
+                    }
+                }
+
+                #pragma omp for collapse(3)
+                for (int k = -(int) s_rho + 1; k <= 0; k++) {
+                    for (int j = 0; j < eta_rho; j++) {
+                        for (int i = 0; i < xi_rho; i++) {
+                            if (oceanModelAdapter->Mask()(j, i) != 1) {
+                                conc(ocean_time_idx, k, j, i) = 1e37;
+                            }
                         }
                     }
                 }
             }
+            auto finish = std::chrono::high_resolution_clock::now();
+
+            if (world_rank==0) {
+                std::chrono::duration<double> elapsed = finish - start;
+                LOG4CPLUS_INFO(logger, "Processed " << nParticles << " in " << elapsed.count() << " seconds.");
+            }
+            LOG4CPLUS_INFO(logger,"-------------------------------");
         }
     }
-    particles->save("out.txt");
-    save(conc);
+    if (world_rank==0) {
+        LOG4CPLUS_INFO(logger, "Saving restart:" << "");
+        particles->save("out.txt");
+        LOG4CPLUS_INFO(logger, "Saving history:" << "");
+        save(conc);
+    }
 };
 Wacomm::~Wacomm() = default;
 
