@@ -4,12 +4,39 @@ project(wacommplusplus)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(DEBUG "Compile logging information in performance-critical classes." OFF)
+if(DEBUG)
+    add_definitions(-DDEBUG)
+endif()
+
+option(USE_MPI "Use MPI for distributed memory parallelism." OFF)
+option(USE_OMP "Use OMP for shared memory parallelism." OFF)
+option(USE_OPENACC "Use OpenACC acceleration." OFF)
+option(USE_OPENCL "Use OpenCL acceleration." OFF)
+option(USE_CUDA "Use CUDA acceleration." OFF)
+
+set(LIBMPI "")
+find_package(MPI)
+if(MPI_CXX_FOUND AND USE_MPI)
+    add_definitions(-DUSE_MPI)
+    message(STATUS "Using MPI for distributed memory parallelism.")
+    include_directories(${MPI_INCLUDE_PATH})
+    set(LIBMPI MPI::MPI_CXX)
+endif()
+
 set(LIBOMP "")
 find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
-    message(STATUS "Found OpenMP")
+if(OpenMP_CXX_FOUND AND USE_OMP)
+    add_definitions(-DUSE_OMP)
+    message(STATUS "Using OMP for shared memory parallelism.")
     set(LIBOMP OpenMP::OpenMP_CXX)
 endif()
+
+#find_package(CUDA)
+#if(CUDA_FOUND AND USE_CUDA)
+#    set(USE_CUDA ON)
+#    message(STATUS "Use CUDA acceleration.")
+#endif()
 
 # Include the support to external projects
 include(ExternalProject)
@@ -48,7 +75,7 @@ endif()
 ExternalProject_Add(random
         GIT_REPOSITORY https://github.com/effolkronium/random.git
         TIMEOUT 360
-        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
+        CMAKE_ARGS -DRandom_BuildTests=OFF -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
         BUILD_COMMAND make
         INSTALL_COMMAND make install
 )
@@ -155,7 +182,8 @@ add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
 add_dependencies(${PROJECT_NAME} random)
 
-target_link_libraries(${PROJECT_NAME} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} ${LIBOMP} pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json)
+
+target_link_libraries(${PROJECT_NAME} ${LIBOMP} ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS}  pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json)
 
 
 ExternalProject_Add(
