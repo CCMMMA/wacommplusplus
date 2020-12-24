@@ -19,6 +19,7 @@
 // get base random alias which is auto seeded and has static API and internal state
 using Random = effolkronium::random_static;
 
+
 // log4cplus - https://github.com/log4cplus/log4cplus
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
@@ -29,12 +30,20 @@ using Random = effolkronium::random_static;
 
 using namespace std;
 
-
+struct particle_data {
+    double k;
+    double j;
+    double i;
+    double health;
+    double tpart;
+};
 
 class Particle {
     public:
+        Particle() = default;
         Particle(double k, double j, double i, double health, double tpart);
         Particle(double k, double j, double i, double tpart);
+        Particle(particle_data data);
 
         ~Particle();
 
@@ -42,6 +51,9 @@ class Particle {
 
         void move(const std::shared_ptr<Config>& config, int ocean_time_idx,
                   const std::shared_ptr<OceanModelAdapter>& oceanModelAdapter);
+
+        particle_data data();
+        void data(particle_data data);
 
         double K() const;
         double J() const;
@@ -54,16 +66,15 @@ class Particle {
 
         std::string to_string() const;
 
+
+
 private:
+#ifdef DEBUG
         log4cplus::Logger logger;
+#endif
 
 
-
-        double k;
-        double j;
-        double i;
-        double health;
-        double tpart;
+        particle_data _data{};
 
         static double sgn(double a);
         static double mod(double a, double p);

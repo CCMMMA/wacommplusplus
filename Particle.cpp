@@ -7,25 +7,55 @@
 #include "Particle.hpp"
 #include "Config.hpp"
 
+
 Particle::Particle(double k, double j, double i,
-                   double health, double tpart):
-                   k(k), j(j), i(i),
-                   health(health),tpart(tpart)
+                   double health, double tpart)
 {
+#ifdef DEBUG
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
+#endif
 
+    _data.k=k;
+    _data.j=j;
+    _data.i=i;
+    _data.health=health;
+    _data.tpart=tpart;
 }
 
-Particle::Particle(double k, double j, double i, double tpart): k(k), j(j), i(i), tpart(tpart){
-    health=health0;
+Particle::Particle(double k, double j, double i, double tpart) {
+
+#ifdef DEBUG
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
+#endif
+
+    _data.k=k;
+    _data.j=j;
+    _data.i=i;
+    _data.tpart=tpart;
+    _data.health=health0;
 }
 
+Particle::Particle(particle_data data) {
+#ifdef DEBUG
+    logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
+#endif
+    _data = data;
+}
 
 Particle::~Particle() = default;
 
+particle_data Particle::data() {
+    return _data;
+}
+
+void Particle::data(particle_data data) {
+    _data = data;
+}
+
+
+
 bool Particle::isAlive() const {
-    return health>0;
+    return _data.health>0;
 }
 
 
@@ -69,15 +99,15 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
     for (int t=0;t<iint;t++) {
 
         // Check if the paticle is not yet active
-        if (tpart>(oceanModelAdapter->OceanTime()(ocean_time_idx)+(t*dti))) {
+        if (_data.tpart>(oceanModelAdapter->OceanTime()(ocean_time_idx)+(t*dti))) {
             // The particle is not already active (already emitted, but not active)
             break;
         }
 
         // Check of the particle health is less than its probability to survive
-        if (health<survprob) {
+        if (_data.health<survprob) {
             // The particle is dead
-            health=-1;
+            _data.health=-1;
             // No reason to continue, exit the integration loop
             break;
         }
@@ -88,19 +118,19 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
          */
 
         // Get the integer part and the fraction part of particle k
-        auto kI=(int)k; double kF=k-kI;
+        auto kI=(int)_data.k; double kF=_data.k-kI;
 
         // Get the integer part and the fraction part of particle j
-        auto jI=(int)j; double jF=j-jI;
+        auto jI=(int)_data.j; double jF=_data.j-jI;
 
         // Get the integer part and the fraction part of particle i
-        auto iI=(int)i; double iF=i-iI;
+        auto iI=(int)_data.i; double iF=_data.i-iI;
 
         // Check if the particle is out of the domain
         if (jI<0 || iI<0 || jI>=eta_rho|| iI>=xi_rho) {
 
             // Set the particle health
-            health=-1;
+            _data.health=-1;
 
             // no reason to continue,  exit the integration loop
             break;
@@ -109,7 +139,7 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         if (oceanModelAdapter->Mask()(jI,iI)<=0) {
 
             // Set the particle health
-            health=-1;
+            _data.health=-1;
 
             // no reason to continue,  exit the integration loop
             break;
@@ -132,7 +162,9 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         }
         */
 
+#ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, this->to_string());
+#endif
 
         // The particle is alive!
         // Perform the bilinear interpolation (2D) in order to get
@@ -145,7 +177,9 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         // The current u component in the particle position
         float uu=u1+u2+u3+u4;
 
+#ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, "uu:" << uu);
+#endif
 
         // Perform the bilinear interpolation (2D) in order to get
         // the v component of the current field in the particle position.
@@ -157,8 +191,9 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         // The current v component in the particle position
         float vv=v1+v2+v3+v4;
 
+#ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, "vv:" << vv );
-
+#endif
 
         // 0,0,690,533
 
@@ -176,8 +211,9 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         // The current w component in the particle position
         float ww=w1+w2+w3+w4+w5+w6+w7+w8;
 
+#ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, "ww:" << ww);
-
+#endif
 
 
         // Perform the bilinear interpolation (3D) in order to get
@@ -194,7 +230,9 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         // The AKT at the particle position.
         float aa=a1+a2+a3+a4+a5+a6+a7+a8;
 
+#ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, "aa:" << aa);
+#endif
 
         // Evaluate the particle leap due to the current field (deterministic leap).
         double dileap=uu*dti;
@@ -204,7 +242,7 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         // Calculation of sigma profile
         // sigmaPROF=sigma(Ixx,Iyy)*(1-Zdet/(-H(Ixx,Iyy))) ! Here is H
         //double sigmaProf=oceanModelAdapter->sigma()(jI, iI)*(1-kdet/(-oceanModelAdapter->H()(jI,iI)))
-        double sigmaprof=3.46*(1+k/s_w);
+        double sigmaprof=3.46*(1+_data.k/s_w);
 
         // Extract 3 pseudorandom numbers
         double gi=0,gj=0,gk=0;
@@ -226,7 +264,10 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         double jleap=djleap+rjleap;
         double kleap=dkleap+rkleap;
 
+#ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, "kleap:" << kleap << " jleap:" << jleap << " ileap:" << ileap );
+#endif
+
         double d1,d2,dd,jidist, kdist;
 
         // Calculate the distance in radiants of latitude between the grid cell where is
@@ -257,13 +298,13 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
 
 
         // Calculate the new particle j candidate
-        jdet=j+0.001*jleap/jidist;
+        jdet=_data.j+0.001*jleap/jidist;
 
         // Calculate the new particle i candidate
-        idet=i+0.001*ileap/jidist;
+        idet=_data.i+0.001*ileap/jidist;
 
         // Calculate the new particle k candidate
-        kdet=k+kleap/kdist;
+        kdet=_data.k+kleap/kdist;
 
         // Reflect if out-of-column
         // Check if the new k have to be limited by the sealfoor
@@ -288,33 +329,33 @@ void Particle::move(const std::shared_ptr<Config>& config, int ocean_time_idx,
         if ( oceanModelAdapter->Mask()(jdetI,idetI) <= 0.0 ) {
             // Reflect the particle
             if ( idetI < iI ) {
-                idet=(double)iI + abs(i-idet);
+                idet=(double)iI + abs(_data.i-idet);
             } else if ( idetI > iI ) {
                 idet=(double)idetI- mod(idet,1.0);
             }
             if ( jdetI < jdet ) {
-                jdet=(double)jdetI+ abs(j-jdet);
+                jdet=(double)jdetI+ abs(_data.j-jdet);
             } else if ( jdetI > jI ) {
                 jdet=(double)jdetI - mod(jdet,1.0);
             }
         }
 
         // Assign the new particle position
-        i=idet;
-        j=jdet;
-        k=kdet;
+        _data.i=idet;
+        _data.j=jdet;
+        _data.k=kdet;
 
         // Update the paticle age
-        tpart=tpart+dti;
+        _data.tpart=_data.tpart+dti;
 
         // Decay the particle
-        health=health0*exp(-tpart/tau0);
+        _data.health=health0*exp(-_data.tpart/tau0);
     }
 }
 
-double Particle::K() const  { return k; }
-double Particle::J() const { return j; }
-double Particle::I() const { return i; }
+double Particle::K() const  { return _data.k; }
+double Particle::J() const { return _data.j; }
+double Particle::I() const { return _data.i; }
 
 // Returns a single pseudorandom number from the uniform distribution over the range [0,1[.
 // https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html
@@ -333,16 +374,16 @@ double Particle::sign(double a, double b) { return abs(a)*sgn(b); }
 
 std::string Particle::to_string() const {
     std::stringstream ss;
-    ss << k << " " << j << " " << i << " " << health << " " << tpart;
+    ss << _data.k << " " << _data.j << " " << _data.i << " " << _data.health << " " << _data.tpart;
     return ss.str();
 }
 
 double Particle::TPart() const {
-    return tpart;
+    return _data.tpart;
 }
 
 double Particle::Health() const {
-    return health;
+    return _data.health;
 }
 
 
