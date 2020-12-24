@@ -22,6 +22,7 @@ public:
     static string reduce(const string &str, const string &fill, const string &whitespace);
     static void tokenize(string &str, char delim, vector<string> &out);
 
+    static string getEnvVar(const string &key);
 };
 
 
