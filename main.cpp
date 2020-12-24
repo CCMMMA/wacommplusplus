@@ -3,7 +3,12 @@
 #include <stdlib.h> /* getenv */
 #include <string>
 
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
+
 #include "CommandLine.hpp"
+#include "Utils.hpp"
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -23,14 +28,19 @@ namespace fs = std::filesystem;
 
 log4cplus::Logger logger;
 
-std::string getEnvVar(std::string const &key) {
-    char *val = getenv(key.c_str());
-    return val == NULL ? std::string("") : std::string(val);
-}
-
 int main(int argc, char **argv) {
+
+#ifdef USE_MPI
+    // Initialize MPI
+    MPI_Init(&argc, &argv);
+#endif
+
     // Inizitalizer
     log4cplus::Initializer initializer;
+
+    // Basic configuration
+    log4cplus::BasicConfigurator basicConfigurator;
+    basicConfigurator.configure();
 
     //Create an appender pointing to the console
     log4cplus::SharedAppenderPtr appender(new log4cplus::ConsoleAppender());
@@ -47,13 +57,31 @@ int main(int argc, char **argv) {
 
     // Set the logging level
     log4cplus::LogLevel logLevel = log4cplus::INFO_LOG_LEVEL;
-    std::string logLevelString = getEnvVar("WACOMM_LOGLEVEL");
-    if (logLevelString != "") {
+    std::string logLevelString = Utils::getEnvVar("WACOMM_LOGLEVEL");
+    if (!logLevelString.empty()) {
         logLevel = std::stoi(logLevelString);
     }
     logger.setLogLevel(logLevel);
 
-    LOG4CPLUS_INFO(logger, "🛈  - WaComM - C++ Version");
+    LOG4CPLUS_INFO(logger, "WaComM - C++ Version");
+
+#ifdef USE_MPI
+    LOG4CPLUS_INFO(logger, "Parallel: Distributed Memory");
+#endif
+#ifdef USE_OMP
+    LOG4CPLUS_INFO(logger, "Parallel: Shared Memory");
+#endif
+
+#ifdef USE_OPENACC
+    LOG4CPLUS_INFO(logger, "Acceleration: OpenAcc");
+#elif USE_OPENCL
+    LOG4CPLUS_INFO(logger, "Acceleration: OpenCL");
+#elif USE_CUDA
+    LOG4CPLUS_INFO(logger, "Acceleration: CUDA");
+#else
+    LOG4CPLUS_INFO(logger, "Acceleration: None");
+#endif
+
     LOG4CPLUS_INFO(logger,"Current directory: " << fs::current_path());
 
     // This variables can be set via the command line.
@@ -91,6 +119,10 @@ int main(int argc, char **argv) {
     WacommPlusPlus wacommPlusPlus(config);
     wacommPlusPlus.run();
 
+#ifdef USE_MPI
+    // Finalize MPI
+    MPI_Finalize();
+#endif
     return 0;
 
 }

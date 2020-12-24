@@ -3,7 +3,7 @@
 //
 
 #include "WacommPlusPlus.hpp"
-
+#include <mpi.h>
 
 WacommPlusPlus::~WacommPlusPlus() = default;
 
@@ -27,6 +27,14 @@ WacommPlusPlus::WacommPlusPlus(std::shared_ptr<Config> config): config(config) {
 
 void WacommPlusPlus::run() {
     LOG4CPLUS_INFO(logger,"External loop...");
+
+    int world_size=1, world_rank=0;
+
+#ifdef USE_MPI
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#endif
+
     int idx=0;
     for (auto & ncInput : config->NcInputs()) {
         if (idx>=config->StartTimeIndex() && idx<config->StartTimeIndex()+config->NumberOfInputs()) {
@@ -35,8 +43,11 @@ void WacommPlusPlus::run() {
             romsAdapter.process();
             shared_ptr<OceanModelAdapter> oceanModelAdapter;
             oceanModelAdapter = make_shared<OceanModelAdapter>(romsAdapter);
-            string inputFilename="input.nc";
-            oceanModelAdapter->saveAsNetCDF(inputFilename);
+
+            if (world_rank==0) {
+                string inputFilename = "input.nc";
+                oceanModelAdapter->saveAsNetCDF(inputFilename);
+            }
             Wacomm wacomm(config, oceanModelAdapter, sources, particles);
             wacomm.run();
         }
