@@ -2,6 +2,12 @@
 WaComM++ is a steroidized version of WaComM - Water quality Community Model.
 WaComM++ supports shared memory (OpenMP) and distributed memory (MPI) paralellization.
 
+Water Community Model (WaComM) uses a particle-based Lagrangian approach relying on tridimensional marine dynamics field produced by coupled Eulerian atmosphere and ocean models.
+WaComM has been developed matching the hierarchical parallelization design requirements.
+
+WaComM is an evolution of the Lagrangian Assessment for Marine Pollution 3D (LAMP3D, https://people.mio.osupytheas.fr/~doglioli/lamp.htm) model.
+We strongly optimized the algorithms improve the performance in high performance computing environments adding features as restarting, distributed, and shared memory parallelization.
+
 # Cite WaComM++
 * Montella Raffaele, Diana Di Luccio, Pasquale Troiano, Angelo Riccio, Alison Brizius, and Ian Foster. "WaComM: A parallel Water quality Community Model for pollutant transport and dispersion operational predictions." In Signal-Image Technology & Internet-Based Systems (SITIS), 2016 12th International Conference on, pp. 717-724. IEEE, 2016.
 https://ieeexplore.ieee.org/abstract/document/7907547/
@@ -39,7 +45,13 @@ mkdir build
 ```bash
 cd build
 ```
-5) Invoke cmake
+5) Invoke cmake using the following options:
+- USE_MPI - Activate the distributed memory parallelization.
+- USE_OMP - Activate the shared memory parallelization.
+- USE_OPENACC - Activate the OpenACC acceleration (future feature).
+- USE_OPENCL - Activate the OpenCL acceleration (future feature).
+- USE_CUDA - Activate the CUDA acceleration (future feature).
+- DEBUG - Add logging printouts (do not use for production or evaluation.)
 ```bash
 cmake ..
 ```
