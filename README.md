@@ -2,7 +2,7 @@
 WaComM++ is a steroidized version of WaComM - Water quality Community Model.
 WaComM++ supports shared memory (OpenMP) and distributed memory (MPI) paralellization.
 
-# Cite WacomM++
+# Cite WaComM++
 * Montella Raffaele, Diana Di Luccio, Pasquale Troiano, Angelo Riccio, Alison Brizius, and Ian Foster. "WaComM: A parallel Water quality Community Model for pollutant transport and dispersion operational predictions." In Signal-Image Technology & Internet-Based Systems (SITIS), 2016 12th International Conference on, pp. 717-724. IEEE, 2016.
 https://ieeexplore.ieee.org/abstract/document/7907547/
   
