@@ -83,8 +83,6 @@ void Wacomm::run()
             std::unique_ptr<struct particle_data[]> recvbuf;
             int itemSize=sizeof(struct particle_data);
 #endif
-
-            //shared_ptr<Particles> pLocalParticles;
             Particles *pLocalParticles;
 
             if (world_rank==0) {
@@ -155,7 +153,7 @@ void Wacomm::run()
             //pLocalParticles=std::shared_ptr<Particles>(&localParticles);
             pLocalParticles=&localParticles;
 #else
-            pLocalParticles=particles;
+            pLocalParticles=particles.get();
 #endif
             LOG4CPLUS_INFO(logger, world_rank << ": Using 1/" << world_size << " processes, each on " << ompMaxThreads << " threads.");
 
