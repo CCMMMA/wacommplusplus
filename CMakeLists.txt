@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 3.13)
 project(wacommplusplus)
 
+#enable_language(C)
+#enable_language(CXX)
+enable_language(Fortran)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL PGI)
+  message(STATUS "Using PGI compilers.")
+  add_compile_options(-std=c++17)
+endif()
 
 option(DEBUG "Compile logging information in performance-critical classes." OFF)
 if(DEBUG)
@@ -32,11 +41,23 @@ if(OpenMP_CXX_FOUND AND USE_OMP)
     set(LIBOMP OpenMP::OpenMP_CXX)
 endif()
 
-#find_package(CUDA)
-#if(CUDA_FOUND AND USE_CUDA)
-#    set(USE_CUDA ON)
-#    message(STATUS "Use CUDA acceleration.")
-#endif()
+find_package(OpenACC)
+if(OpenACC_FOUND AND USE_OPENACC)
+    set(USE_OPENACC ON)
+    message(STATUS "Use OpenACC acceleration.")
+endif()
+
+find_package(OpenCL)
+if(OpenCL_FOUND AND USE_OPENCL)
+    set(USE_OPENCL ON)
+    message(STATUS "Use OpenCL acceleration.")
+endif()
+
+find_package(CUDA)
+if(CUDA_FOUND AND USE_CUDA)
+    set(USE_CUDA ON)
+    message(STATUS "Use CUDA acceleration.")
+endif()
 
 # Include the support to external projects
 include(ExternalProject)
@@ -97,7 +118,7 @@ ExternalProject_Add(zlib
         URL https://zlib.net/zlib-1.2.11.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION}
+        CONFIGURE_COMMAND CFLAGS=-fPIC ./configure --prefix=${EXTERNAL_INSTALL_LOCATION}
         BUILD_COMMAND make
         INSTALL_COMMAND make install
         )
