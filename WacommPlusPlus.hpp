@@ -5,7 +5,7 @@
 #ifndef WACOMMPLUSPLUS_WACOMMPLUSPLUS_HPP
 #define WACOMMPLUSPLUS_WACOMMPLUSPLUS_HPP
 
-#include "ROMSAdapter.hpp"
+#include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "Wacomm.hpp"
 
 class WacommPlusPlus {

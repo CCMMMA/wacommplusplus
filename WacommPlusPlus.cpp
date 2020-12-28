@@ -3,7 +3,10 @@
 //
 
 #include "WacommPlusPlus.hpp"
+
+#ifdef USE_MPI
 #include <mpi.h>
+#endif
 
 WacommPlusPlus::~WacommPlusPlus() = default;
 
