@@ -6,7 +6,7 @@
 
 #include <chrono>
 #include <utility>
-#include "ROMSAdapter.hpp"
+#include "OceanModelAdapters/ROMSAdapter.hpp"
 
 #ifdef USE_MPI
 #include <mpi.h>
@@ -167,7 +167,7 @@ void Wacomm::run()
 #ifdef DEBUG
                 LOG4CPLUS_DEBUG(logger, world_rank<< ": Particle " << idx );
 #endif
-                pLocalParticles->at(idx).move(config, ocean_time_idx, oceanModelAdapter);
+                pLocalParticles->at(idx).move(config->dataptr(), ocean_time_idx, oceanModelAdapter->dataptr());
 #ifdef USE_OMP
                 iterations[omp_get_thread_num()]++;
 #endif
@@ -230,7 +230,8 @@ void Wacomm::run()
 
             if (world_rank==0) {
                 std::chrono::duration<double> elapsed = finish - start;
-                LOG4CPLUS_INFO(logger, "Processed " << nParticles << " in " << elapsed.count() << " seconds.");
+                double nParticlesPerSecond = nParticles / elapsed.count();
+                LOG4CPLUS_INFO(logger, "Processed " << nParticles << " in " << elapsed.count() << " seconds ("<< nParticlesPerSecond <<" particles/second).");
             }
             LOG4CPLUS_INFO(logger,"-------------------------------");
         }
@@ -312,7 +313,7 @@ void Wacomm::save(Array4<float> &conc) {
     hVar.putAtt("units","meter");
     hVar.putAtt("coordinates","lon_rho lat_rho");
     hVar.putAtt("field","bath, scalar");
-    hVar.putVar(oceanModelAdapter->H()->operator()());
+    hVar.putVar(oceanModelAdapter->H()());
 
     vector<NcDim> oceanTimeEtaRhoXiRhoDims;
     oceanTimeEtaRhoXiRhoDims.push_back(oceanTimeDim);
@@ -326,7 +327,7 @@ void Wacomm::save(Array4<float> &conc) {
     hZeta.putAtt("coordinates","lon_rho lat_rho ocean_time");
     hZeta.putAtt("field","free-surface, scalar, series");
     hZeta.putAtt("_FillValue",ncFloat, 9.99999993e+36);
-    hZeta.putVar(oceanModelAdapter->Zeta()->operator()());
+    hZeta.putVar(oceanModelAdapter->Zeta()());
 
 
     vector<NcDim> oceanTimeSRhoEtaRhoXiRhoDims;
