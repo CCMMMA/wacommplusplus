@@ -24,7 +24,7 @@ namespace fs = std::filesystem;
 #include "WacommPlusPlus.hpp"
 #include "Particles.hpp"
 #include "Sources.hpp"
-#include "ROMSAdapter.hpp"
+#include "OceanModelAdapters/ROMSAdapter.hpp"
 
 log4cplus::Logger logger;
 
