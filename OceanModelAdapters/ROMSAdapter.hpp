@@ -13,8 +13,8 @@
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
 
-#include "Array.h"
-#include "OceanModelAdapter.hpp"
+#include "../Array.h"
+#include "../OceanModelAdapter.hpp"
 
 using namespace std;
 using namespace Array;
