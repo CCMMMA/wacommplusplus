@@ -8,33 +8,31 @@ OceanModelAdapter::OceanModelAdapter() {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 }
 
-Array1<double> &OceanModelAdapter::OceanTime() { return oceanTime; }
-Array1<double> &OceanModelAdapter::SRho() { return sRho; }
-Array1<double> &OceanModelAdapter::SW() { return sW; }
-Array2<double> &OceanModelAdapter::Mask() { return mask; }
-Array2<double> &OceanModelAdapter::Lon() { return lon; }
-Array2<double> &OceanModelAdapter::Lat() { return lat; }
-Array2<double> *OceanModelAdapter::LonRad() { return &lonRad; }
-Array2<double> *OceanModelAdapter::LatRad() { return &latRad; }
-Array1<double> *OceanModelAdapter::Depth() { return &depth; }
-Array2<double> *OceanModelAdapter::H() { return &h; }
-Array3<float> *OceanModelAdapter::Zeta() { return &zeta; }
-Array4<float> *OceanModelAdapter::U() { return &u; }
-Array4<float> *OceanModelAdapter::V() { return &v; }
-Array4<float> *OceanModelAdapter::W() { return &w; }
-Array4<float> *OceanModelAdapter::AKT() { return &akt; }
+Array1<double> &OceanModelAdapter::OceanTime() { return _data.oceanTime; }
+Array1<double> &OceanModelAdapter::SRho() { return _data.sRho; }
+Array1<double> &OceanModelAdapter::SW() { return _data.sW; }
+Array2<double> &OceanModelAdapter::Mask() { return _data.mask; }
+Array2<double> &OceanModelAdapter::Lon() { return _data.lon; }
+Array2<double> &OceanModelAdapter::Lat() { return _data.lat; }
+Array2<double> &OceanModelAdapter::LonRad() { return _data.lonRad; }
+Array2<double> &OceanModelAdapter::LatRad() { return _data.latRad; }
+Array1<double> &OceanModelAdapter::Depth() { return _data.depth; }
+Array2<double> &OceanModelAdapter::H() { return _data.h; }
+Array3<float> &OceanModelAdapter::Zeta() { return _data.zeta; }
+Array4<float> &OceanModelAdapter::U() { return _data.u; }
+Array4<float> &OceanModelAdapter::V() { return _data.v; }
+Array4<float> &OceanModelAdapter::W() { return _data.w; }
+Array4<float> &OceanModelAdapter::AKT() { return _data.akt; }
 
-double OceanModelAdapter::HCorrectedByZeta(int ocean_time, int j, int i) {
-    return h(j,i)+zeta(ocean_time,j,i);
-}
+
 
 void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
 
-    size_t ocean_time=oceanTime.Nx();
-    size_t s_rho=sRho.Nx();
-    size_t s_w=sW.Nx();
-    size_t eta_rho=mask.Nx();
-    size_t xi_rho=mask.Ny();
+    size_t ocean_time=_data.oceanTime.Nx();
+    size_t s_rho=_data.sRho.Nx();
+    size_t s_w=_data.sW.Nx();
+    size_t eta_rho=_data.mask.Nx();
+    size_t xi_rho=_data.mask.Ny();
 
     LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
 
@@ -53,7 +51,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     oceanTimeVar.putAtt("calendar","gregorian");
     oceanTimeVar.putAtt("field","time, scalar, series");
     oceanTimeVar.putAtt("_CoordinateAxisType","Time");
-    oceanTimeVar.putVar(oceanTime());
+    oceanTimeVar.putVar(_data.oceanTime());
 
     NcVar sRhoVar = dataFile.addVar("s_rho", ncDouble, sRhoDim);
     sRhoVar.putAtt("long_name","S-coordinate at RHO-points");
@@ -66,7 +64,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     sRhoVar.putAtt("_CoordinateAxes","s_rho");
     sRhoVar.putAtt("_CoordinateAxisType","GeoZ");
     sRhoVar.putAtt("_CoordinateZisPositive","up");
-    sRhoVar.putVar(sRho());
+    sRhoVar.putVar(_data.sRho());
 
     NcVar sWVar = dataFile.addVar("s_w", ncDouble, sWDim);
     sWVar.putAtt("long_name","S-coordinate at W-points");
@@ -79,7 +77,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     sWVar.putAtt("_CoordinateAxes","s_w");
     sWVar.putAtt("_CoordinateAxisType","GeoZ");
     sWVar.putAtt("_CoordinateZisPositive","up");
-    sWVar.putVar(sW());
+    sWVar.putVar(_data.sW());
 
     vector<NcDim> etaRhoXiRhoDims;
     etaRhoXiRhoDims.push_back(etaRhoDim);
@@ -90,7 +88,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     latRhoVar.putAtt("standard_name","latitude");
     latRhoVar.putAtt("field","lat_rho, scalar");
     latRhoVar.putAtt("_coordinateaxistype","lat");
-    latRhoVar.putVar(lat());
+    latRhoVar.putVar(_data.lat());
 
     NcVar lonRhoVar = dataFile.addVar("lon_rho", ncDouble, etaRhoXiRhoDims);
     lonRhoVar.putAtt("long_name","longitude of rho-points");
@@ -98,20 +96,20 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     lonRhoVar.putAtt("standard_name","longitude");
     lonRhoVar.putAtt("field","lon_rho, scalar");
     lonRhoVar.putAtt("_coordinateaxistype","lon");
-    lonRhoVar.putVar(lon());
+    lonRhoVar.putVar(_data.lon());
 
     NcVar maskRhoVar = dataFile.addVar("mask_rho", ncDouble, etaRhoXiRhoDims);
     maskRhoVar.putAtt("long_name","mask on RHO-points");
     maskRhoVar.putAtt("coordinates","lon_rho lat_rho");
     maskRhoVar.putAtt("units","1");
-    maskRhoVar.putVar(mask());
+    maskRhoVar.putVar(_data.mask());
 
     NcVar hVar = dataFile.addVar("h", ncDouble, etaRhoXiRhoDims);
     hVar.putAtt("long_name","bathymetry at RHO-point");
     hVar.putAtt("units","meter");
     hVar.putAtt("coordinates","lon_rho lat_rho");
     hVar.putAtt("field","bath, scalar");
-    hVar.putVar(h());
+    hVar.putVar(_data.h());
 
     vector<NcDim> oceanTimeEtaRhoXiRhoDims;
     oceanTimeEtaRhoXiRhoDims.push_back(oceanTimeDim);
@@ -125,7 +123,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     varZeta.putAtt("coordinates","lon_rho lat_rho ocean_time");
     varZeta.putAtt("field","free-surface, scalar, series");
     varZeta.putAtt("_FillValue",ncFloat, 9.99999993e+36);
-    varZeta.putVar(zeta());
+    varZeta.putVar(_data.zeta());
 
     vector<NcDim> oceanTimeSRhoEtaRhoXiRhoDims;
     oceanTimeSRhoEtaRhoXiRhoDims.push_back(oceanTimeDim);
@@ -142,7 +140,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     uVar.putAtt("field","u-velocity, scalar, series");
     uVar.putAtt("time","ocean_time");
     uVar.putAtt("_FillValue",ncFloat, 9.99999993e+36);
-    uVar.putVar(u());
+    uVar.putVar(_data.u());
 
     NcVar vVar = dataFile.addVar("v", ncFloat, oceanTimeSRhoEtaRhoXiRhoDims);
     vVar.putAtt("long_name","v-momentum component at RHO-points");
@@ -153,7 +151,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     vVar.putAtt("field","v-velocity, scalar, series");
     vVar.putAtt("time","ocean_time");
     vVar.putAtt("_FillValue",ncFloat, 9.99999993e+36);
-    vVar.putVar(v());
+    vVar.putVar(_data.v());
 
     vector<NcDim> oceanTimeSWEtaRhoXiRhoDims;
     oceanTimeSWEtaRhoXiRhoDims.push_back(oceanTimeDim);
@@ -170,7 +168,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     wVar.putAtt("field","w-velocity, scalar, series");
     wVar.putAtt("time","ocean_time");
     wVar.putAtt("_FillValue",ncFloat, 9.99999993e+36);
-    wVar.putVar(w());
+    wVar.putVar(_data.w());
 
     NcVar aktVar = dataFile.addVar("akt", ncFloat, oceanTimeSWEtaRhoXiRhoDims);
     aktVar.putAtt("long_name","temperature vertical diffusion coefficient");
@@ -180,13 +178,17 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     aktVar.putAtt("coordinates","lon_rho lat_rho s_w ocean_time");
     aktVar.putAtt("field","AKt, scalar, series");
     aktVar.putAtt("time","ocean_time");
-    aktVar.putVar(akt());
+    aktVar.putVar(_data.akt());
 
 }
 
 void OceanModelAdapter::process() {
     LOG4CPLUS_ERROR(logger,"OceanModelAdapter::process must be implemented in a concrete adapter!");
     exit(-1);
+}
+
+oceanmodel_data *OceanModelAdapter::dataptr() {
+    return &_data;
 }
 
 
