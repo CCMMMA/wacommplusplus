@@ -49,8 +49,8 @@ class Particle {
 
         bool isAlive() const;
 
-        void move(const std::shared_ptr<Config>& config, int ocean_time_idx,
-                  const std::shared_ptr<OceanModelAdapter>& oceanModelAdapter);
+        void move(config_data *configData, int ocean_time_idx,
+                  oceanmodel_data *oceanModelData);
 
         particle_data data();
         void data(particle_data data);
