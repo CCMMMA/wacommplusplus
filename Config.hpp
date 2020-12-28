@@ -17,11 +17,23 @@ using namespace std;
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
 
+struct config_data {
+    bool random{};
+    double deltat{};
+    double dti{};
+    double survprob{};
+    double tau0{};
+    double sv{};
+    double crid{};
+};
+
 class Config {
 public:
     Config();
     explicit Config(string &fileName);
     ~Config();
+
+    config_data *dataptr();
 
     string &ConfigFile();
     vector<string> &NcInputs();
@@ -58,14 +70,8 @@ private:
 
     bool dry{};
     bool useSources{};
-    bool random{};
 
-    double deltat{};
-    double dti{};
-    double survprob{};
-    double tau0{};
-    double sv{};
-    double crid{};
+    config_data _data;
 
     vector<string> ncInputs;
     string ncOutputRoot;

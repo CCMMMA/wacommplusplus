@@ -22,7 +22,6 @@ Config::Config(string &fileName): configFile(fileName) {
         // the configuration is a fortran style namelist
         fromNamelist(infile);
     }
-    LOG4CPLUS_INFO(logger, "...done!");
 
 }
 
@@ -36,22 +35,22 @@ void Config::setDefault() {
     dry = false;
 
     // Input time step in s
-    deltat=3600;
+    _data.deltat=3600;
 
     // Integration time in s
-    dti=30;
+    _data.dti=30;
 
     // To be clarified
-    tau0=86400.0;
+    _data.tau0=86400.0;
 
     // Probability of particle surviving
-    survprob=1.0e-4;
+    _data.survprob=1.0e-4;
 
     // Sedimentation velocity
-    sv=0;
+    _data.sv=0;
 
     // Reduction Coefficient
-    crid=1;
+    _data.crid=1;
 
     // File system root where the outputs will be saved ( default current directory )
     ncOutputRoot = "";
@@ -88,7 +87,7 @@ void Config::setDefault() {
     useSources = true;
 
     // Use random leap (defaukt true. use false for model testing versus other imlementations
-    random = true;
+    _data.random = true;
 }
 
 void Config::fromNamelist(ifstream &infile) {
@@ -176,9 +175,9 @@ void Config::namelistParseChm(ifstream &infile) {
         if (keyValues.size()==2) {
             string key=Utils::trim(keyValues.at(0)," \t\r");
             if (key == "tau0") {
-                this->tau0 = stod(keyValues.at(1));
+                this->_data.tau0 = stod(keyValues.at(1));
             } else if (key == "survprob") {
-                this->survprob = stod(keyValues.at(1));
+                this->_data.survprob = stod(keyValues.at(1));
             }
         }
     }
@@ -260,20 +259,20 @@ void Config::fromJson(ifstream &infile) {
 
 }
 
-double Config::Dti() const { return dti; }
+double Config::Dti() const { return _data.dti; }
 
-double Config::Deltat() const { return deltat; }
+double Config::Deltat() const { return _data.deltat; }
 
 double Config::Survprob() const {
-    return survprob;
+    return _data.survprob;
 }
 
 double Config::Tau0() const {
-    return tau0;
+    return _data.tau0;
 }
 
 double Config::SedimentationVelocity() const {
-    return sv;
+    return _data.sv;
 }
 
 bool Config::Dry() const {
@@ -285,7 +284,7 @@ void Config::Dry(bool value) {
 }
 
 double Config::ReductionCoefficient() const {
-    return crid;
+    return _data.crid;
 }
 
 string Config::RestartFile() const {
@@ -329,11 +328,15 @@ void Config::UseSources(bool value) {
 }
 
 void Config::Random(bool value) {
-    random=value;
+    _data.random=value;
 }
 
 bool Config::Random() const {
-    return random;
+    return _data.random;
+}
+
+config_data *Config::dataptr() {
+    return &_data;
 }
 
 
