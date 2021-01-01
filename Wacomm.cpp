@@ -7,6 +7,7 @@
 #include <chrono>
 #include <utility>
 #include "OceanModelAdapters/ROMSAdapter.hpp"
+#include "JulianDate.hpp"
 
 #ifdef USE_MPI
 #include <mpi.h>
@@ -51,9 +52,11 @@ void Wacomm::run()
     size_t xi_rho=oceanModelAdapter->Mask().Ny();
 
 
-    LOG4CPLUS_INFO(logger,"ocean_time:" + std::to_string(ocean_time));
-    LOG4CPLUS_INFO(logger,"s_rho:" + std::to_string(s_rho));
-    LOG4CPLUS_INFO(logger,"eta_rho:" + std::to_string(eta_rho) + " xi_rho:" + std::to_string(xi_rho));
+    if (world_rank==0) {
+        LOG4CPLUS_INFO(logger, "ocean_time:" + std::to_string(ocean_time));
+        LOG4CPLUS_INFO(logger, "s_rho:" + std::to_string(s_rho));
+        LOG4CPLUS_INFO(logger, "eta_rho:" + std::to_string(eta_rho) + " xi_rho:" + std::to_string(xi_rho));
+    }
 
     Array4<float> conc(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
 
@@ -69,10 +72,12 @@ void Wacomm::run()
     }
 
     if (!config->Dry()) {
+        Calendar cal;
+
         for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
             // Record start time
             auto start = std::chrono::high_resolution_clock::now();
-            int nParticles=particles->size();
+
 
 
 #ifdef USE_MPI
@@ -87,9 +92,19 @@ void Wacomm::run()
 
             if (world_rank==0) {
 
-                LOG4CPLUS_INFO(logger, "Input step:" << ocean_time_idx);
+
+                // Time in "seconds since 1968-05-23 00:00:00"
+                double modJulian=oceanModelAdapter->OceanTime()(ocean_time_idx);
+
+                // Convert time in days based
+                modJulian=modJulian/86400;
+
+                JulianDate::fromModJulian(modJulian, cal);
+
+                LOG4CPLUS_INFO(logger, "Simulating:" << oceanModelAdapter->OceanTime()(ocean_time_idx) << " - " << cal.asNCEPdate());
                 LOG4CPLUS_INFO(logger, "Sources:" << sources->size());
 
+                // Getthe number of sources
                 int nSources = sources->size();
 
                 #pragma omp parallel for default(none) shared(nSources, ocean_time_idx)
@@ -120,7 +135,7 @@ void Wacomm::run()
                 }
 #endif
             }
-
+            int nParticles=particles->size();
 #ifdef USE_MPI
             MPI_Bcast(send_counts.get(),world_size,MPI_INT,0,MPI_COMM_WORLD);
             int elementToProcess=send_counts.get()[world_rank];
@@ -155,19 +170,20 @@ void Wacomm::run()
 #else
             pLocalParticles=particles.get();
 #endif
-            LOG4CPLUS_INFO(logger, world_rank << ": Using 1/" << world_size << " processes, each on " << ompMaxThreads << " threads.");
-
             LOG4CPLUS_INFO(logger, world_rank<< ": Local particles:" << pLocalParticles->size());
 
             // Record start time
             auto startLocal = std::chrono::high_resolution_clock::now();
 
-            #pragma omp parallel for default(none) shared(iterations, pLocalParticles, ocean_time_idx, nParticles)
+            config_data *pConfigData = config->dataptr();
+            oceanmodel_data *pOceanModelData = oceanModelAdapter->dataptr();
+
+            #pragma omp parallel for default(none) shared(iterations, ocean_time_idx, pConfigData, pLocalParticles, pOceanModelData)
             for (int idx = 0; idx < pLocalParticles->size(); idx++) {
 #ifdef DEBUG
                 LOG4CPLUS_DEBUG(logger, world_rank<< ": Particle " << idx );
 #endif
-                pLocalParticles->at(idx).move(config->dataptr(), ocean_time_idx, oceanModelAdapter->dataptr());
+                pLocalParticles->at(idx).move(pConfigData, ocean_time_idx, pOceanModelData);
 #ifdef USE_OMP
                 iterations[omp_get_thread_num()]++;
 #endif
@@ -235,24 +251,31 @@ void Wacomm::run()
             }
             LOG4CPLUS_INFO(logger,"-------------------------------");
         }
-    }
-    if (world_rank==0) {
-        LOG4CPLUS_INFO(logger, "Saving restart:" << "");
-        particles->save("out.txt");
-        LOG4CPLUS_INFO(logger, "Saving history:" << "");
-        save(conc);
+
+        if (world_rank==0) {
+            if (config->SaveHistory()) {
+
+                string historyFilename = config->HistoryFile() + cal.asNCEPdate() + ".txt";
+                LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
+                particles->save(historyFilename);
+            }
+
+            string ncOutputFilename=config->NcOutputRoot()+cal.asNCEPdate()+".nc";
+            LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
+            save(ncOutputFilename,conc);
+        }
     }
 };
 Wacomm::~Wacomm() = default;
 
-void Wacomm::save(Array4<float> &conc) {
+void Wacomm::save(string &fileName, Array4<float> &conc) {
 
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
     size_t s_rho=oceanModelAdapter->SRho().Nx();
     size_t eta_rho=oceanModelAdapter->Mask().Nx();
     size_t xi_rho=oceanModelAdapter->Mask().Ny();
 
-    std:string fileName="out.nc";
+
 
     LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
 
