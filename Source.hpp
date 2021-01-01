@@ -15,17 +15,26 @@ using Random = effolkronium::random_static;
 class Source {
 public:
     Source();
-    Source(string id, double k, double j, double i, int start, int end, int particlesPerHour, int mode);
+    Source(string id, double k, double j, double i, double start, double end, int particlesPerHour, int mode);
     ~Source();
 
-    void emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles, double tpart);
+    void emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles, double currentOceanTime);
+
+    string Id();
+    double K();
+    double J();
+    double I();
+    double Start();
+    double End();
+    int ParticlesPerHour();
+    int Mode();
 
     void Id(string value);
     void K(double value);
     void J(double value);
     void I(double value);
-    void Start(int value);
-    void End(int value);
+    void Start(double value);
+    void End(double value);
     void ParticlesPerHour(int value);
     void Mode(int value);
 
@@ -36,8 +45,8 @@ private:
     double k;
     double j;
     double i;
-    int start;
-    int end;
+    double start;
+    double end;
     int particlesPerHour;
     int mode;
 
