@@ -34,7 +34,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     size_t eta_rho=_data.mask.Nx();
     size_t xi_rho=_data.mask.Ny();
 
-    LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
+    LOG4CPLUS_DEBUG(logger,"Saving in: " << fileName);
 
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, NcFile::replace);
@@ -190,5 +190,175 @@ void OceanModelAdapter::process() {
 oceanmodel_data *OceanModelAdapter::dataptr() {
     return &_data;
 }
+
+void OceanModelAdapter::kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon) {
+    // Get the integer part and the fraction part of particle k
+    auto kI=(int)k; double kF=k-kI;
+
+    // Get the integer part and the fraction part of particle j
+    auto jI=(int)j; double jF=j-jI;
+
+    // Get the integer part and the fraction part of particle i
+    auto iI=(int)i; double iF=i-iI;
+
+    // Check if the source must be skipped
+    if (jI < 0 || iI < 0 || jI>=_data.mask.Nx() || iI>=_data.mask.Ny()) {
+        lon = 1e37;
+        lat = 1e37;
+        dep = 1e37;
+        return;
+    }
+
+    // Perform the bilinear interpolation (2D) in order to get
+    // the lat at the source position.
+    double lon1=_data.lon(jI,    iI)    *(1.0-iF)  *(1.0-jF);
+    double lon2=_data.lon(jI+1,  iI)    *(1.0-iF)  *     jF;
+    double lon3=_data.lon(jI+1,  iI+1)  *     iF   *     jF;
+    double lon4=_data.lon(jI  ,  iI+1)  *     iF   *(1.0-jF);
+
+    // The current lon (longitude) at the source position
+    lon=lon1+lon2+lon3+lon4;
+
+
+    // Perform the bilinear interpolation (2D) in order to get
+    // the lat at the source position.
+    double lat1=_data.lat(jI,    iI)    *(1.0-iF)  *(1.0-jF);
+    double lat2=_data.lat(jI+1,  iI)    *(1.0-iF)  *     jF;
+    double lat3=_data.lat(jI+1,  iI+1)  *     iF   *     jF;
+    double lat4=_data.lat(jI  ,  iI+1)  *     iF   *(1.0-jF);
+
+    // The current lat (latitude) at the source position
+    lat=lat1+lat2+lat3+lat4;
+
+    // Perform the bilinear interpolation (2D) in order to get
+    // the h (depth) at the particle position.
+    double h1=_data.h(jI,    iI)    *(1.0-iF)  *(1.0-jF);
+    double h2=_data.h(jI+1,  iI)    *(1.0-iF)  *     jF;
+    double h3=_data.h(jI+1,  iI+1)  *     iF   *     jF;
+    double h4=_data.h(jI  ,  iI+1)  *     iF   *(1.0-jF);
+
+    // The current h (depth) at the particle position
+    double h=h1+h2+h3+h4;
+
+    double aDep = abs(
+            abs(h * _data.sW(kI-1)) -
+            abs(h * _data.sW(kI))
+    );
+    dep=-(h*abs(_data.sW(kI))+abs(kF*aDep));
+}
+
+void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double &k, double &j, double &i) {
+    int minK, minJ, minI;
+    double d, d1, d2, dd, minD=1e37;
+
+    double latRad=0.0174533*lat;
+    double lonRad=0.0174533*lon;
+
+    size_t eta_rho = _data.mask.Nx();
+    size_t xi_rho = _data.mask.Ny();
+    size_t s_w = _data.w.Ny();
+
+    for (int j=0; j<eta_rho; j++) {
+        for (int i=0; i<eta_rho; i++) {
+            // Calculate the distance in radiants of latitude between the grid cell where is
+            // currently located the particle and the next one.
+            d1=(latRad-_data.latRad(j,i));
+
+            // Calculate the distance in radiants of longitude between the grid cell where is
+            // currently located the particle and the next one.
+            d2=(lonRad-_data.lonRad(j,i));
+
+            // Calculate the grid cell diagonal horizontal size using the Haversine method
+            // https://www.movable-type.co.uk/scripts/latlong.html
+            dd=pow(sin(0.5*d1),2) +
+               pow(sin(0.5*d2),2)*
+               cos(latRad)*
+               cos(_data.latRad(j,i));
+            d=2.0*atan2(pow(dd,.5),pow(1.0-dd,.5))*6371.0;
+
+            if (d<minD) {
+                minD=d;
+                minJ=j;
+                minI=i;
+            }
+        }
+    }
+
+    double dLat=latRad-_data.latRad(minJ, minI);
+    double dLon=lonRad-_data.lonRad(minJ, minI);
+    int otherJ=minJ+sgn(dLat);
+    int otherI=minI+sgn(dLon);
+    if (dLat!=0) {
+        double aLat = abs(_data.latRad(minJ, minI)-_data.latRad(otherJ, otherI));
+        double jF=abs(dLat)/aLat;
+        j=min(minJ,otherJ)+jF;
+    } else {
+        j=minJ;
+    }
+
+    if (dLon!=0) {
+        double aLon = abs(_data.lonRad(minJ, minI)-_data.lonRad(otherJ, otherI));
+        double iF=abs(dLon)/aLon;
+        i=min(minI,otherI)+iF;
+    } else {
+        i=minI;
+    }
+
+    // Get the integer part and the fraction part of particle j
+    auto jI=(int)j; double jF=j-jI;
+
+    // Get the integer part and the fraction part of particle i
+    auto iI=(int)i; double iF=i-iI;
+
+    // Convert dep to positive down
+    dep = abs(dep);
+
+    // Perform the bilinear interpolation (2D) in order to get
+    // the h (depth) at the particle position.
+    double h1=_data.h(jI,    iI)    *(1.0-iF)  *(1.0-jF);
+    double h2=_data.h(jI+1,  iI)    *(1.0-iF)  *     jF;
+    double h3=_data.h(jI+1,  iI+1)  *     iF   *     jF;
+    double h4=_data.h(jI  ,  iI+1)  *     iF   *(1.0-jF);
+
+    // The current h (depth) at the particle position
+    double h=h1+h2+h3+h4;
+
+    // Check if the depth is deeper than h
+    if (dep>h) {
+        // The position is about at the bottom
+        k=-(int) s_w + 1;
+    } else
+        // CHeck if it is on the surface
+        if (dep==0) {
+            k=-1;
+    } else {
+            minD = 1e37;
+            double hs;
+            for (int k = (-(int) s_w + 1); k <= 0; k++) {
+                hs = h * abs(_data.sW(k));
+                d = abs(hs - dep);
+                if (d < minD) {
+                    minD = d;
+                    minK = k;
+                }
+            }
+            double dDep = dep - h * abs(_data.sW(minK));
+            if (dDep != 0) {
+                int otherK = minK + sgn(dDep);
+                double aDep = abs(
+                        abs(h * _data.sW(minK)) -
+                        abs(h * _data.sW(otherK))
+                );
+                double kF = abs(dDep) / aDep;
+                k = min(minK, otherK) + kF;
+            } else {
+                k = minK;
+            }
+        }
+
+}
+
+// Returns -1 if a < 0 and 1 if a > 0
+double OceanModelAdapter::sgn(double a) { return (a > 0) - (a < 0); }
 
 

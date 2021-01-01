@@ -42,6 +42,9 @@ public:
 
     virtual void process();
 
+    void kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon);
+    void deplatlon2kji(double dep, double lat, double lon, double &k, double &j, double &i);
+
     oceanmodel_data *dataptr();
 
     Array1<double> &OceanTime();
@@ -69,6 +72,7 @@ private:
     friend class WacommPlusPlus;
     oceanmodel_data _data{};
 
+    double sgn(double a);
 };
 
 
