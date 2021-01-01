@@ -19,16 +19,14 @@ using namespace std;
 class Sources: public vector<Source> {
 public:
     Sources();
-    Sources(string &fileName);
     ~Sources();
 
-    void save(string &fileName);
+    void loadFromNamelist(string &fileName);
+    void loadFromJson(string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
+    void saveAsJson(string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
 
 private:
     log4cplus::Logger logger;
-
-    void fromNamelist(ifstream &ifs);
-    void fromJson(ifstream &ifs);
 
     void namelistParseEms(ifstream &ifstream);
 };
