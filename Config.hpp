@@ -41,8 +41,7 @@ public:
     void Dry(bool value);
     bool Dry() const;
 
-    void UseSources(bool value);
-    bool UseSources() const;
+
 
     void Random(bool value);
     bool Random() const;
@@ -54,8 +53,23 @@ public:
     double Deltat() const;
     double SedimentationVelocity() const;
 
+    void SaveHistory(bool value);
+    bool SaveHistory() const;
+    string HistoryFile() const;
+    void HistoryFile(string value);
+
+    string NcOutputRoot() const;
+    void NcOutputRoot(string value);
+
+    void UseRestart(bool value);
     bool UseRestart() const;
     string RestartFile() const;
+    void RestartFile(string value);
+
+    bool UseSources() const;
+    void UseSources(bool value);
+    string SourcesFile() const;
+    void SourcesFile(string value);
 
     void StartTimeIndex(int value);
     int StartTimeIndex();
@@ -69,7 +83,6 @@ private:
     string configFile;
 
     bool dry{};
-    bool useSources{};
 
     config_data _data;
 
@@ -78,25 +91,29 @@ private:
     double timeStep;
     int nHour;
     int startTime;
+
     bool useRestart;
     string restartFile;
     double restartInterval;
+
+    bool useSources;
+    string sourcesFile;
+
     bool saveHistory;
     string historyFile;
     string initHistoryTime;
     double historyInterval;
 
     void setDefault();
+
     void fromNamelist(ifstream &ifs);
     void fromJson(ifstream &ifs);
 
     void namelistParseIo(ifstream &ifstream);
-
     void namelistParseChm(ifstream &infile);
-
     void namelistParseRst(ifstream &infile);
-
     void namelistParseHst(ifstream &infile);
+
 };
 
 

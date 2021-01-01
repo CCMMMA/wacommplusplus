@@ -4,7 +4,9 @@
 
 #include "Config.hpp"
 
-Config::Config() = default;
+Config::Config() {
+    setDefault();
+}
 
 Config::Config(string &fileName): configFile(fileName) {
     setDefault();
@@ -13,7 +15,7 @@ Config::Config(string &fileName): configFile(fileName) {
     basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
-    LOG4CPLUS_INFO(logger, "Reading config file:" + fileName);
+    LOG4CPLUS_DEBUG(logger, "Reading config file:" + fileName);
     std::ifstream infile(fileName);
     if(fileName.substr(fileName.find_last_of(".") + 1) == "json") {
         // The configuration is a json
@@ -26,7 +28,7 @@ Config::Config(string &fileName): configFile(fileName) {
 }
 
 Config::~Config() {
-    setDefault();
+
 }
 
 
@@ -83,8 +85,11 @@ void Config::setDefault() {
     // Save history each seconds (default 3600, 1h)
     historyInterval = 3600;
 
-    // Use sources (defult true)
+    // Use sources (defalt true)
     useSources = true;
+
+    // Set the sources file name (defauly empty)
+    sourcesFile = "";
 
     // Use random leap (defaukt true. use false for model testing versus other imlementations
     _data.random = true;
@@ -117,7 +122,7 @@ void Config::fromNamelist(ifstream &infile) {
 void Config::namelistParseIo(ifstream &infile) {
     std::string line;
 
-    LOG4CPLUS_INFO(logger, "Parsing io section");
+    LOG4CPLUS_DEBUG(logger, "Parsing io section");
 
     // Start the input/output section
     while (std::getline(infile, line))
@@ -143,7 +148,7 @@ void Config::namelistParseIo(ifstream &infile) {
                     this->ncInputs.push_back(ncInput);
                 }
             } else if (key == "nc_output_root") {
-                this->ncOutputRoot = keyValues.at(1);
+                this->ncOutputRoot = Utils::trim(keyValues.at(1)," ',");
             } else if (key == "starttime") {
                 this->startTime = stoi(keyValues.at(1));
             } else if (key == "nHour") {
@@ -158,7 +163,7 @@ void Config::namelistParseIo(ifstream &infile) {
 void Config::namelistParseChm(ifstream &infile) {
     std::string line;
 
-    LOG4CPLUS_INFO(logger, "Parsing chm section");
+    LOG4CPLUS_DEBUG(logger, "Parsing chm section");
 
     // Start the Chem section
     while (std::getline(infile, line))
@@ -186,7 +191,7 @@ void Config::namelistParseChm(ifstream &infile) {
 void Config::namelistParseRst(ifstream &infile) {
     std::string line;
 
-    LOG4CPLUS_INFO(logger, "Parsing rst section");
+    LOG4CPLUS_DEBUG(logger, "Parsing rst section");
 
     // Start the Restart section
     while (std::getline(infile, line))
@@ -221,7 +226,7 @@ void Config::namelistParseRst(ifstream &infile) {
 void Config::namelistParseHst(ifstream &infile) {
     std::string line;
 
-    LOG4CPLUS_INFO(logger, "Parsing hst section");
+    LOG4CPLUS_DEBUG(logger, "Parsing hst section");
 
     // Start the History section
     while (std::getline(infile, line))
@@ -245,7 +250,7 @@ void Config::namelistParseHst(ifstream &infile) {
                     this->saveHistory=false;
                 }
             } else if (key == "historyfile") {
-                this->historyFile = keyValues.at(1);
+                this->historyFile = Utils::trim(keyValues.at(1)," ',");
             } else if (key == "initthsttime") {
                 this->initHistoryTime = keyValues.at(1);
             } else if (key == "outfreq") {
@@ -319,13 +324,7 @@ int Config::NumberOfInputs() {
     return nHour;
 }
 
-bool Config::UseSources() const {
-    return useSources;
-}
 
-void Config::UseSources(bool value) {
-    useSources=value;
-}
 
 void Config::Random(bool value) {
     _data.random=value;
@@ -339,4 +338,51 @@ config_data *Config::dataptr() {
     return &_data;
 }
 
+bool Config::UseSources() const {
+    return useSources;
+}
+
+void Config::UseSources(bool value) {
+    useSources = value;
+}
+
+void Config::UseRestart(bool value) {
+    useRestart = value;
+}
+
+void Config::RestartFile(string value) {
+    restartFile = value;
+}
+
+string Config::SourcesFile() const {
+    return sourcesFile;
+}
+
+void Config::SourcesFile(string value) {
+    sourcesFile=value;
+}
+
+string Config::NcOutputRoot() const {
+    return ncOutputRoot;
+}
+
+void Config::NcOutputRoot(string value) {
+    ncOutputRoot=value;
+}
+
+void  Config::SaveHistory(bool value) {
+    saveHistory=value;
+}
+
+void  Config::HistoryFile(string value) {
+    historyFile = value;
+}
+
+bool Config::SaveHistory() const {
+    return saveHistory;
+}
+
+string Config::HistoryFile() const {
+    return historyFile;
+}
 
