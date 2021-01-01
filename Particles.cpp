@@ -11,14 +11,14 @@ Particles::Particles() {
     basicConfig.configure();
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
-    LOG4CPLUS_INFO(logger, "Empty Particles");
+    LOG4CPLUS_DEBUG(logger, "Empty Particles");
 }
 
 Particles::Particles(string fileName) {
 
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
-    LOG4CPLUS_INFO(logger, "Reading restart file:"+fileName);
+    LOG4CPLUS_DEBUG(logger, "Reading restart file:"+fileName);
 
     std::ifstream infile(fileName);
 
@@ -31,7 +31,7 @@ Particles::Particles(string fileName) {
         {
             double k, j, i, health, tpart;
             if (!(iss >> i >> j >> k >> health >> tpart )) { break; } // error
-            Particle particle(k, j, i, health, tpart);
+            Particle particle(k, j, i, health, tpart, -1);
             push_back(particle);
         }
         count++;
@@ -41,6 +41,7 @@ Particles::Particles(string fileName) {
 
 void Particles::save(const string& fileName)
 {
+    LOG4CPLUS_DEBUG(logger, "Saving restart file:"+fileName);
     std::ofstream outfile(fileName);
     int count = size();
     outfile << "\t" << count << endl;
