@@ -10,7 +10,7 @@ ROMSAdapter::ROMSAdapter(string &fileName): fileName(fileName) {
 
 void ROMSAdapter::process()
 {
-    LOG4CPLUS_INFO(logger,"Loading:"+fileName);
+    LOG4CPLUS_DEBUG(logger,"Loading:"+fileName);
 
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, NcFile::read);
@@ -108,7 +108,7 @@ void ROMSAdapter::process()
     Array3<float> zeta(ocean_time,eta_rho,xi_rho);
     varZeta.getVar(zeta());
 
-    LOG4CPLUS_INFO(logger,"Loaded!");
+    LOG4CPLUS_DEBUG(logger,"Loaded!");
 
     this->OceanTime().Allocate(ocean_time);
     this->SRho().Allocate(s_rho, -(int)s_rho+1);
@@ -126,38 +126,27 @@ void ROMSAdapter::process()
     this->W().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
     this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
 
-    LOG4CPLUS_INFO(logger,"Copying 1D ...");
-/*
-    for(int t=0; t<ocean_time;t++) {
-        this->OceanTime()(t)=oceanTime(t);
-    }*/
+    LOG4CPLUS_DEBUG(logger,"Copying 1D ...");
+    
     memcpy( this->OceanTime(), oceanTime(), ocean_time*sizeof(double) );
-    /*
-    for(int k=-(int)s_rho+1; k<=0;k++) {
-        this->SRho()(k)=sRho(k);
-    }*/
     memcpy( this->SRho(), sRho(), s_rho*sizeof(double) );
-    /*
-    for(int k=-(int)s_w+1; k<=0;k++) {
-        this->SW()(k)=sW(k);
-    }*/
     memcpy( this->SW(), sW(), s_w*sizeof(double) );
 
     for(int k=-(int)s_w+2; k<=0;k++) {
         this->Depth().operator()(k)=sW(k)-sW(k-1);
     }
 
-    LOG4CPLUS_INFO(logger,"Copying 2D...");
+    LOG4CPLUS_DEBUG(logger,"Copying 2D...");
 
     memcpy( this->Mask(), mask_rho(), eta_rho*xi_rho*sizeof(double) );
     memcpy( this->Lat(), lat_rho(), eta_rho*xi_rho*sizeof(double) );
     memcpy( this->Lon(), lon_rho(), eta_rho*xi_rho*sizeof(double) );
     memcpy( this->H().operator double *(), h(), eta_rho*xi_rho*sizeof(double) );
 
-    LOG4CPLUS_INFO(logger,"Copying 3D...");
+    LOG4CPLUS_DEBUG(logger,"Copying 3D...");
     memcpy( this->Zeta().operator float *(), zeta(), ocean_time*eta_rho*xi_rho*sizeof(float) );
 
-    LOG4CPLUS_INFO(logger,"Convert lon & lat in radiants...");
+    LOG4CPLUS_DEBUG(logger,"Convert lon & lat in radiants...");
     // lon_u, lat_v in radiants
     #pragma omp for collapse(2)
     for ( int j=0; j<eta_rho;j++) {
@@ -167,21 +156,18 @@ void ROMSAdapter::process()
         }
     }
 
-    LOG4CPLUS_INFO(logger,"Interpolation 2D...");
+    LOG4CPLUS_DEBUG(logger,"Interpolation 2D...");
     uv2rho(mask_rho, mask_u, mask_v, u,v);
 
-    LOG4CPLUS_INFO(logger,"Interpolation 3D...");
-    //wakt2rho(mask_rho,mask_u, mask_v, w, akt);
+    LOG4CPLUS_DEBUG(logger,"Interpolation 3D...");
     wakt2wakt(mask_rho, w, akt);
-
-    LOG4CPLUS_INFO(logger,"...done!");
 }
 
 void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
                          Array4<float>& u, Array4<float>& v) {
     float uw1, uw2, vw1, vw2;
 
-    LOG4CPLUS_INFO(logger,"uv2rho");
+    LOG4CPLUS_DEBUG(logger,"uv2rho");
 
     size_t ocean_time = u.Nx();
     size_t s_rho = u.Ny();
@@ -248,7 +234,7 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
                            Array4<float>& w, Array4<float>& akt ) {
     float ww0, ww1, ww2, ww3, aktw0, aktw1, aktw2, aktw3;
 
-    LOG4CPLUS_INFO(logger,"wakt2rho");
+    LOG4CPLUS_DEBUG(logger,"wakt2rho");
 
     size_t ocean_time = w.Nx();
     size_t s_w = w.Ny();
@@ -327,7 +313,7 @@ void ROMSAdapter::wakt2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Arr
 void ROMSAdapter::wakt2wakt(Array2<double>& mask_rho, Array4<float>& w, Array4<float>& akt ) {
     float ww0, ww1, ww2, ww3, aktw0, aktw1, aktw2, aktw3;
 
-    LOG4CPLUS_INFO(logger,"wakt2rho");
+    LOG4CPLUS_DEBUG(logger,"wakt2rho");
 
     size_t ocean_time = w.Nx();
     size_t s_w = w.Ny();
