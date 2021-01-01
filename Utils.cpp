@@ -4,6 +4,8 @@
 
 #include "Utils.hpp"
 
+
+
 std::string Utils::getEnvVar(std::string const &key) {
     char *val = getenv(key.c_str());
     return val == NULL ? std::string("") : std::string(val);
