@@ -36,13 +36,14 @@ struct particle_data {
     double i;
     double health;
     double tpart;
+    double emitOceanTime;
 };
 
 class Particle {
     public:
         Particle() = default;
-        Particle(double k, double j, double i, double health, double tpart);
-        Particle(double k, double j, double i, double tpart);
+        Particle(double k, double j, double i, double health, double tpart, double emitOceanTime);
+        Particle(double k, double j, double i, double emitOceanTime);
         Particle(particle_data data);
 
         ~Particle();

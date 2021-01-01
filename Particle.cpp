@@ -9,7 +9,7 @@
 
 
 Particle::Particle(double k, double j, double i,
-                   double health, double tpart)
+                   double health, double tpart, double emitOceanTime)
 {
 #ifdef DEBUG
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -20,9 +20,11 @@ Particle::Particle(double k, double j, double i,
     _data.i=i;
     _data.health=health;
     _data.tpart=tpart;
+    _data.emitOceanTime=emitOceanTime;
+
 }
 
-Particle::Particle(double k, double j, double i, double tpart) {
+Particle::Particle(double k, double j, double i, double emitOceanTime) {
 
 #ifdef DEBUG
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -31,7 +33,8 @@ Particle::Particle(double k, double j, double i, double tpart) {
     _data.k=k;
     _data.j=j;
     _data.i=i;
-    _data.tpart=tpart;
+    _data.emitOceanTime=emitOceanTime;
+    _data.tpart=0;
     _data.health=health0;
 }
 
@@ -99,7 +102,7 @@ void Particle::move(config_data *configData, int ocean_time_idx,
     for (int t=0;t<iint;t++) {
 
         // Check if the paticle is not yet active
-        if (_data.tpart>(oceanModelData->oceanTime(ocean_time_idx)+(t*dti))) {
+        if (_data.emitOceanTime>(oceanModelData->oceanTime(ocean_time_idx)+(t*dti))) {
             // The particle is not already active (already emitted, but not active)
             break;
         }
@@ -135,6 +138,7 @@ void Particle::move(config_data *configData, int ocean_time_idx,
             // no reason to continue,  exit the integration loop
             break;
         }
+
         // Check if the particle beached
         if (oceanModelData->mask(jI,iI)<=0) {
 
