@@ -81,3 +81,59 @@ Download the data.
 1) Select *data | Debug*
 2) Click on menu *Build*, option *Build data*
 3) Wait
+
+# Running
+Be sure to have a configuration file.
+WaComM++ can read Fortran namelists used by classic WaComM implementation (https://github.com/ccmmma/wacomm).
+If possible, use native json configuration file.
+
+## Vanilla (no MPI, no OMP, no acceleration)
+WaComM++ can be used on machine with really poor computing resources, nevertheless production an High-Performace
+Computing cluster is warmly raccomanded.
+
+```bash
+./wacommplusplus
+```
+
+Automatically search for namelist.wacomm or wacomm.json configuration file.
+
+```bash
+./wacommplusplus -c namelist|json
+```
+
+Use a namelist or a json configuration file.
+
+## Shared memory parallelism (OpenMP)
+WaComM++ supports shared memory parallelization using OpenMP threads.
+Select the number of threads to use exporting the OMP_NUM_THREADS environment variable.
+Due to the embarassing parallel algorithm, there is no limitation in the number of used threads.
+
+```bash
+export OMP_NUM_THREADS=n
+./wacommplusplus
+```
+
+## Distributed memory parallelism (Open MPI)
+WaComM++ supports distributed memory parallelization using the Open MPI library.
+Select the number of process to use specifying the -n or -np mpirun parameter.
+Due to the embarassing parallel algorithm, there is no limitation in the number of used processes.
+
+```bash
+mpirun -n np ./wacommplusplus
+```
+
+If WaComM++ have been compiled with bouth USE_MPI and USE_OMP options, it is possible to balance the number of threads
+for each prohect.
+
+Let be n the number of threads per process and np the number of processes, WaCom++ can be run as
+follows:
+
+```bash
+export OMP_NUM_THREADS=n
+mpirun -n np ./wacommplusplus
+```
+
+NB: the overall performance are strictly influenced by the architecture used.
+
+# Parallelization schema
+...
