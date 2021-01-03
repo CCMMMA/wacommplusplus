@@ -353,18 +353,21 @@ void Particle::move(config_data *configData, int ocean_time_idx,
         int jdetI=(int)(jdet);
         int idetI=(int)(idet);
 
-        // Check if the candidate new particle position is on land (mask=0)
-        if ( oceanModelData->mask(jdetI,idetI) <= 0.0 ) {
-            // Reflect the particle
-            if ( idetI < iI ) {
-                idet=(double)iI + abs(_data.i-idet);
-            } else if ( idetI > iI ) {
-                idet=(double)idetI- mod(idet,1.0);
-            }
-            if ( jdetI < jdet ) {
-                jdet=(double)jdetI+ abs(_data.j-jdet);
-            } else if ( jdetI > jI ) {
-                jdet=(double)jdetI - mod(jdet,1.0);
+        // Check if the candidate position is within the domain
+        if (jdetI>= 0 && idetI >= 0 && jdetI<eta_rho && idetI <xi_rho) {
+            // Check if the candidate new particle position is on land (mask=0)
+            if (oceanModelData->mask(jdetI, idetI) <= 0.0) {
+                // Reflect the particle
+                if (idetI < iI) {
+                    idet = (double) iI + abs(_data.i - idet);
+                } else if (idetI > iI) {
+                    idet = (double) idetI - mod(idet, 1.0);
+                }
+                if (jdetI < jdet) {
+                    jdet = (double) jdetI + abs(_data.j - jdet);
+                } else if (jdetI > jI) {
+                    jdet = (double) jdetI - mod(jdet, 1.0);
+                }
             }
         }
 
