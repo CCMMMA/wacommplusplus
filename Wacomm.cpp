@@ -31,10 +31,10 @@ Wacomm::Wacomm(std::shared_ptr<Config> config,
 
 void Wacomm::run()
 {
-    LOG4CPLUS_INFO(logger,"Dry mode:" << config->Dry() );
+    LOG4CPLUS_DEBUG(logger,"Dry mode:" << config->Dry() );
 
     int world_size=1, world_rank=0;
-    int ompMaxThreads=1;
+    int ompMaxThreads=1, ompThreadNum=0;
 
 #ifdef USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -44,7 +44,7 @@ void Wacomm::run()
 #ifdef USE_OMP
     ompMaxThreads=omp_get_max_threads();
 #endif
-    std::vector<int> iterations(ompMaxThreads, 0);
+
 
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
     size_t s_rho=oceanModelAdapter->SRho().Nx();
@@ -72,6 +72,7 @@ void Wacomm::run()
     }
 
     if (!config->Dry()) {
+        int itemSize=sizeof(struct particle_data);
         Calendar cal;
 
         for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
@@ -86,7 +87,6 @@ void Wacomm::run()
 
             std::unique_ptr<struct particle_data[]> sendbuf;
             std::unique_ptr<struct particle_data[]> recvbuf;
-            int itemSize=sizeof(struct particle_data);
 #endif
             Particles *pLocalParticles;
 
@@ -120,7 +120,7 @@ void Wacomm::run()
 
                 send_counts[0] = (int)((elementsPerProcess + spare));
                 displs[0]=0;
-                LOG4CPLUS_INFO(logger, world_rank << ": send_counts[0]=" << send_counts.get()[0] << " displ[0]=" << displs.get()[0]);
+                LOG4CPLUS_DEBUG(logger, world_rank << ": send_counts[0]=" << send_counts.get()[0] << " displ[0]=" << displs.get()[0]);
 
                 for (int i = 1; i < world_size; i++) {
                     send_counts.get()[i] = (int)(elementsPerProcess);//*itemSize);
@@ -139,38 +139,41 @@ void Wacomm::run()
 #ifdef USE_MPI
             MPI_Bcast(send_counts.get(),world_size,MPI_INT,0,MPI_COMM_WORLD);
             int elementToProcess=send_counts.get()[world_rank];
-            LOG4CPLUS_INFO(logger, world_rank << ":" << " elementToProcess:" << elementToProcess);
+            LOG4CPLUS_DEBUG(logger, world_rank << ":" << " elementToProcess:" << elementToProcess);
 
             recvbuf=std::make_unique<particle_data[]>(elementToProcess*itemSize);
 
             int mpiError;
-            constexpr std::size_t num_members = 3;
-            int lengths[num_members] = { 1, 1, 1 };
+            constexpr std::size_t num_members = 6;
+            int lengths[num_members] = { 1, 1, 1, 1, 1, 1 };
             MPI_Aint offsets[num_members] = {
                     offsetof(struct particle_data, k),
                     offsetof(struct particle_data, j),
-                    offsetof(struct particle_data, i)
+                    offsetof(struct particle_data, i),
+                    offsetof(struct particle_data, health),
+                    offsetof(struct particle_data, tpart),
+                    offsetof(struct particle_data, emitOceanTime)
             };
-            MPI_Datatype types[num_members] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
+            MPI_Datatype types[num_members] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
 
             MPI_Datatype mpiParticleData;
             MPI_Type_create_struct(num_members, lengths, offsets, types, &mpiParticleData);
             MPI_Type_commit(&mpiParticleData);
             mpiError=MPI_Scatterv(sendbuf.get(), send_counts.get(), displs.get(), mpiParticleData,
                          recvbuf.get(), elementToProcess, mpiParticleData, 0, MPI_COMM_WORLD);
-            LOG4CPLUS_INFO(logger, world_rank << ": mpiError=" << mpiError);
+            LOG4CPLUS_DEBUG(logger, world_rank << ": mpiError=" << mpiError);
 
             Particles localParticles;
             for (int idx=0;idx<elementToProcess;idx++) {
                 Particle particle(recvbuf[idx]);
                 localParticles.push_back(particle);
             }
-            //pLocalParticles=std::shared_ptr<Particles>(&localParticles);
+
             pLocalParticles=&localParticles;
 #else
             pLocalParticles=particles.get();
 #endif
-            LOG4CPLUS_INFO(logger, world_rank<< ": Local particles:" << pLocalParticles->size());
+            LOG4CPLUS_DEBUG(logger, world_rank<< ": Local particles:" << pLocalParticles->size());
 
             // Record start time
             auto startLocal = std::chrono::high_resolution_clock::now();
@@ -178,23 +181,61 @@ void Wacomm::run()
             config_data *pConfigData = config->dataptr();
             oceanmodel_data *pOceanModelData = oceanModelAdapter->dataptr();
 
-            #pragma omp parallel for default(none) shared(iterations, ocean_time_idx, pConfigData, pLocalParticles, pOceanModelData)
-            for (int idx = 0; idx < pLocalParticles->size(); idx++) {
-#ifdef DEBUG
-                LOG4CPLUS_DEBUG(logger, world_rank<< ": Particle " << idx );
+            std::vector<int> iterations(ompMaxThreads, 0);
+            
+            size_t elementsPerThread = pLocalParticles->size() / ompMaxThreads;
+            size_t sparePerThread = pLocalParticles->size() % ompMaxThreads;
+
+            size_t thread_counts[ompMaxThreads];
+            size_t thread_displs[ompMaxThreads];
+
+            thread_counts[0] = (int)((elementsPerThread + sparePerThread));
+            thread_displs[0] = 0;
+
+            for (int tidx = 1; tidx < ompMaxThreads; tidx++) {
+                thread_counts[tidx] = (int)(elementsPerThread);
+                thread_displs[tidx]=thread_counts[0]+elementsPerThread*(tidx-1);
+            }
+/*
+            if (world_rank==0) {
+                for (int tidx = 0; tidx < ompMaxThreads; tidx++) {
+                    LOG4CPLUS_INFO(logger, world_rank << ": thread " << tidx << " counts: " << thread_counts[tidx] << " displs: " << thread_displs[tidx]);
+                }
+            }
+*/
+#ifdef USE_CUDA
+            // Alloc pOceanModelData, pConfigData, pLocalParticles
+            // Copy host to device pOceanModelData, pConfigData,
+            // Copy host to device pLocalParticles
 #endif
-                pLocalParticles->at(idx).move(pConfigData, ocean_time_idx, pOceanModelData);
+
+            #pragma omp parallel default(none) private(ompThreadNum) shared (thread_counts, thread_displs, ocean_time_idx, pLocalParticles, pConfigData, pOceanModelData, iterations)
+            {
 #ifdef USE_OMP
-                iterations[omp_get_thread_num()]++;
+                ompThreadNum=omp_get_thread_num();
 #endif
+                size_t first=thread_displs[ompThreadNum];
+                size_t last=first+thread_counts[ompThreadNum];
+
+                //LOG4CPLUS_INFO(logger, ompThreadNum << ": first " << first << " last: " << last);
+
+                for (size_t idx = first; idx < last; idx++) {
+                    pLocalParticles->at(idx).move(pConfigData, ocean_time_idx, pOceanModelData);
+                    iterations[ompThreadNum]++;
+                }
             }
 
-#ifdef USE_OMP
-            int thread_index=0;
-            for (const auto i : iterations) {
-                LOG4CPLUS_INFO(logger, world_rank << ": Thread " << thread_index++ << " -> " << i << " Particles");
+            if (world_rank==0) {
+                for (int tidx = 0; tidx < ompMaxThreads; tidx++) {
+                    LOG4CPLUS_INFO(logger, world_rank << ": thread " << tidx << " particles: " << iterations[tidx]);
+                }
             }
+
+#ifdef USE_CUDA
+            // Copy device to host pLocalParticles
+            // Free pOceanModelData, pConfigData, pLocalParticles
 #endif
+
 #ifdef USE_MPI
             for (int idx=0;idx<localParticles.size();idx++) {
                 recvbuf[idx]=localParticles.at(idx).data();
@@ -227,7 +268,9 @@ void Wacomm::run()
                         int k = (int) round(particle.K());
                         int j = (int) round(particle.J());
                         int i = (int) round(particle.I());
-                        conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i) + 1;
+                        if (j>=0 && j<eta_rho && i>0 && i<xi_rho && k>=(-(int)s_rho+1) && k<=0) {
+                            conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i) + 1;
+                        }
                     }
                 }
 
@@ -249,7 +292,6 @@ void Wacomm::run()
                 double nParticlesPerSecond = nParticles / elapsed.count();
                 LOG4CPLUS_INFO(logger, "Processed " << nParticles << " in " << elapsed.count() << " seconds ("<< nParticlesPerSecond <<" particles/second).");
             }
-            LOG4CPLUS_INFO(logger,"-------------------------------");
         }
 
         if (world_rank==0) {
