@@ -47,7 +47,7 @@ void Particles::save(const string& fileName)
     outfile << "\t" << count << endl;
     for(int idx=0; idx<count; idx++) {
         Particle particle = at(idx);
-        outfile << particle.to_string() << endl;
+        outfile << particle.I() << " "  << particle.J() << " " <<  particle.K() << " " << particle.Health() << " " <<  particle.TPart() << endl;
     }
 }
 
