@@ -3,6 +3,7 @@
 //
 
 #include "WacommPlusPlus.hpp"
+#include "JulianDate.hpp"
 
 #ifdef USE_MPI
 #include <mpi.h>
@@ -24,48 +25,60 @@ WacommPlusPlus::WacommPlusPlus(std::shared_ptr<Config> config): config(config) {
 
 
 void WacommPlusPlus::run() {
-    LOG4CPLUS_DEBUG(logger,"External loop...");
+    LOG4CPLUS_DEBUG(logger, "External loop...");
 
-    int world_size=1, world_rank=0;
+    int world_size = 1, world_rank = 0;
 
 #ifdef USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 #endif
 
-    int idx=0;
-    for (auto & ncInput : config->NcInputs()) {
-        //if (idx>=config->StartTimeIndex() && idx<config->NumberOfInputs()) {
-        if (true) {
-            LOG4CPLUS_INFO(logger, "Input from Ocean Model: " << ncInput);
-            ROMSAdapter romsAdapter(ncInput);
-            romsAdapter.process();
-            shared_ptr<OceanModelAdapter> oceanModelAdapter;
-            oceanModelAdapter = make_shared<OceanModelAdapter>(romsAdapter);
+    int idx = 0;
+    for (auto &ncInput : config->NcInputs()) {
 
-            // Check if it is needed to load the sources
-            if ( config->UseSources() && sources->size()==0) {
-                string fileName=config->SourcesFile();
-                if (fileName.empty()) {
-                    sources->loadFromNamelist(config->ConfigFile());
+        LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
+        ROMSAdapter romsAdapter(ncInput);
+        romsAdapter.process();
+        shared_ptr<OceanModelAdapter> oceanModelAdapter;
+        oceanModelAdapter = make_shared<OceanModelAdapter>(romsAdapter);
+
+        Calendar cal;
+
+        // Time in "seconds since 1968-05-23 00:00:00"
+        double modJulian=oceanModelAdapter->OceanTime()(0);
+
+        // Convert time in days based
+        modJulian=modJulian/86400;
+
+        JulianDate::fromModJulian(modJulian, cal);
+
+        // Check if it is needed to load the sources
+        if (config->UseSources() && sources->empty()) {
+            string fileName = config->SourcesFile();
+            if (fileName.empty()) {
+                sources->loadFromNamelist(config->ConfigFile());
+            } else {
+                if (fileName.substr(fileName.find_last_of('.') + 1) == "json") {
+                    // The configuration is a json
+                    sources->loadFromJson(fileName, oceanModelAdapter);
                 } else {
-                    if (fileName.substr(fileName.find_last_of(".") + 1) == "json") {
-                        // The configuration is a json
-                        sources->loadFromJson(fileName, oceanModelAdapter);
-                    } else {
-                        // the configuration is a fortran style namelist
-                        sources->loadFromNamelist(fileName);
-                    }
+                    // the configuration is a fortran style namelist
+                    sources->loadFromNamelist(fileName);
                 }
             }
+        }
 
-            if (world_rank==0) {
-                string inputFilename = "input.nc";
+        if (world_rank == 0) {
+            if (config->SaveInput()) {
+                string inputFilename = config->NcInputRoot() + cal.asNCEPdate() + ".nc";
                 oceanModelAdapter->saveAsNetCDF(inputFilename);
             }
-            Wacomm wacomm(config, oceanModelAdapter, sources, particles);
-            wacomm.run();
         }
+
+        Wacomm wacomm(config, oceanModelAdapter, sources, particles);
+        wacomm.run();
+
         idx++;
     }
 }
