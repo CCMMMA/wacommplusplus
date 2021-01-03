@@ -93,6 +93,12 @@ void Config::setDefault() {
 
     // Use random leap (defaukt true. use false for model testing versus other imlementations
     _data.random = true;
+
+    // Save processed input files (default false)
+    saveInput = false;
+
+    // Root for saved input files.
+    ncInputRoot="processed/wacomm_input_";
 }
 
 void Config::fromNamelist(ifstream &infile) {
@@ -384,5 +390,21 @@ bool Config::SaveHistory() const {
 
 string Config::HistoryFile() const {
     return historyFile;
+}
+
+void Config::SaveInput(bool value) {
+    saveInput = value;
+}
+
+bool Config::SaveInput() const {
+    return saveInput;
+}
+
+string Config::NcInputRoot() const {
+    return ncInputRoot;
+}
+
+void Config::NcInputRoot(string value) {
+    ncInputRoot = value;
 }
 

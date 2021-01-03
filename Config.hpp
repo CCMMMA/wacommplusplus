@@ -61,6 +61,11 @@ public:
     string NcOutputRoot() const;
     void NcOutputRoot(string value);
 
+    void SaveInput(bool value);
+    bool SaveInput() const;
+    string NcInputRoot() const;
+    void NcInputRoot(string value);
+
     void UseRestart(bool value);
     bool UseRestart() const;
     string RestartFile() const;
@@ -88,6 +93,10 @@ private:
 
     vector<string> ncInputs;
     string ncOutputRoot;
+
+    bool saveInput;
+    string ncInputRoot;
+
     double timeStep;
     int nHour;
     int startTime;
