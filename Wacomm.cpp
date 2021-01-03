@@ -126,7 +126,7 @@ void Wacomm::run()
                     send_counts.get()[i] = (int)(elementsPerProcess);//*itemSize);
                     displs.get()[i]=send_counts.get()[0]*itemSize+elementsPerProcess*(i-1)*itemSize;
 
-                    LOG4CPLUS_INFO(logger, world_rank << ": send_counts[" << i << "]=" << send_counts.get()[i] << " displ[" << i << "]=" << displs.get()[i]);
+                    LOG4CPLUS_DEBUG(logger, world_rank << ": send_counts[" << i << "]=" << send_counts.get()[i] << " displ[" << i << "]=" << displs.get()[i]);
                 }
 
                 sendbuf=std::make_unique<struct particle_data[]>(particles->size()*itemSize);
@@ -144,17 +144,18 @@ void Wacomm::run()
             recvbuf=std::make_unique<particle_data[]>(elementToProcess*itemSize);
 
             int mpiError;
-            constexpr std::size_t num_members = 6;
-            int lengths[num_members] = { 1, 1, 1, 1, 1, 1 };
+            constexpr std::size_t num_members = 7;
+            int lengths[num_members] = { 1, 1, 1, 1, 1, 1, 1 };
             MPI_Aint offsets[num_members] = {
+                    offsetof(struct particle_data, id),
                     offsetof(struct particle_data, k),
                     offsetof(struct particle_data, j),
                     offsetof(struct particle_data, i),
                     offsetof(struct particle_data, health),
-                    offsetof(struct particle_data, tpart),
-                    offsetof(struct particle_data, emitOceanTime)
+                    offsetof(struct particle_data, age),
+                    offsetof(struct particle_data, time)
             };
-            MPI_Datatype types[num_members] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
+            MPI_Datatype types[num_members] = { MPI_UNSIGNED_LONG, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
 
             MPI_Datatype mpiParticleData;
             MPI_Type_create_struct(num_members, lengths, offsets, types, &mpiParticleData);
@@ -247,7 +248,7 @@ void Wacomm::run()
             // Record end time
             auto finishLocal = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsedLocal = finishLocal - startLocal;
-            LOG4CPLUS_INFO(logger, world_rank<< ": processed "<< pLocalParticles->size() << " in " << elapsedLocal.count() << " seconds.");
+            LOG4CPLUS_DEBUG(logger, world_rank<< ": processed "<< pLocalParticles->size() << " in " << elapsedLocal.count() << " seconds.");
 
             if (world_rank==0) {
 #ifdef USE_MPI
@@ -297,9 +298,11 @@ void Wacomm::run()
         if (world_rank==0) {
             if (config->SaveHistory()) {
 
-                string historyFilename = config->HistoryFile() + cal.asNCEPdate() + ".txt";
+                string historyFilename = config->HistoryFile() + cal.asNCEPdate() ;
                 LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
-                particles->save(historyFilename);
+                particles->saveAsTxt(historyFilename+ ".txt");
+                //particles->saveAsJson(historyFilename+ ".json", oceanModelAdapter);
+                particles->saveAsNetCDF(historyFilename+ ".nc", oceanModelAdapter);
             }
 
             string ncOutputFilename=config->NcOutputRoot()+cal.asNCEPdate()+".nc";
