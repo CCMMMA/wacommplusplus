@@ -37,7 +37,9 @@ void WacommPlusPlus::run() {
     int idx = 0;
     for (auto &ncInput : config->NcInputs()) {
 
-        LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
+        if (world_rank==0) {
+            LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
+        }
         ROMSAdapter romsAdapter(ncInput);
         romsAdapter.process();
         shared_ptr<OceanModelAdapter> oceanModelAdapter;
