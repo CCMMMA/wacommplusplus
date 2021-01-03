@@ -31,19 +31,20 @@ using Random = effolkronium::random_static;
 using namespace std;
 
 struct particle_data {
+    unsigned long id;
     double k;
     double j;
     double i;
     double health;
-    double tpart;
-    double emitOceanTime;
+    double age;
+    double time;
 };
 
 class Particle {
     public:
         Particle() = default;
-        Particle(double k, double j, double i, double health, double tpart, double emitOceanTime);
-        Particle(double k, double j, double i, double emitOceanTime);
+        Particle(unsigned long id, double k, double j, double i, double health, double age, double time);
+        Particle(unsigned long id, double k, double j, double i, double time);
         Particle(particle_data data);
 
         ~Particle();
@@ -61,7 +62,10 @@ class Particle {
         double I() const;
 
         double Health() const;
-        double TPart() const;
+        double Age() const;
+
+        double Time() const;
+        unsigned long Id() const;
 
         static double gen();
 

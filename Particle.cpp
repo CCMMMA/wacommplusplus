@@ -8,34 +8,35 @@
 #include "Config.hpp"
 
 
-Particle::Particle(double k, double j, double i,
-                   double health, double tpart, double emitOceanTime)
+Particle::Particle(unsigned long id, double k, double j, double i,
+                   double health, double age, double time)
 {
 #ifdef DEBUG
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 #endif
 
+    _data.id=id;
     _data.k=k;
     _data.j=j;
     _data.i=i;
     _data.health=health;
-    _data.tpart=tpart;
-    _data.emitOceanTime=emitOceanTime;
+    _data.age=age;
+    _data.time=time;
 
 }
 
-Particle::Particle(double k, double j, double i, double emitOceanTime) {
+Particle::Particle(unsigned long id, double k, double j, double i, double time) {
 
 #ifdef DEBUG
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 #endif
-
+    _data.id=id;
     _data.k=k;
     _data.j=j;
     _data.i=i;
-    _data.emitOceanTime=emitOceanTime;
-    _data.tpart=0;
     _data.health=health0;
+    _data.age=0;
+    _data.time=time;
 }
 
 Particle::Particle(particle_data data) {
@@ -102,7 +103,7 @@ void Particle::move(config_data *configData, int ocean_time_idx,
     for (int t=0;t<iint;t++) {
 
         // Check if the paticle is not yet active
-        if (_data.emitOceanTime>(oceanModelData->oceanTime(ocean_time_idx)+(t*dti))) {
+        if (_data.time>(oceanModelData->oceanTime(ocean_time_idx)+(t*dti))) {
             // The particle is not already active (already emitted, but not active)
             break;
         }
@@ -377,10 +378,10 @@ void Particle::move(config_data *configData, int ocean_time_idx,
         _data.k=kdet;
 
         // Update the paticle age
-        _data.tpart=_data.tpart+dti;
+        _data.age=_data.age+dti;
 
         // Decay the particle
-        _data.health=health0*exp(-_data.tpart/tau0);
+        _data.health=health0*exp(-_data.age/tau0);
     }
 }
 
@@ -405,16 +406,24 @@ double Particle::sign(double a, double b) { return abs(a)*sgn(b); }
 
 std::string Particle::to_string() const {
     std::stringstream ss;
-    ss << _data.k << " " << _data.j << " " << _data.i << " " << _data.health << " " << _data.tpart;
+    ss << _data.id << " " << _data.k << " " << _data.j << " " << _data.i << " " << _data.health << " " << _data.age << " " << _data.time;
     return ss.str();
 }
 
-double Particle::TPart() const {
-    return _data.tpart;
+double Particle::Age() const {
+    return _data.age;
 }
 
 double Particle::Health() const {
     return _data.health;
+}
+
+double Particle::Time() const {
+    return _data.time;
+}
+
+unsigned long Particle::Id() const {
+    return _data.id;
 }
 
 
