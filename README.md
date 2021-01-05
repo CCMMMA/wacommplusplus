@@ -30,6 +30,11 @@ The WaComM system can be used in more ways: as a decision support tool, to aid i
 areas for farming activity deployment, or in an ex-post fashion in order to achieve better management of offshore
 activities.
 
+# Parallelization schema
+...
+![WaComM++ parallelation schema.](images/wacommplusplus-parallelization-schema.png)
+
+
 
 # Cite WaComM++
 * Montella Raffaele, Diana Di Luccio, Pasquale Troiano, Angelo Riccio, Alison Brizius, and Ian Foster. "WaComM: A parallel Water quality Community Model for pollutant transport and dispersion operational predictions." In Signal-Image Technology & Internet-Based Systems (SITIS), 2016 12th International Conference on, pp. 717-724. IEEE, 2016.
@@ -49,7 +54,7 @@ WaComM++ is developed using C++17. Be sure a compatible toolchain is installed a
     ```
   - Set the environment as user
     ```bash
-    scl enable devtoolset-9 -- bash
+    `scl enable devtoolset-9 -- bash`
     ``
     
   
@@ -151,6 +156,8 @@ Due to the embarassing parallel algorithm, there is no limitation in the number 
 export OMP_NUM_THREADS=n
 ./wacommplusplus
 ```
+If the OMP_NUM_THREADS is not specified, OpenMPI assumes the number of threads is equals to the number of available CPU
+cores.
 
 ## Distributed memory parallelism (Open MPI)
 WaComM++ supports distributed memory parallelization using the Open MPI library.
@@ -174,5 +181,3 @@ mpirun -n np ./wacommplusplus
 
 NB: the overall performance are strictly influenced by the architecture used.
 
-# Parallelization schema
-...
