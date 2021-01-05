@@ -3,6 +3,7 @@
 //
 
 #include "OceanModelAdapter.hpp"
+#include <math.h>
 
 OceanModelAdapter::OceanModelAdapter() {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
