@@ -12,6 +12,25 @@ We strongly optimized the algorithms improve the performance in high performance
 
 WaComM is operatively used for pollutants trasnsport and diffution at the Center for Monitoring and Modelling Marine and Atmosphere applications (CMMMA, https://meteo.uniparthenope.it) run by the Department of Science and Technologies (DiST, https://dist.uniparthenope.it) of the University of Naples "Parthenope" (https://www.uniparthenope.it).
 
+It is used to compute the transport and diffusion of pollutants for assessing the water quality for mussel farming and 
+fish breeding.
+
+In WaComM, several basic algorithms have been optimized and, in order to improve its performance on a High-Performance
+Computing environment, some features like restarting and parallelization techniques in shared memory environments have
+been added.
+
+Pollutants are modeled as inert Lagrangian particles.
+
+No interactions with other particles or feedback are included in the model.
+The pollution sources are defined as a geographic location in terms of longitude, latitude, and depth, the total amount
+of Lagrangian particles released in one hour, and the emission profile that could be set statically or change during the
+simulation.
+
+The WaComM system can be used in more ways: as a decision support tool, to aid in the selection of the best suitable
+areas for farming activity deployment, or in an ex-post fashion in order to achieve better management of offshore
+activities.
+
+
 # Cite WaComM++
 * Montella Raffaele, Diana Di Luccio, Pasquale Troiano, Angelo Riccio, Alison Brizius, and Ian Foster. "WaComM: A parallel Water quality Community Model for pollutant transport and dispersion operational predictions." In Signal-Image Technology & Internet-Based Systems (SITIS), 2016 12th International Conference on, pp. 717-724. IEEE, 2016.
 https://ieeexplore.ieee.org/abstract/document/7907547/
@@ -24,7 +43,15 @@ https://ieeexplore.ieee.org/abstract/document/7907547/
 
 WaComM++ is developed using C++17. Be sure a compatible toolchain is installed and available.
 * Linux CentOS:
-  yum install devtoolset-9
+  - install as root with
+    ```bash
+    yum install devtoolset-9
+    ```
+  - Set the environment as user
+    ```bash
+    scl enable devtoolset-9 -- bash
+    ``
+    
   
 * MacOS:
   CLang
@@ -53,16 +80,28 @@ cd build
 - USE_MPI - Activate the distributed memory parallelization.
 - USE_OMP - Activate the shared memory parallelization.
 - USE_OPENACC - Activate the OpenACC acceleration (future feature).
-- USE_OPENCL - Activate the OpenCL acceleration (future feature).
 - USE_CUDA - Activate the CUDA acceleration (future feature).
 - DEBUG - Add logging printouts (do not use for production or evaluation.)
+
+WaComM++ uses cmake version 3. In some Linux system cmake is the version 3 by default. In other systems the version 3
+must be specified using the cmake3 command. 
+
+- Example: compile vanilla WaComM++ (No parallelization)
 ```bash
-cmake ..
+cmake3 ..
 ```
+
+- Example: compile with both OpenMP and MPI support:
+```bash
+cmake3 -DUSE_OMP=ON -DUSE_MPI=ON ..
+```
+
 6) Run make and wait
+
 ```bash
 make
 ```
+
 ## Using CLion 
 
 1) Clone a new project from CVS
