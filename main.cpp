@@ -31,6 +31,9 @@ namespace fs = std::filesystem;
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
 
+#include <iostream>
+
+
 log4cplus::Logger logger;
 
 int main(int argc, char **argv) {
@@ -123,8 +126,6 @@ int main(int argc, char **argv) {
 #endif
 #ifdef USE_OPENACC
         LOG4CPLUS_INFO(logger, "Acceleration: OpenAcc");
-#elif USE_OPENCL
-        LOG4CPLUS_INFO(logger, "Acceleration: OpenCL");
 #elif USE_CUDA
         LOG4CPLUS_INFO(logger, "Acceleration: CUDA");
 #else
