@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <iomanip>
 
 // for convenience
 using json = nlohmann::json;
@@ -101,7 +102,8 @@ void Particles::saveAsJson(const string &fileName, std::shared_ptr<OceanModelAda
 void Particles::saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter)
 {
     // https://github.com/NOAA-ORR-ERD/nc_particles
-
+    // https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/aphs04.html
+    
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
 
     Array1<unsigned long> id(this->size());
