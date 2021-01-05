@@ -21,7 +21,6 @@ endif()
 option(USE_MPI "Use MPI for distributed memory parallelism." OFF)
 option(USE_OMP "Use OMP for shared memory parallelism." OFF)
 option(USE_OPENACC "Use OpenACC acceleration." OFF)
-option(USE_OPENCL "Use OpenCL acceleration." OFF)
 option(USE_CUDA "Use CUDA acceleration." OFF)
 
 set(LIBMPI "")
@@ -43,14 +42,8 @@ endif()
 
 find_package(OpenACC)
 if(OpenACC_FOUND AND USE_OPENACC)
-    set(USE_OPENACC ON)
+    add_definitions(-DUSE_OPENACC)
     message(STATUS "Use OpenACC acceleration.")
-endif()
-
-find_package(OpenCL)
-if(OpenCL_FOUND AND USE_OPENCL)
-    set(USE_OPENCL ON)
-    message(STATUS "Use OpenCL acceleration.")
 endif()
 
 find_package(CUDA)
