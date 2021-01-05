@@ -25,11 +25,11 @@ option(USE_CUDA "Use CUDA acceleration." OFF)
 
 set(LIBMPI "")
 find_package(MPI)
-if(MPI_CXX_FOUND AND USE_MPI)
+if(MPI_C_FOUND AND USE_MPI)
     add_definitions(-DUSE_MPI)
     message(STATUS "Using MPI for distributed memory parallelism.")
     include_directories(${MPI_INCLUDE_PATH})
-    set(LIBMPI MPI::MPI_CXX)
+    set(LIBMPI ${MPI_C_LIBRARIES})
 endif()
 
 set(LIBOMP "")
