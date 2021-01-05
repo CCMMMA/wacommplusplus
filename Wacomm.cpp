@@ -226,11 +226,11 @@ void Wacomm::run()
                 }
             }
 
-            if (world_rank==0) {
+            //if (world_rank==0) {
                 for (int tidx = 0; tidx < ompMaxThreads; tidx++) {
                     LOG4CPLUS_INFO(logger, world_rank << ": thread " << tidx << " particles: " << iterations[tidx]);
                 }
-            }
+            //}
 
 #ifdef USE_CUDA
             // Copy device to host pLocalParticles
@@ -300,7 +300,7 @@ void Wacomm::run()
 
                 string historyFilename = config->HistoryFile() + cal.asNCEPdate() ;
                 LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
-                particles->saveAsTxt(historyFilename+ ".txt");
+                //particles->saveAsTxt(historyFilename+ ".txt");
                 //particles->saveAsJson(historyFilename+ ".json", oceanModelAdapter);
                 particles->saveAsNetCDF(historyFilename+ ".nc", oceanModelAdapter);
             }
