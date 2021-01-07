@@ -38,7 +38,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     LOG4CPLUS_DEBUG(logger,"Saving in: " << fileName);
 
     // Open the file for read access
-    netCDF::NcFile dataFile(fileName, NcFile::replace);
+    netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
 
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
     NcDim sRhoDim = dataFile.addDim("s_rho", s_rho);
