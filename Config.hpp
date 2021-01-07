@@ -82,6 +82,11 @@ public:
     void NumberOfInputs(int value);
     int NumberOfInputs();
 
+    void saveAsJson(const string &fileName);
+    void loadFromJson(const string &fileName);
+    void loadFromNamelist(const string &fileName);
+
+
 private:
     log4cplus::Logger logger;
 
@@ -91,6 +96,16 @@ private:
 
     config_data _data;
 
+    string name;
+    string institution;
+    string url;
+
+    double julianStart;
+    double julianEnd;
+    double julianRef;
+
+    string oceanModel;
+    string ncBasePath;
     vector<string> ncInputs;
     string ncOutputRoot;
 
@@ -114,9 +129,6 @@ private:
     double historyInterval;
 
     void setDefault();
-
-    void fromNamelist(ifstream &ifs);
-    void fromJson(ifstream &ifs);
 
     void namelistParseIo(ifstream &ifstream);
     void namelistParseChm(ifstream &infile);

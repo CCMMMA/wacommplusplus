@@ -3,6 +3,11 @@
 //
 
 #include "Config.hpp"
+#include "JulianDate.hpp"
+#include <nlohmann/json.hpp>
+
+// for convenience
+using json = nlohmann::json;
 
 Config::Config() {
     setDefault();
@@ -16,13 +21,13 @@ Config::Config(string &fileName): configFile(fileName) {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
     LOG4CPLUS_DEBUG(logger, "Reading config file:" + fileName);
-    std::ifstream infile(fileName);
+
     if(fileName.substr(fileName.find_last_of(".") + 1) == "json") {
         // The configuration is a json
-        fromJson(infile);
+        loadFromJson(fileName);
     } else {
         // the configuration is a fortran style namelist
-        fromNamelist(infile);
+        loadFromNamelist(fileName);
     }
 
 }
@@ -98,10 +103,13 @@ void Config::setDefault() {
     saveInput = false;
 
     // Root for saved input files.
-    ncInputRoot="processed/wacomm_input_";
+    ncInputRoot="ocm_";
 }
 
-void Config::fromNamelist(ifstream &infile) {
+void Config::loadFromNamelist(const string &fileName) {
+    setDefault();
+
+    std::ifstream infile(fileName);
     std::string line;
     while (std::getline(infile, line))
     {
@@ -266,10 +274,6 @@ void Config::namelistParseHst(ifstream &infile) {
     }
 }
 
-void Config::fromJson(ifstream &infile) {
-
-}
-
 double Config::Dti() const { return _data.dti; }
 
 double Config::Deltat() const { return _data.deltat; }
@@ -406,5 +410,116 @@ string Config::NcInputRoot() const {
 
 void Config::NcInputRoot(string value) {
     ncInputRoot = value;
+}
+
+void Config::saveAsJson(const string &fileName) {
+
+    Calendar calStart, calEnd;
+
+    JulianDate::fromModJulian(julianStart, calStart);
+    JulianDate::fromModJulian(julianEnd, calEnd);
+
+    json simulation = {
+            { "name", name },
+            { "institution", institution },
+            { "url", url},
+            { "start", calStart.asNCEPdate()},
+            { "end", calEnd.asNCEPdate() }
+    };
+
+    json io = {
+            { "ocean_model", oceanModel},
+            { "base_path", ncBasePath },
+            { "nc_inputs", ncInputs }
+    };
+
+    json restart = {
+            { "active", useRestart },
+            { "restart_file", restartFile }
+    };
+
+    json sources = {
+            { "active", useSources },
+            { "sources_file", sourcesFile }
+    };
+
+    json physics = {
+            { "tau0", _data.tau0 },
+            { "survprob", _data.survprob },
+            { "random", _data.random },
+            { "sv", _data.sv },
+            { "dti", _data.dti },
+            { "deltat", _data.deltat },
+            { "crid", _data.crid },
+    };
+
+    json config = {
+            { "simulation", simulation},
+            { "io", io},
+            { "restart", restart},
+            { "sources", sources},
+            { "physics", physics},
+    };
+
+    // write prettified JSON to another file
+    std::ofstream o(fileName);
+    o << std::setw(4) << config << std::endl;
+}
+
+void Config::loadFromJson(const string &fileName) {
+    setDefault();
+    json config;
+    std::ifstream i(fileName);
+    i >> config;
+    if (config.contains("simulation")) {
+        json simulation=config["simulation"];
+        if (simulation.contains("dry")) { dry = simulation["dry"]; }
+        if (simulation.contains("name")) { name = simulation["name"]; }
+        if (simulation.contains("institution")) { institution = simulation["institution"]; }
+        if (simulation.contains("url")) { url = simulation["url"]; }
+        if (simulation.contains("start")) {
+            Calendar calStart(simulation["start"]);
+            julianStart=JulianDate::toModJulian(calStart);
+        }
+        if (simulation.contains("end")) {
+            Calendar calEnd(simulation["end"]);
+            julianEnd=JulianDate::toModJulian(calEnd);
+        }
+    }
+    if (config.contains("io")) {
+        json io=config["io"];
+        if (io.contains("save_input")) { saveInput = io["save_input"]; }
+        if (io.contains("nc_input_root")) { ncInputRoot = io["nc_input_root"]; }
+        if (io.contains("base_path")) { ncBasePath = io["base_path"]; }
+        if (io.contains("ocean_model")) { oceanModel = io["ocean_model"]; }
+        if (io.contains("nc_output_root")) { ncOutputRoot = io["nc_output_root"]; }
+        if (io.contains("timestep")) { timeStep = io["timestep"]; }
+        if (io.contains("nc_inputs") && io["nc_inputs"].is_array()) {
+            for (auto ncInput:io["nc_inputs"]) {
+                string file=ncInput;
+                this->ncInputs.push_back(ncBasePath+"/"+file);
+            }
+        }
+    }
+    if (config.contains("restart")) {
+        json restart=config["restart"];
+        if (restart.contains("active")) { useRestart = restart["active"]; }
+        if (restart.contains("restart_file")) { restartFile = restart["restart_file"]; }
+    }
+    if (config.contains("sources")) {
+        json sources=config["sources"];
+        if (sources.contains("active")) { useSources = sources["active"]; }
+        if (sources.contains("sources_file")) { sourcesFile = sources["sources_file"]; }
+    }
+    if (config.contains("physics")) {
+        json physics=config["physics"];
+        if (physics.contains("tau0")) { _data.tau0 = physics["tau0"]; }
+        if (physics.contains("crid")) { _data.crid = physics["crid"]; }
+        if (physics.contains("deltat")) { _data.deltat = physics["deltat"]; }
+        if (physics.contains("dti")) { _data.dti = physics["dti"]; }
+        if (physics.contains("sv")) { _data.sv = physics["sv"]; }
+        if (physics.contains("random")) { _data.random = physics["random"]; }
+        if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
+    }
 }
 
