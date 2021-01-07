@@ -58,6 +58,7 @@ int main(int argc, char **argv) {
 
     // This variables can be set via the command line.
     std::string configFile = "namelist.wacomm";
+    configFile = "wacomm.json";
     bool        oPrintHelp = false;
 
     // First configure all possible command line options.
@@ -142,11 +143,11 @@ int main(int argc, char **argv) {
 
     auto config = std::make_shared<Config>(configFile);
     //config->NumberOfInputs(1);
-    config->SaveInput(true);
-    config->UseSources(true);
-    config->UseRestart(true);
+    //config->SaveInput(true);
+    //config->UseSources(true);
+    //config->UseRestart(true);
     //config->SourcesFile("sarno_river.json");
-    config->Dry(false);
+    //config->Dry(false);
 
     WacommPlusPlus wacommPlusPlus(config);
     wacommPlusPlus.run();
