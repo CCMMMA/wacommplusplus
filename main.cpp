@@ -1,5 +1,4 @@
 #include <iostream>
-#include <filesystem>
 #include <stdlib.h> /* getenv */
 #include <string>
 
@@ -11,11 +10,10 @@
 #include <omp.h>
 #endif
 
-#include "CommandLine.hpp"
 #include "Utils.hpp"
 
 using namespace std;
-namespace fs = std::filesystem;
+
 
 // log4cplus - https://github.com/log4cplus/log4cplus
 #include "log4cplus/configurator.h"
@@ -59,28 +57,6 @@ int main(int argc, char **argv) {
     // This variables can be set via the command line.
     std::string configFile = "namelist.wacomm";
     configFile = "wacomm.json";
-    bool        oPrintHelp = false;
-
-    // First configure all possible command line options.
-    CommandLine args("WaComM++");
-    args.addArgument({"-c", "--config"},   &configFile,   "Fortran style namelist or JSON configuration file");
-    args.addArgument({"-h", "--help"},     &oPrintHelp,
-                     "Print this help. This help message is actually so long "
-                     "that it requires a line break!");
-
-    // Then do the actual parsing.
-    try {
-        args.parse(argc, argv);
-    } catch (std::runtime_error const& e) {
-        std::cout << e.what() << std::endl;
-        return -1;
-    }
-
-    // When oPrintHelp was set to true, we print a help message and exit.
-    if (oPrintHelp) {
-        args.printHelp();
-        return 0;
-    }
 
     // Inizitalizer
     log4cplus::Initializer initializer;
@@ -110,6 +86,10 @@ int main(int argc, char **argv) {
     }
     logger.setLogLevel(logLevel);
 
+    if (argc==2) {
+        configFile=string(argv[1]);
+    }
+
     // Check if the process is the main one
     if (world_rank == 0) {
         LOG4CPLUS_INFO(logger, "WaComM - C++ Version");
@@ -135,9 +115,6 @@ int main(int argc, char **argv) {
 
         LOG4CPLUS_INFO(logger, world_rank << ": Using 1/" << world_size << " processes, each on " << ompMaxThreads
                                           << " threads.");
-        LOG4CPLUS_INFO(logger, "Current directory: " << fs::current_path());
-
-
         LOG4CPLUS_INFO(logger, "Configuration: " << configFile);
     }
 
