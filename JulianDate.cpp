@@ -142,21 +142,20 @@ void JulianDate::playground() {
 }
 
 string Calendar::format(string format) {
-    std::stringstream buffer;
+
     tm my_tm;
     my_tm.tm_year = _data[YEAR]-1900;
     my_tm.tm_mon = _data[MONTH];
     my_tm.tm_mday = _data[DAY_OF_MONTH];
     my_tm.tm_hour = _data[HOUR_OF_DAY];
-    buffer << put_time(&my_tm, format.c_str());
-    return buffer.str();
+    char s[256];
+    strftime(s,256,format.c_str(),&my_tm);
+    return string(s);
 }
 
 void Calendar::parse(string format, string value) {
     tm my_tm;
-    stringstream  in;
-    in << value;
-    in >> get_time(&my_tm, format.c_str());
+    strptime(value.c_str(), format.c_str(), &my_tm);
     _data[YEAR]=my_tm.tm_year+1900;
     _data[MONTH] = my_tm.tm_mon;
     _data[DAY_OF_MONTH] = my_tm.tm_mday;
