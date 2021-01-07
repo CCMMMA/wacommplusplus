@@ -152,7 +152,7 @@ void Particles::saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelA
     LOG4CPLUS_INFO(logger,"Saving NetCDF in: " << fileName);
 
     // Open the file for read access
-    netCDF::NcFile dataFile(fileName, NcFile::replace);
+    netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
 
     NcDim particlesDim = dataFile.addDim("particles", this->size());
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
