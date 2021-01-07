@@ -15,7 +15,10 @@ Source::~Source() = default;
 void Source::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles, double currentOceanTime) {
     // Check if the source is active
     if (mode>0) {
-        unsigned long id=particles->at(particles->size()-1).Id()+1;
+        unsigned long id=0;
+        if (particles->size()>0) {
+            id = particles->at(particles->size() - 1).Id() + 1;
+        }
         // Check if the particle have to be released
         if ((mode == 1) && (start<0 || start>=currentOceanTime) && (end<0 || end<=currentOceanTime) ) {
 
