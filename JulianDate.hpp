@@ -20,6 +20,8 @@ public:
     constexpr static const int HOUR_OF_DAY = 3;
 
     Calendar();
+    Calendar(string value);
+    Calendar(string format, string value);
     Calendar(int year, int month, int day, int hour);
     ~Calendar();
 
@@ -28,6 +30,7 @@ public:
 
     string asNCEPdate();
     string format(string format);
+    void parse(string format, string value);
 
 private:
     int _data[4];
@@ -51,6 +54,9 @@ public:
 
     static double toModJulian(Calendar cal);
     static void fromModJulian(double modJulian, Calendar &cal);
+
+    static double toModJulian(double julianRef, Calendar cal);
+    static void fromModJulian(double julianRef, double modJulian, Calendar &cal);
 
     static double get19680523();
     static double get19700101();

@@ -76,13 +76,21 @@ void JulianDate::fromJulian(double injulian, int &year, int &month, int &day, in
 
 }
 
+double JulianDate::toModJulian(double julianRef, Calendar cal) {
+    return toJulian(cal)-julianRef;
+}
+
+void JulianDate::fromModJulian(double julianRef, double modJulian, Calendar &cal) {
+    double julian=modJulian+julianRef;
+    fromJulian(julian, cal);
+}
+
 double JulianDate::toModJulian(Calendar cal) {
-    return toJulian(cal)-get19680523();
+    return toModJulian(get19680523(), cal);
 }
 
 void JulianDate::fromModJulian(double modJulian, Calendar &cal) {
-    double julian=modJulian+get19680523();
-    fromJulian(julian, cal);
+    fromModJulian(get19680523(),modJulian,cal);
 }
 
 double JulianDate::get19680523() {
@@ -144,6 +152,17 @@ string Calendar::format(string format) {
     return buffer.str();
 }
 
+void Calendar::parse(string format, string value) {
+    tm my_tm;
+    stringstream  in;
+    in << value;
+    in >> get_time(&my_tm, format.c_str());
+    _data[YEAR]=my_tm.tm_year+1900;
+    _data[MONTH] = my_tm.tm_mon;
+    _data[DAY_OF_MONTH] = my_tm.tm_mday;
+    _data[HOUR_OF_DAY] = my_tm.tm_hour;
+}
+
 Calendar::Calendar() {
     auto now = std::chrono::system_clock::now();
     std::time_t dt = std::chrono::system_clock::to_time_t(now);
@@ -153,6 +172,15 @@ Calendar::Calendar() {
     _data[MONTH]=dateTime->tm_mon;
     _data[DAY_OF_MONTH]=dateTime->tm_mday;
     _data[HOUR_OF_DAY]=dateTime->tm_hour;
+}
+
+Calendar::Calendar(string value) {
+    parse("%Y%m%dZ%H", value);
+
+}
+
+Calendar::Calendar(string format, string value) {
+    parse(format, value);
 }
 
 Calendar::Calendar(int year, int month, int day, int hour) {
