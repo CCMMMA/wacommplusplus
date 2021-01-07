@@ -48,7 +48,7 @@ endif()
 
 find_package(CUDA)
 if(CUDA_FOUND AND USE_CUDA)
-    set(USE_CUDA ON)
+    add_definitions(-DUSE_CUDA)
     message(STATUS "Use CUDA acceleration.")
 endif()
 
