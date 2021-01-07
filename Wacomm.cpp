@@ -60,7 +60,7 @@ void Wacomm::run()
 
     Array4<float> conc(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
 
-    #pragma omp for collapse(4)
+    #pragma omp parallel for collapse(4) default(none) shared(ocean_time, s_rho, eta_rho, xi_rho, conc)
     for (int t=0;t<ocean_time;t++) {
         for (int k=-(int)s_rho+1; k<=0; k++) {
             for (int j=0; j<eta_rho; j++) {
@@ -104,12 +104,12 @@ void Wacomm::run()
                 LOG4CPLUS_INFO(logger, "Simulating:" << oceanModelAdapter->OceanTime()(ocean_time_idx) << " - " << cal.asNCEPdate());
                 LOG4CPLUS_INFO(logger, "Sources:" << sources->size());
 
-                // Getthe number of sources
+                // Get the number of sources
                 int nSources = sources->size();
 
-                #pragma omp parallel for default(none) shared(nSources, ocean_time_idx)
                 for (int idx = 0; idx < nSources; idx++) {
-                    sources->at(idx).emit(config, particles, oceanModelAdapter->OceanTime()(ocean_time_idx));
+                    Source &source=sources->at(idx);
+                    source.emit(config, particles, oceanModelAdapter->OceanTime()(ocean_time_idx));
                 }
 
                 LOG4CPLUS_INFO(logger, "Total particles:" << particles->size());
@@ -221,7 +221,8 @@ void Wacomm::run()
                 //LOG4CPLUS_INFO(logger, ompThreadNum << ": first " << first << " last: " << last);
 
                 for (size_t idx = first; idx < last; idx++) {
-                    pLocalParticles->at(idx).move(pConfigData, ocean_time_idx, pOceanModelData);
+                    Particle &particle = pLocalParticles->at(idx);
+                    particle.move(pConfigData, ocean_time_idx, pOceanModelData);
                     iterations[ompThreadNum]++;
                 }
             }
@@ -261,10 +262,14 @@ void Wacomm::run()
                                                 [](const Particle &particle) { return !particle.isAlive(); }),
                                  particles->end());
 
-                LOG4CPLUS_INFO(logger, "Particles:" << particles->size());
+                size_t nParticles = particles->size();
+                LOG4CPLUS_INFO(logger, "Particles:" << nParticles);
 
                 LOG4CPLUS_INFO(logger, "Evaluate concentration");
-                for (const Particle &particle: *particles) {
+
+                #pragma omp parallel for default(none) shared(nParticles, ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
+                for (int idx=0; idx<nParticles;idx++) {
+                    const Particle &particle = particles->at(idx);
                     if (particle.isAlive()) {
                         int k = (int) round(particle.K());
                         int j = (int) round(particle.J());
@@ -275,7 +280,7 @@ void Wacomm::run()
                     }
                 }
 
-                #pragma omp for collapse(3)
+                #pragma omp parallel for collapse(3) default(none) shared(ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
                 for (int k = -(int) s_rho + 1; k <= 0; k++) {
                     for (int j = 0; j < eta_rho; j++) {
                         for (int i = 0; i < xi_rho; i++) {
@@ -325,7 +330,7 @@ void Wacomm::save(string &fileName, Array4<float> &conc) {
     LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
 
     // Open the file for read access
-    netCDF::NcFile dataFile(fileName, NcFile::replace);
+    netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
 
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
     NcDim sRhoDim = dataFile.addDim("s_rho", s_rho);
