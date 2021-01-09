@@ -165,7 +165,7 @@ void Config::namelistParseIo(ifstream &infile) {
                 this->ncOutputRoot = Utils::trim(keyValues.at(1)," ',");
             } else if (key == "starttime") {
                 this->startTime = stoi(keyValues.at(1));
-            } else if (key == "nHour") {
+            } else if (key == "nhour") {
                 this->nHour = stoi(keyValues.at(1));
             } else if (key == "timestep") {
                 this->timeStep = stod(keyValues.at(1));
