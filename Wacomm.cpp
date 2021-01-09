@@ -17,6 +17,7 @@
 #include <omp.h>
 #endif
 
+
 Wacomm::Wacomm(std::shared_ptr<Config> config,
                std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
                std::shared_ptr<Sources> sources,
@@ -72,13 +73,12 @@ void Wacomm::run()
     }
 
     if (!config->Dry()) {
-        int itemSize=sizeof(struct particle_data);
+        int itemSize = sizeof(struct particle_data);
         Calendar cal;
 
         for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
             // Record start time
             auto start = std::chrono::high_resolution_clock::now();
-
 
 
 #ifdef USE_MPI
@@ -90,25 +90,26 @@ void Wacomm::run()
 #endif
             Particles *pLocalParticles;
 
-            if (world_rank==0) {
+            if (world_rank == 0) {
 
 
                 // Time in "seconds since 1968-05-23 00:00:00"
-                double modJulian=oceanModelAdapter->OceanTime()(ocean_time_idx);
+                double modJulian = oceanModelAdapter->OceanTime()(ocean_time_idx);
 
                 // Convert time in days based
-                modJulian=modJulian/86400;
+                modJulian = modJulian / 86400;
 
                 JulianDate::fromModJulian(modJulian, cal);
 
-                LOG4CPLUS_INFO(logger, "Simulating:" << oceanModelAdapter->OceanTime()(ocean_time_idx) << " - " << cal.asNCEPdate());
+                LOG4CPLUS_INFO(logger, "Simulating:" << oceanModelAdapter->OceanTime()(ocean_time_idx) << " - "
+                                                     << cal.asNCEPdate());
                 LOG4CPLUS_INFO(logger, "Sources:" << sources->size());
 
                 // Get the number of sources
                 int nSources = sources->size();
 
                 for (int idx = 0; idx < nSources; idx++) {
-                    Source &source=sources->at(idx);
+                    Source &source = sources->at(idx);
                     source.emit(config, particles, oceanModelAdapter->OceanTime()(ocean_time_idx));
                 }
 
@@ -135,7 +136,7 @@ void Wacomm::run()
                 }
 #endif
             }
-            int nParticles=particles->size();
+            int nParticles = particles->size();
 #ifdef USE_MPI
             MPI_Bcast(send_counts.get(),world_size,MPI_INT,0,MPI_COMM_WORLD);
             int elementToProcess=send_counts.get()[world_rank];
@@ -172,18 +173,98 @@ void Wacomm::run()
 
             pLocalParticles=&localParticles;
 #else
-            pLocalParticles=particles.get();
+            pLocalParticles = particles.get();
 #endif
-            LOG4CPLUS_DEBUG(logger, world_rank<< ": Local particles:" << pLocalParticles->size());
-
-            // Record start time
-            auto startLocal = std::chrono::high_resolution_clock::now();
+            LOG4CPLUS_DEBUG(logger, world_rank << ": Local particles:" << pLocalParticles->size());
 
             config_data *pConfigData = config->dataptr();
             oceanmodel_data *pOceanModelData = oceanModelAdapter->dataptr();
 
-            std::vector<int> iterations(ompMaxThreads, 0);
-            
+            Array1<double> oceanTime(pOceanModelData->oceanTime.Nx(),
+                                     pOceanModelData->oceanTime.Ox());
+
+            Array2<double> mask(pOceanModelData->mask.Nx(), pOceanModelData->mask.Ny(),
+                                pOceanModelData->mask.Ox(), pOceanModelData->mask.Oy());
+
+            Array2<double> lonRad(pOceanModelData->lonRad.Nx(), pOceanModelData->lonRad.Ny(),
+                                  pOceanModelData->lonRad.Ox(), pOceanModelData->lonRad.Oy());
+
+            Array2<double> latRad(pOceanModelData->latRad.Nx(), pOceanModelData->latRad.Ny(),
+                                  pOceanModelData->latRad.Ox(), pOceanModelData->latRad.Oy());
+
+            Array1<double> depth(pOceanModelData->depth.Nx(),
+                                 pOceanModelData->depth.Ox());
+
+            Array2<double> h(pOceanModelData->h.Nx(), pOceanModelData->h.Ny(),
+                             pOceanModelData->h.Ox(), pOceanModelData->h.Oy());
+
+            Array3<float> zeta(pOceanModelData->zeta.Nx(), pOceanModelData->zeta.Ny(), pOceanModelData->zeta.Nz(),
+                               pOceanModelData->zeta.Ox(), pOceanModelData->zeta.Oy(), pOceanModelData->zeta.Oz());
+            Array4<float> u(
+                    pOceanModelData->u.Nx(), pOceanModelData->u.Ny(), pOceanModelData->u.Nz(), pOceanModelData->u.N4(),
+                    pOceanModelData->u.Ox(), pOceanModelData->u.Oy(), pOceanModelData->u.Oz(), pOceanModelData->u.O4());
+            Array4<float> v(
+                    pOceanModelData->v.Nx(), pOceanModelData->v.Ny(), pOceanModelData->v.Nz(), pOceanModelData->v.N4(),
+                    pOceanModelData->v.Ox(), pOceanModelData->v.Oy(), pOceanModelData->v.Oz(), pOceanModelData->v.O4());
+            Array4<float> w(
+                    pOceanModelData->w.Nx(), pOceanModelData->w.Ny(), pOceanModelData->w.Nz(), pOceanModelData->w.N4(),
+                    pOceanModelData->w.Ox(), pOceanModelData->w.Oy(), pOceanModelData->w.Oz(), pOceanModelData->w.O4());
+            Array4<float> akt(
+                    pOceanModelData->akt.Nx(), pOceanModelData->akt.Ny(), pOceanModelData->akt.Nz(),
+                    pOceanModelData->akt.N4(),
+                    pOceanModelData->akt.Ox(), pOceanModelData->akt.Oy(), pOceanModelData->akt.Oz(),
+                    pOceanModelData->akt.O4());
+
+            memcpy(oceanTime(), pOceanModelData->oceanTime(),
+                   pOceanModelData->oceanTime.Nx() *
+                   sizeof(double));
+
+            memcpy(mask(), pOceanModelData->mask(),
+                   pOceanModelData->mask.Nx() * pOceanModelData->mask.Ny() *
+                   sizeof(double));
+
+            memcpy(lonRad(), pOceanModelData->lonRad(),
+                   pOceanModelData->lonRad.Nx() * pOceanModelData->lonRad.Ny() *
+                   sizeof(double));
+
+            memcpy(latRad(), pOceanModelData->latRad(),
+                   pOceanModelData->latRad.Nx() * pOceanModelData->latRad.Ny() *
+                   sizeof(double));
+
+            memcpy(depth(), pOceanModelData->depth(),
+                   pOceanModelData->depth.Nx() *
+                   sizeof(double));
+
+            memcpy(h(), pOceanModelData->h(),
+                   pOceanModelData->h.Nx() * pOceanModelData->h.Ny() *
+                   sizeof(double));
+
+            memcpy(zeta(), pOceanModelData->zeta(),
+                   pOceanModelData->zeta.Nx() * pOceanModelData->zeta.Ny() * pOceanModelData->zeta.Nz() *
+                   sizeof(float));
+
+            memcpy(u(), pOceanModelData->u(),
+                   pOceanModelData->u.Nx() * pOceanModelData->u.Ny() * pOceanModelData->u.Nz() *
+                   pOceanModelData->u.N4() *
+                   sizeof(float));
+
+            memcpy(v(), pOceanModelData->v(),
+                   pOceanModelData->v.Nx() * pOceanModelData->v.Ny() * pOceanModelData->v.Nz() *
+                   pOceanModelData->v.N4() *
+                   sizeof(float));
+
+            memcpy(w(), pOceanModelData->w(),
+                   pOceanModelData->w.Nx() * pOceanModelData->w.Ny() * pOceanModelData->w.Nz() *
+                   pOceanModelData->w.N4() *
+                   sizeof(float));
+
+            memcpy(akt(), pOceanModelData->akt(),
+                   pOceanModelData->akt.Nx() * pOceanModelData->akt.Ny() * pOceanModelData->akt.Nz() *
+                   pOceanModelData->akt.N4() *
+                   sizeof(float));
+
+            size_t nLocalParticles = pLocalParticles->size();
+
             size_t elementsPerThread = pLocalParticles->size() / ompMaxThreads;
             size_t sparePerThread = pLocalParticles->size() % ompMaxThreads;
 
@@ -197,46 +278,31 @@ void Wacomm::run()
                 thread_counts[tidx] = (int)(elementsPerThread);
                 thread_displs[tidx]=thread_counts[0]+elementsPerThread*(tidx-1);
             }
-/*
-            if (world_rank==0) {
-                for (int tidx = 0; tidx < ompMaxThreads; tidx++) {
-                    LOG4CPLUS_INFO(logger, world_rank << ": thread " << tidx << " counts: " << thread_counts[tidx] << " displs: " << thread_displs[tidx]);
-                }
-            }
-*/
-#ifdef USE_CUDA
-            // Alloc pOceanModelData, pConfigData, pLocalParticles
-            // Copy host to device pOceanModelData, pConfigData,
-            // Copy host to device pLocalParticles
-#endif
 
-            #pragma omp parallel default(none) private(ompThreadNum) shared (thread_counts, thread_displs, ocean_time_idx, pLocalParticles, pConfigData, pOceanModelData, iterations)
+            // Record start time
+            auto startLocal = std::chrono::high_resolution_clock::now();
+
+            #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, pConfigData, pLocalParticles, ocean_time_idx, oceanTime, mask, lonRad,latRad, depth, h, zeta, u, v, w, akt)
             {
+
 #ifdef USE_OMP
                 ompThreadNum=omp_get_thread_num();
 #endif
+
+                struct config_data configData;
+                memcpy(&configData,pConfigData,sizeof(configData));
+
                 size_t first=thread_displs[ompThreadNum];
                 size_t last=first+thread_counts[ompThreadNum];
 
-                //LOG4CPLUS_INFO(logger, ompThreadNum << ": first " << first << " last: " << last);
-
                 for (size_t idx = first; idx < last; idx++) {
-                    Particle &particle = pLocalParticles->at(idx);
-                    particle.move(pConfigData, ocean_time_idx, pOceanModelData);
-                    iterations[ompThreadNum]++;
+                    pLocalParticles->at(idx).move(&configData, ocean_time_idx, oceanTime, mask, lonRad,
+                                                  latRad, depth, h, zeta, u, v, w, akt);
                 }
+
             }
-
-            //if (world_rank==0) {
-                for (int tidx = 0; tidx < ompMaxThreads; tidx++) {
-                    LOG4CPLUS_INFO(logger, world_rank << ": thread " << tidx << " particles: " << iterations[tidx]);
-                }
-            //}
-
-#ifdef USE_CUDA
-            // Copy device to host pLocalParticles
-            // Free pOceanModelData, pConfigData, pLocalParticles
-#endif
+            // Record end time
+            auto finishLocal = std::chrono::high_resolution_clock::now();
 
 #ifdef USE_MPI
             for (int idx=0;idx<localParticles.size();idx++) {
@@ -246,12 +312,12 @@ void Wacomm::run()
                         sendbuf.get(),send_counts.get(),displs.get(),mpiParticleData,0,MPI_COMM_WORLD);
             MPI_Type_free(&mpiParticleData);
 #endif
-            // Record end time
-            auto finishLocal = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> elapsedLocal = finishLocal - startLocal;
-            LOG4CPLUS_DEBUG(logger, world_rank<< ": processed "<< pLocalParticles->size() << " in " << elapsedLocal.count() << " seconds.");
 
             if (world_rank==0) {
+                std::chrono::duration<double> elapsedLocal = finishLocal - startLocal;
+                double nParticlesPerSecondLocal = pLocalParticles->size() / elapsedLocal.count();
+                LOG4CPLUS_INFO(logger, "Locally processed " << nParticles << " in " << elapsedLocal.count() << " seconds ("<< nParticlesPerSecondLocal <<" particles/second).");
+
 #ifdef USE_MPI
                 for (int idx=0;idx<particles->size();idx++) {
                     particles->at(idx).data(sendbuf[idx]);
