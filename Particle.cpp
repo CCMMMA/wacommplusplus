@@ -64,8 +64,18 @@ bool Particle::isAlive() const {
 
 
 
-void Particle::move(config_data *configData, int ocean_time_idx,
-                    oceanmodel_data *oceanModelData) {
+void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> &oceanTime, Array2<double> &mask,
+                    Array2<double> &lonRad, Array2<double> &latRad, Array1<double> &depth,
+                    Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
+                    Array4<float> &akt) {
+
+    srand( Random::get<unsigned>(0, UINT32_MAX) );
+
+    particle_data localParticleData;
+    memcpy(&localParticleData, &_data, sizeof(particle_data));
+
+    // Get the random flag
+    bool random=configData->random;
 
     // Get the integration time (default 30s)
     double dti=configData->dti;
@@ -91,27 +101,27 @@ void Particle::move(config_data *configData, int ocean_time_idx,
     double iint=deltat/dti;
 
     // Get the number of the sigma levels
-    size_t s_w = oceanModelData->w.Ny();
+    size_t s_w = w.Ny();
 
     // Get the domain size in south-north number of rows
-    size_t eta_rho = oceanModelData->mask.Nx();
+    size_t eta_rho = mask.Nx();
 
     // Get the domain size in west-east number of columns
-    size_t xi_rho = oceanModelData->mask.Ny();
+    size_t xi_rho = mask.Ny();
 
     // For each integration interval
     for (int t=0;t<iint;t++) {
 
         // Check if the paticle is not yet active
-        if (_data.time>(oceanModelData->oceanTime(ocean_time_idx)+(t*dti))) {
+        if (localParticleData.time>(oceanTime(ocean_time_idx)+(t*dti))) {
             // The particle is not already active (already emitted, but not active)
             break;
         }
 
         // Check of the particle health is less than its probability to survive
-        if (_data.health<survprob) {
+        if (localParticleData.health<survprob) {
             // The particle is dead
-            _data.health=-1;
+            localParticleData.health=-1;
             // No reason to continue, exit the integration loop
             break;
         }
@@ -122,29 +132,29 @@ void Particle::move(config_data *configData, int ocean_time_idx,
          */
 
         // Get the integer part and the fraction part of particle k
-        auto kI=(int)_data.k; double kF=_data.k-kI;
+        auto kI=(int)localParticleData.k; double kF=localParticleData.k-kI;
 
         // Get the integer part and the fraction part of particle j
-        auto jI=(int)_data.j; double jF=_data.j-jI;
+        auto jI=(int)localParticleData.j; double jF=localParticleData.j-jI;
 
         // Get the integer part and the fraction part of particle i
-        auto iI=(int)_data.i; double iF=_data.i-iI;
+        auto iI=(int)localParticleData.i; double iF=localParticleData.i-iI;
 
         // Check if the particle is out of the domain
         if (jI<0 || iI<0 || jI>=eta_rho|| iI>=xi_rho) {
 
             // Set the particle health
-            _data.health=-1;
+            localParticleData.health=-1;
 
             // no reason to continue,  exit the integration loop
             break;
         }
 
         // Check if the particle beached
-        if (oceanModelData->mask(jI,iI)<=0) {
+        if (mask(jI,iI)<=0) {
 
             // Set the particle health
-            _data.health=-1;
+            localParticleData.health=-1;
 
             // no reason to continue,  exit the integration loop
             break;
@@ -175,20 +185,20 @@ void Particle::move(config_data *configData, int ocean_time_idx,
 
         // Perform the bilinear interpolation (2D) in order to get
         // the zeta at the particle position.
-        float z1=oceanModelData->zeta(ocean_time_idx,    jI,    iI)    *(1.0-iF)  *(1.0-jF);
-        float z2=oceanModelData->zeta(ocean_time_idx,    jI+1,  iI)    *(1.0-iF)  *     jF;
-        float z3=oceanModelData->zeta(ocean_time_idx,    jI+1,  iI+1)  *     iF   *     jF;
-        float z4=oceanModelData->zeta(ocean_time_idx,    jI  ,  iI+1)  *     iF   *(1.0-jF);
+        float z1=zeta(ocean_time_idx,    jI,    iI)    *(1.0-iF)  *(1.0-jF);
+        float z2=zeta(ocean_time_idx,    jI+1,  iI)    *(1.0-iF)  *     jF;
+        float z3=zeta(ocean_time_idx,    jI+1,  iI+1)  *     iF   *     jF;
+        float z4=zeta(ocean_time_idx,    jI  ,  iI+1)  *     iF   *(1.0-jF);
 
         // The current zeta at the particle position
         float zeta=z1+z2+z3+z4;
 
         // Perform the bilinear interpolation (2D) in order to get
         // the h (depth) at the particle position.
-        double h1=oceanModelData->h(jI,    iI)    *(1.0-iF)  *(1.0-jF);
-        double h2=oceanModelData->h(jI+1,  iI)    *(1.0-iF)  *     jF;
-        double h3=oceanModelData->h(jI+1,  iI+1)  *     iF   *     jF;
-        double h4=oceanModelData->h(jI  ,  iI+1)  *     iF   *(1.0-jF);
+        double h1=h(jI,    iI)    *(1.0-iF)  *(1.0-jF);
+        double h2=h(jI+1,  iI)    *(1.0-iF)  *     jF;
+        double h3=h(jI+1,  iI+1)  *     iF   *     jF;
+        double h4=h(jI  ,  iI+1)  *     iF   *(1.0-jF);
 
         // The current h (depth) at the particle position
         double h=h1+h2+h3+h4;
@@ -196,10 +206,10 @@ void Particle::move(config_data *configData, int ocean_time_idx,
         // The particle is alive!
         // Perform the bilinear interpolation (2D) in order to get
         // the u component of the current field in the particle position.
-        float u1=oceanModelData->u(ocean_time_idx,   kI,    jI,    iI)    *(1.0-iF)  *(1.0-jF);
-        float u2=oceanModelData->u(ocean_time_idx,   kI,    jI+1,  iI)    *(1.0-iF)  *     jF;
-        float u3=oceanModelData->u(ocean_time_idx,   kI,    jI+1,  iI+1)  *     iF   *     jF;
-        float u4=oceanModelData->u(ocean_time_idx,   kI,    jI  ,  iI+1)  *     iF   *(1.0-jF);
+        float u1=u(ocean_time_idx,   kI,    jI,    iI)    *(1.0-iF)  *(1.0-jF);
+        float u2=u(ocean_time_idx,   kI,    jI+1,  iI)    *(1.0-iF)  *     jF;
+        float u3=u(ocean_time_idx,   kI,    jI+1,  iI+1)  *     iF   *     jF;
+        float u4=u(ocean_time_idx,   kI,    jI  ,  iI+1)  *     iF   *(1.0-jF);
 
         // The current u component in the particle position
         float uu=u1+u2+u3+u4;
@@ -210,10 +220,10 @@ void Particle::move(config_data *configData, int ocean_time_idx,
 
         // Perform the bilinear interpolation (2D) in order to get
         // the v component of the current field in the particle position.
-        float v1=oceanModelData->v(ocean_time_idx,    kI, jI,     iI)     *(1.0-iF)   *(1.0-jF);
-        float v2=oceanModelData->v(ocean_time_idx,    kI, jI+1,   iI)     *(1.0-iF)   *     jF;
-        float v3=oceanModelData->v(ocean_time_idx,    kI, jI+1,   iI+1)   *     iF    *     jF;
-        float v4=oceanModelData->v(ocean_time_idx,    kI, jI,     iI+1)   *     iF    *(1.0-jF);
+        float v1=v(ocean_time_idx,    kI, jI,     iI)     *(1.0-iF)   *(1.0-jF);
+        float v2=v(ocean_time_idx,    kI, jI+1,   iI)     *(1.0-iF)   *     jF;
+        float v3=v(ocean_time_idx,    kI, jI+1,   iI+1)   *     iF    *     jF;
+        float v4=v(ocean_time_idx,    kI, jI,     iI+1)   *     iF    *(1.0-jF);
 
         // The current v component in the particle position
         float vv=v1+v2+v3+v4;
@@ -226,14 +236,14 @@ void Particle::move(config_data *configData, int ocean_time_idx,
 
         // Perform the bilinear interpolation (3D) in order to get
         // the w component of the current field in the particle position.
-        float w1=oceanModelData->w(ocean_time_idx,    kI,     jI,     iI)*(1.0-iF)  *(1.0-jF)  *(1.0-kF);
-        float w2=oceanModelData->w(ocean_time_idx,    kI,     jI+1,   iI)*(1.0-iF)  *     jF   *(1.0-kF);
-        float w3=oceanModelData->w(ocean_time_idx,    kI,     jI+1,   iI+1)*     iF   *     jF   *(1.0-kF);
-        float w4=oceanModelData->w(ocean_time_idx,    kI,     jI,     iI+1)*     iF   *(1.0-jF)  *(1.0-kF);
-        float w5=oceanModelData->w(ocean_time_idx,kI-1, jI, iI)*(1.0-iF)*(1.0-jF)*kF;
-        float w6=oceanModelData->w(ocean_time_idx,kI-1,jI+1,iI)*(1.0-iF)*jF*kF;
-        float w7=oceanModelData->w(ocean_time_idx,kI-1,jI+1,iI+1)*iF*jF*kF;
-        float w8=oceanModelData->w(ocean_time_idx, kI-1, jI, iI+1)*iF*(1.0-jF)*kF;
+        float w1=w(ocean_time_idx,    kI,     jI,     iI)*(1.0-iF)  *(1.0-jF)  *(1.0-kF);
+        float w2=w(ocean_time_idx,    kI,     jI+1,   iI)*(1.0-iF)  *     jF   *(1.0-kF);
+        float w3=w(ocean_time_idx,    kI,     jI+1,   iI+1)*     iF   *     jF   *(1.0-kF);
+        float w4=w(ocean_time_idx,    kI,     jI,     iI+1)*     iF   *(1.0-jF)  *(1.0-kF);
+        float w5=w(ocean_time_idx,kI-1, jI, iI)*(1.0-iF)*(1.0-jF)*kF;
+        float w6=w(ocean_time_idx,kI-1,jI+1,iI)*(1.0-iF)*jF*kF;
+        float w7=w(ocean_time_idx,kI-1,jI+1,iI+1)*iF*jF*kF;
+        float w8=w(ocean_time_idx, kI-1, jI, iI+1)*iF*(1.0-jF)*kF;
 
         // The current w component in the particle position
         float ww=w1+w2+w3+w4+w5+w6+w7+w8;
@@ -245,14 +255,14 @@ void Particle::move(config_data *configData, int ocean_time_idx,
 
         // Perform the bilinear interpolation (3D) in order to get
         // the akt in the particle position.
-        float a1=oceanModelData->akt(ocean_time_idx,  kI,     jI,     iI)*(1.0-iF)   *(1.0-jF)   *(1.0-kF);
-        float a2=oceanModelData->akt(ocean_time_idx,  kI,     jI+1,   iI)*(1.0-iF)   *     jF    *(1.0-kF);
-        float a3=oceanModelData->akt(ocean_time_idx,  kI,     jI+1,   iI+1)*     iF    *     jF    *(1.0-kF);
-        float a4=oceanModelData->akt(ocean_time_idx,  kI,     jI,     iI+1)*     iF    *(1.0-jF)   *(1.0-kF);
-        float a5=oceanModelData->akt(ocean_time_idx,  kI-1,   jI,     iI)*(1.0-iF)*(1.0-jF)*kF;
-        float a6=oceanModelData->akt(ocean_time_idx,  kI-1,   jI+1,   iI)*(1.0-iF)*jF*kF;
-        float a7=oceanModelData->akt(ocean_time_idx,  kI-1,   jI+1,   iI+1)*iF*jF*kF; ;
-        float a8=oceanModelData->akt(ocean_time_idx,kI-1,jI,iI+1)*iF*(1.0-jF)*kF;
+        float a1=akt(ocean_time_idx,  kI,     jI,     iI)*(1.0-iF)   *(1.0-jF)   *(1.0-kF);
+        float a2=akt(ocean_time_idx,  kI,     jI+1,   iI)*(1.0-iF)   *     jF    *(1.0-kF);
+        float a3=akt(ocean_time_idx,  kI,     jI+1,   iI+1)*     iF    *     jF    *(1.0-kF);
+        float a4=akt(ocean_time_idx,  kI,     jI,     iI+1)*     iF    *(1.0-jF)   *(1.0-kF);
+        float a5=akt(ocean_time_idx,  kI-1,   jI,     iI)*(1.0-iF)*(1.0-jF)*kF;
+        float a6=akt(ocean_time_idx,  kI-1,   jI+1,   iI)*(1.0-iF)*jF*kF;
+        float a7=akt(ocean_time_idx,  kI-1,   jI+1,   iI+1)*iF*jF*kF; ;
+        float a8=akt(ocean_time_idx,kI-1,jI,iI+1)*iF*(1.0-jF)*kF;
 
         // The AKT at the particle position.
         float aa=a1+a2+a3+a4+a5+a6+a7+a8;
@@ -269,17 +279,19 @@ void Particle::move(config_data *configData, int ocean_time_idx,
         // Calculation of sigma profile
         // sigmaPROF=sigma(Ixx,Iyy)*(1-Zdet/(-H(Ixx,Iyy))) ! Here is H
         //double sigmaProf=oceanModelAdapter->sigma()(jI, iI)*(1-kdet/(-oceanModelAdapter->H()(jI,iI)))
-        double sigmaprof=3.46*(1+_data.k/s_w);
+        double sigmaprof=3.46*(1+localParticleData.k/s_w);
 
         // Extract 3 pseudorandom numbers
         double gi=0,gj=0,gk=0;
-        if (configData->random) {
+
+        if (random) {
             for (int a = 0; a < 12; a++) {
                 gi = gi + gen() - 0.5;
                 gj = gj + gen() - 0.5;
                 gk = gk + gen() - 0.5;
             }
         }
+
 
         // Random leap
         double rileap=gi*sigmaprof;
@@ -299,27 +311,26 @@ void Particle::move(config_data *configData, int ocean_time_idx,
 
         // Calculate the distance in radiants of latitude between the grid cell where is
         // currently located the particle and the next one.
-        d1=(oceanModelData->latRad(jI+1,iI)-oceanModelData->latRad(jI,iI));
+        d1=(latRad(jI+1,iI)-latRad(jI,iI));
 
         // Calculate the distance in radiants of longitude between the grid cell where is
         // currently located the particle and the next one.
-        d2=(oceanModelData->lonRad(jI,iI+1)-oceanModelData->lonRad(jI,iI));
+        d2=(lonRad(jI,iI+1)-lonRad(jI,iI));
 
         // Calculate the grid cell diagonal horizontal size using the Haversine method
         // https://www.movable-type.co.uk/scripts/latlong.html
         dd=pow(sin(0.5*d1),2) +
                 pow(sin(0.5*d2),2)*
-                cos(oceanModelData->latRad(jI+1,iI))*
-                cos(oceanModelData->latRad(jI,iI));
+                cos(latRad(jI+1,iI))*
+                cos(latRad(jI,iI));
         jidist=2.0*atan2(pow(dd,.5),pow(1.0-dd,.5))*6371.0;
 
-        // Calculate a vertical distance
-        double depth=oceanModelData->depth(kI);
+
 
         //double hcbz=oceanModelAdapter->HCorrectedByZeta(ocean_time_idx,jI,iI);
         //cout << "jI:" << jI << " iI:" << iI << " depth(" << kI <<"):"<<depth<< " hcbz:"<< hcbz << endl;
         //kdist=oceanModelData->depth(kI)*oceanModelAdapter->HCorrectedByZeta(ocean_time_idx,jI,iI);
-        kdist=depth*(h+zeta);
+        kdist=depth(kI)*(h+zeta);
         if ( abs(kleap) > abs(kdist) ) {
             kleap=sign(kdist,kleap);
         }
@@ -327,13 +338,13 @@ void Particle::move(config_data *configData, int ocean_time_idx,
 
 
         // Calculate the new particle j candidate
-        jdet=_data.j+0.001*jleap/jidist;
+        jdet=localParticleData.j+0.001*jleap/jidist;
 
         // Calculate the new particle i candidate
-        idet=_data.i+0.001*ileap/jidist;
+        idet=localParticleData.i+0.001*ileap/jidist;
 
         // Calculate the new particle k candidate
-        kdet=_data.k+kleap/kdist;
+        kdet=localParticleData.k+kleap/kdist;
 
         // Reflect if out-of-column
         // Check if the new k have to be limited by the sealfoor
@@ -357,15 +368,15 @@ void Particle::move(config_data *configData, int ocean_time_idx,
         // Check if the candidate position is within the domain
         if (jdetI>= 0 && idetI >= 0 && jdetI<eta_rho && idetI <xi_rho) {
             // Check if the candidate new particle position is on land (mask=0)
-            if (oceanModelData->mask(jdetI, idetI) <= 0.0) {
+            if (mask(jdetI, idetI) <= 0.0) {
                 // Reflect the particle
                 if (idetI < iI) {
-                    idet = (double) iI + abs(_data.i - idet);
+                    idet = (double) iI + abs(localParticleData.i - idet);
                 } else if (idetI > iI) {
                     idet = (double) idetI - mod(idet, 1.0);
                 }
                 if (jdetI < jdet) {
-                    jdet = (double) jdetI + abs(_data.j - jdet);
+                    jdet = (double) jdetI + abs(localParticleData.j - jdet);
                 } else if (jdetI > jI) {
                     jdet = (double) jdetI - mod(jdet, 1.0);
                 }
@@ -373,16 +384,17 @@ void Particle::move(config_data *configData, int ocean_time_idx,
         }
 
         // Assign the new particle position
-        _data.i=idet;
-        _data.j=jdet;
-        _data.k=kdet;
+        localParticleData.i=idet;
+        localParticleData.j=jdet;
+        localParticleData.k=kdet;
 
         // Update the paticle age
-        _data.age=_data.age+dti;
+        localParticleData.age=localParticleData.age+dti;
 
         // Decay the particle
-        _data.health=health0*exp(-_data.age/tau0);
+        localParticleData.health=health0*exp(-localParticleData.age/tau0);
     }
+    memcpy(&_data, &localParticleData, sizeof(particle_data));
 }
 
 double Particle::K() const  { return _data.k; }
@@ -391,7 +403,8 @@ double Particle::I() const { return _data.i; }
 
 // Returns a single pseudorandom number from the uniform distribution over the range [0,1[.
 // https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html
-double Particle::gen() { return Random::get<double>(0.0, 1.0); }
+//double Particle::gen() { return Random::get<double>(0.0, 1.0); }
+double Particle::gen() { return (float) rand()/RAND_MAX; }
 
 // Returns -1 if a < 0 and 1 if a > 0
 double Particle::sgn(double a) { return (a > 0) - (a < 0); }
