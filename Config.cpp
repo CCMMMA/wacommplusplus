@@ -80,17 +80,15 @@ void Config::setDefault() {
     restartInterval = 3600;
 
     // Save history (to be used as restart) default true
-    saveHistory = true;
+    saveHistory = "none";
 
     // Default file name for the history
-    historyFile = "WACOMM_rst_";
+    historyRoot = "WACOMM_rst_";
 
-    initHistoryTime = "";
+    // Embedded history data into output (default false)
+    embeddedHistory = false;
 
-    // Save history each seconds (default 3600, 1h)
-    historyInterval = 3600;
-
-    // Use sources (defalt true)
+    // Use sources (default true)
     useSources = true;
 
     // Set the sources file name (defauly empty)
@@ -259,16 +257,10 @@ void Config::namelistParseHst(ifstream &infile) {
             if (key == "history") {
                 keyValues.at(1) = Utils::trim(keyValues.at(1), " \t");
                 if (keyValues.at(1) == ".true.") {
-                    this->saveHistory=true;
-                } else {
-                    this->saveHistory=false;
+                    this->saveHistory="text";
                 }
             } else if (key == "historyfile") {
-                this->historyFile = Utils::trim(keyValues.at(1)," ',");
-            } else if (key == "initthsttime") {
-                this->initHistoryTime = keyValues.at(1);
-            } else if (key == "outfreq") {
-                this->historyInterval = stod(keyValues.at(1));
+                this->historyRoot = Utils::trim(keyValues.at(1)," ',");
             }
         }
     }
@@ -380,20 +372,20 @@ void Config::NcOutputRoot(string value) {
     ncOutputRoot=value;
 }
 
-void  Config::SaveHistory(bool value) {
+void  Config::SaveHistory(string value) {
     saveHistory=value;
 }
 
-void  Config::HistoryFile(string value) {
-    historyFile = value;
+void  Config::HistoryRoot(string value) {
+    historyRoot = value;
 }
 
-bool Config::SaveHistory() const {
+string Config::SaveHistory() const {
     return saveHistory;
 }
 
-string Config::HistoryFile() const {
-    return historyFile;
+string Config::HistoryRoot() const {
+    return historyRoot;
 }
 
 void Config::SaveInput(bool value) {
@@ -410,6 +402,14 @@ string Config::NcInputRoot() const {
 
 void Config::NcInputRoot(string value) {
     ncInputRoot = value;
+}
+
+bool  Config::EmbeddedHistory() const {
+    return embeddedHistory;
+}
+
+void Config::EmbeddedHistroy(bool value) {
+    embeddedHistory = value;
 }
 
 void Config::saveAsJson(const string &fileName) {
@@ -430,7 +430,11 @@ void Config::saveAsJson(const string &fileName) {
     json io = {
             { "ocean_model", oceanModel},
             { "base_path", ncBasePath },
-            { "nc_inputs", ncInputs }
+            { "nc_inputs", ncInputs },
+            { "nc_output_root", ncOutputRoot },
+            { "save_history", saveHistory },
+            { "save_input", saveInput},
+            { "nc_input_root", ncInputRoot}
     };
 
     json restart = {
@@ -488,6 +492,9 @@ void Config::loadFromJson(const string &fileName) {
     }
     if (config.contains("io")) {
         json io=config["io"];
+        if (io.contains("embedded_history")) { embeddedHistory = io["embedded_history"]; }
+        if (io.contains("save_history")) { saveHistory = io["save_history"]; }
+        if (io.contains("history_root")) {  historyRoot= io["history_root"]; }
         if (io.contains("save_input")) { saveInput = io["save_input"]; }
         if (io.contains("nc_input_root")) { ncInputRoot = io["nc_input_root"]; }
         if (io.contains("base_path")) { ncBasePath = io["base_path"]; }

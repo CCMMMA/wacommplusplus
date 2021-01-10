@@ -53,13 +53,16 @@ public:
     double Deltat() const;
     double SedimentationVelocity() const;
 
-    void SaveHistory(bool value);
-    bool SaveHistory() const;
-    string HistoryFile() const;
-    void HistoryFile(string value);
+    void SaveHistory(string value);
+    string SaveHistory() const;
+    string HistoryRoot() const;
+    void HistoryRoot(string value);
 
     string NcOutputRoot() const;
     void NcOutputRoot(string value);
+
+    bool EmbeddedHistory() const;
+    void EmbeddedHistroy(bool value);
 
     void SaveInput(bool value);
     bool SaveInput() const;
@@ -123,10 +126,10 @@ private:
     bool useSources;
     string sourcesFile;
 
-    bool saveHistory;
-    string historyFile;
-    string initHistoryTime;
-    double historyInterval;
+    string saveHistory;
+    string historyRoot;
+
+    bool embeddedHistory;
 
     void setDefault();
 
