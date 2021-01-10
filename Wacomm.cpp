@@ -366,43 +366,58 @@ void Wacomm::run()
             }
         }
 
-        if (world_rank==0) {
-            if (config->SaveHistory()) {
 
-                string historyFilename = config->HistoryFile() + cal.asNCEPdate() ;
+
+        if (world_rank==0) {
+            Calendar calFinal;
+            // Calculate the oceanTime at the end of calculations
+            double finalOceanTime=oceanModelAdapter->OceanTime()[ocean_time-1]+config->Deltat();
+            JulianDate::fromModJulian(finalOceanTime/86400, calFinal);
+
+            if (!config->SaveHistory().empty()) {
+
+                string historyFilename = config->HistoryRoot() + calFinal.asNCEPdate() ;
                 LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
-                //particles->saveAsTxt(historyFilename+ ".txt");
-                //particles->saveAsJson(historyFilename+ ".json", oceanModelAdapter);
-                particles->saveAsNetCDF(historyFilename+ ".nc", oceanModelAdapter);
+                if (config->SaveHistory() == "text") {
+                    particles->saveAsTxt(historyFilename+ ".txt");
+                } else if (config->SaveHistory() == "json") {
+                    particles->saveAsJson(historyFilename+ ".json", finalOceanTime, oceanModelAdapter);
+                } else if (config->SaveHistory() == "nc") {
+                    particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter);
+                }
             }
 
             string ncOutputFilename=config->NcOutputRoot()+cal.asNCEPdate()+".nc";
             LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
-            save(ncOutputFilename,conc);
+            if (config->EmbeddedHistory()) {
+                particles->saveAsNetCDF(ncOutputFilename, finalOceanTime, oceanModelAdapter);
+            }
+            save(ncOutputFilename,conc, config->EmbeddedHistory());
         }
     }
 };
 Wacomm::~Wacomm() = default;
 
-void Wacomm::save(string &fileName, Array4<float> &conc) {
+void Wacomm::save(string &fileName, Array4<float> &conc, bool add) {
 
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
     size_t s_rho=oceanModelAdapter->SRho().Nx();
     size_t eta_rho=oceanModelAdapter->Mask().Nx();
     size_t xi_rho=oceanModelAdapter->Mask().Ny();
 
+    NcFile::FileMode fileMode=NcFile::replace;
+    if (add == true) {
+        fileMode=NcFile::write;
+    }
+
 
 
     LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
 
     // Open the file for read access
-    netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
+    netCDF::NcFile dataFile(fileName, fileMode,NcFile::nc4);
 
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
-    NcDim sRhoDim = dataFile.addDim("s_rho", s_rho);
-    NcDim etaRhoDim = dataFile.addDim("eta_rho", eta_rho);
-    NcDim xiRhoDim = dataFile.addDim("eta_xi", xi_rho);
-
     NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);
     oceanTimeVar.putAtt("long_name","time since initialization");
     oceanTimeVar.putAtt("units","seconds since 1968-05-23 00:00:00 GMT");
@@ -411,6 +426,7 @@ void Wacomm::save(string &fileName, Array4<float> &conc) {
     oceanTimeVar.putAtt("_CoordinateAxisType","Time");
     oceanTimeVar.putVar(oceanModelAdapter->OceanTime()());
 
+    NcDim sRhoDim = dataFile.addDim("s_rho", s_rho);
     NcVar sRhoVar = dataFile.addVar("s_rho", ncDouble, sRhoDim);
     sRhoVar.putAtt("long_name","S-coordinate at RHO-points");
     sRhoVar.putAtt("positive","up");
@@ -422,6 +438,8 @@ void Wacomm::save(string &fileName, Array4<float> &conc) {
     sRhoVar.putAtt("_CoordinateZisPositive","up");
     sRhoVar.putVar(oceanModelAdapter->SRho()());
 
+    NcDim etaRhoDim = dataFile.addDim("eta_rho", eta_rho);
+    NcDim xiRhoDim = dataFile.addDim("eta_xi", xi_rho);
     vector<NcDim> etaRhoXiRhoDims;
     etaRhoXiRhoDims.push_back(etaRhoDim);
     etaRhoXiRhoDims.push_back(xiRhoDim);
