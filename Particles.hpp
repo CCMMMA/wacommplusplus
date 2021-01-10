@@ -24,8 +24,8 @@ public:
     void loadFromTxt(const string& fileName);
 
     void saveAsTxt(const string& fileName);
-    void saveAsJson(const string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
-    void saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
+    void saveAsJson(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
+    void saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
 
 
 private:

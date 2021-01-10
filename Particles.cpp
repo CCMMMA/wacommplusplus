@@ -44,7 +44,7 @@ void Particles::saveAsTxt(const string& fileName)
     }
 }
 
-void Particles::saveAsJson(const string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter)
+void Particles::saveAsJson(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter)
 {
     json features = json::array();
 
@@ -99,23 +99,23 @@ void Particles::saveAsJson(const string &fileName, std::shared_ptr<OceanModelAda
     o << std::setw(4) << featureCollection << std::endl;
 }
 
-void Particles::saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter)
+void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter)
 {
     // https://github.com/NOAA-ORR-ERD/nc_particles
     // https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/aphs04.html
     
-    size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
+    size_t particle_time=1;
 
     Array1<unsigned long> id(this->size());
-    Array2<double> lat(this->size(),ocean_time);
-    Array2<double> lon(this->size(),ocean_time);
-    Array2<double> dep(this->size(),ocean_time);
-    Array2<double> j(this->size(),ocean_time);
-    Array2<double> i(this->size(),ocean_time);
-    Array2<double> k(this->size(),ocean_time);
-    Array2<double> health(this->size(),ocean_time);
-    Array2<double> age(this->size(),ocean_time);
-    Array2<double> time(this->size(),ocean_time);
+    Array2<double> lat(this->size(),particle_time);
+    Array2<double> lon(this->size(),particle_time);
+    Array2<double> dep(this->size(),particle_time);
+    Array2<double> j(this->size(),particle_time);
+    Array2<double> i(this->size(),particle_time);
+    Array2<double> k(this->size(),particle_time);
+    Array2<double> health(this->size(),particle_time);
+    Array2<double> age(this->size(),particle_time);
+    Array2<double> time(this->size(),particle_time);
 
     LOG4CPLUS_INFO(logger,"Preparing NetCDF...");
 
@@ -155,15 +155,15 @@ void Particles::saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelA
     netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
 
     NcDim particlesDim = dataFile.addDim("particles", this->size());
-    NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
+    NcDim particleTimeDim = dataFile.addDim("particle_time", particle_time);
 
-    NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);
-    oceanTimeVar.putAtt("long_name","time since initialization");
-    oceanTimeVar.putAtt("units","seconds since 1968-05-23 00:00:00 GMT");
-    oceanTimeVar.putAtt("calendar","gregorian");
-    oceanTimeVar.putAtt("field","time, scalar, series");
-    oceanTimeVar.putAtt("_CoordinateAxisType","Time");
-    oceanTimeVar.putVar(oceanModelAdapter->OceanTime()());
+    NcVar particleTimeVar = dataFile.addVar("particle_time", ncDouble, particleTimeDim);
+    particleTimeVar.putAtt("long_name","time since initialization");
+    particleTimeVar.putAtt("units","seconds since 1968-05-23 00:00:00 GMT");
+    particleTimeVar.putAtt("calendar","gregorian");
+    particleTimeVar.putAtt("field","time, scalar, series");
+    particleTimeVar.putAtt("_CoordinateAxisType","Time");
+    particleTimeVar.putVar(&particleTime);
 
 
     NcVar idVar = dataFile.addVar("id", ncUint64, particlesDim);
@@ -171,11 +171,11 @@ void Particles::saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelA
     idVar.putAtt("cf_role", "trajectory_id");
     idVar.putVar(id());
 
-    vector<NcDim> particlesOceanTimeDims;
-    particlesOceanTimeDims.push_back(particlesDim);
-    particlesOceanTimeDims.push_back(oceanTimeDim);
+    vector<NcDim> particlesParticleTimeDims;
+    particlesParticleTimeDims.push_back(particlesDim);
+    particlesParticleTimeDims.push_back(particleTimeDim);
 
-    NcVar latVar = dataFile.addVar("lat", ncDouble, particlesOceanTimeDims);
+    NcVar latVar = dataFile.addVar("lat", ncDouble, particlesParticleTimeDims);
     latVar.putAtt("long_name","latitude of particle");
     latVar.putAtt("unit","degree_north");
     latVar.putAtt("standard_name","latitude");
@@ -183,7 +183,7 @@ void Particles::saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelA
     //latVar.putAtt("_coordinateaxistype","lat");
     latVar.putVar(lat());
 
-    NcVar lonVar = dataFile.addVar("lon", ncDouble, particlesOceanTimeDims);
+    NcVar lonVar = dataFile.addVar("lon", ncDouble, particlesParticleTimeDims);
     lonVar.putAtt("long_name","longitude of particle");
     lonVar.putAtt("unit","degree_east");
     lonVar.putAtt("standard_name","longitude");
@@ -191,7 +191,7 @@ void Particles::saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelA
     //lonVar.putAtt("_coordinateaxistype","lon");
     lonVar.putVar(lon());
 
-    NcVar depVar = dataFile.addVar("depth", ncDouble, particlesOceanTimeDims);
+    NcVar depVar = dataFile.addVar("depth", ncDouble, particlesParticleTimeDims);
     depVar.putAtt("long_name","particle depth below sea surface");
     depVar.putAtt("unit","meters");
     depVar.putAtt("standard_name","depth");
@@ -200,31 +200,31 @@ void Particles::saveAsNetCDF(const string &fileName, std::shared_ptr<OceanModelA
     //depVar.putAtt("_coordinateaxistype","depth");
     depVar.putVar(dep());
 
-    NcVar KVar = dataFile.addVar("k", ncDouble, particlesOceanTimeDims);
+    NcVar KVar = dataFile.addVar("k", ncDouble, particlesParticleTimeDims);
     KVar.putAtt("long_name","depth fractional index");
     KVar.putVar(k());
 
-    NcVar JVar = dataFile.addVar("j", ncDouble, particlesOceanTimeDims);
+    NcVar JVar = dataFile.addVar("j", ncDouble, particlesParticleTimeDims);
     JVar.putAtt("long_name","latitude fractional index");
     JVar.putVar(j());
 
-    NcVar IVar = dataFile.addVar("i", ncDouble, particlesOceanTimeDims);
+    NcVar IVar = dataFile.addVar("i", ncDouble, particlesParticleTimeDims);
     IVar.putAtt("long_name","longitude fractional index");
     IVar.putVar(i());
 
-    NcVar HealthVar = dataFile.addVar("health", ncDouble, particlesOceanTimeDims);
+    NcVar HealthVar = dataFile.addVar("health", ncDouble, particlesParticleTimeDims);
     HealthVar.putAtt("long_name","health of the particle");
     HealthVar.putAtt("units","1e-9") ;
     HealthVar.putAtt("coordinates","ocean_time lon lat depth") ;
     HealthVar.putVar(health());
 
-    NcVar AgeVar = dataFile.addVar("age", ncDouble, particlesOceanTimeDims);
+    NcVar AgeVar = dataFile.addVar("age", ncDouble, particlesParticleTimeDims);
     AgeVar.putAtt("long_name","age of the particle");
     AgeVar.putAtt("units","seconds since emission");
     AgeVar.putAtt("coordinates","ocean_time lon lat depth") ;
     AgeVar.putVar(age());
 
-    NcVar TimeVar = dataFile.addVar("time", ncDouble, particlesOceanTimeDims);
+    NcVar TimeVar = dataFile.addVar("time", ncDouble, particlesParticleTimeDims);
     TimeVar.putAtt("long_name","emission time of the particle");
     TimeVar.putAtt("units","seconds since 1968-05-23 00:00:00 GMT");
     TimeVar.putAtt("calendar","gregorian");
