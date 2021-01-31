@@ -41,7 +41,7 @@ public:
     void saveAsNetCDF(std::string &fileName);
 
 
-    virtual void process() {};
+    virtual void process()=0;
 
     void kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon);
     void deplatlon2kji(double dep, double lat, double lon, double &k, double &j, double &i);
