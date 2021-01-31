@@ -35,6 +35,7 @@ using namespace std;
 log4cplus::Logger logger;
 
 int main(int argc, char **argv) {
+
     int world_size=1, world_rank=0;
     int ompMaxThreads=1;
 
