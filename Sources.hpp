@@ -16,14 +16,21 @@
 
 using namespace std;
 
-class Sources: public vector<Source> {
+class Sources: private vector<Source> {
 public:
     Sources();
     ~Sources();
 
+    using vector::push_back;
+    using vector::operator[];
+    using vector::size;
+    using vector::at;
+    using vector::empty;
+
     void loadFromNamelist(string &fileName);
-    void loadFromJson(string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
-    void saveAsJson(string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
+    void loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> oceanModelAdapter);
+    void saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanModelAdapter);
+
 
 private:
     log4cplus::Logger logger;

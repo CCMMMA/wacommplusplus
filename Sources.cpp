@@ -153,7 +153,7 @@ void Sources::namelistParseEms(ifstream &infile) {
 }
 
 
-void Sources::saveAsJson(string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter)
+void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanModelAdapter)
 {
     json features = json::array();
 
@@ -212,8 +212,9 @@ void Sources::saveAsJson(string &fileName, std::shared_ptr<OceanModelAdapter> oc
 Sources::~Sources() {
 }
 
-void Sources::loadFromJson(string &fileName, std::shared_ptr<OceanModelAdapter> oceanModelAdapter) {
-    LOG4CPLUS_INFO(logger, "Reading from namelist:" + fileName);
+void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> oceanModelAdapter) {
+
+    LOG4CPLUS_INFO(logger, "Reading from json:" << fileName);
 
     std::ifstream infile(fileName);
 
@@ -221,9 +222,8 @@ void Sources::loadFromJson(string &fileName, std::shared_ptr<OceanModelAdapter> 
         json featureCollection;
         infile >> featureCollection;
 
-
-
         if (featureCollection.contains("features") && featureCollection["features"].is_array()) {
+
             int count = 1;
             for (auto feature:featureCollection["features"]) {
                 double k = 0, j = 1e37, i = 1e37;
@@ -259,7 +259,7 @@ void Sources::loadFromJson(string &fileName, std::shared_ptr<OceanModelAdapter> 
                                     if (coordinates.size() == 3 && dep == 0) {
                                         dep = coordinates[2];
                                     }
-                                    oceanModelAdapter->deplatlon2kji(dep, lat, lon, k, j, i);
+                                    //oceanModelAdapter->deplatlon2kji(dep, lat, lon, k, j, i);
                                 }
                             }
                         }
@@ -273,4 +273,5 @@ void Sources::loadFromJson(string &fileName, std::shared_ptr<OceanModelAdapter> 
     } catch (const nlohmann::json::parse_error& e) {
         LOG4CPLUS_ERROR(logger,e.what());
     }
+
 }
