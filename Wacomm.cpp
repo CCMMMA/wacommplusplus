@@ -28,12 +28,13 @@ Wacomm::Wacomm(std::shared_ptr<Config> config,
                particles(std::move(particles)) {
 
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
+    //cout << "Wacomm::Wacomm oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
+
 }
 
 void Wacomm::run()
 {
     LOG4CPLUS_DEBUG(logger,"Dry mode:" << config->Dry() );
-
     int world_size=1, world_rank=0;
     int ompMaxThreads=1, ompThreadNum=0;
 
@@ -76,7 +77,10 @@ void Wacomm::run()
         int itemSize = sizeof(struct particle_data);
         Calendar cal;
 
+
+
         for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
+
             // Record start time
             auto start = std::chrono::high_resolution_clock::now();
 
@@ -178,90 +182,65 @@ void Wacomm::run()
             LOG4CPLUS_DEBUG(logger, world_rank << ": Local particles:" << pLocalParticles->size());
 
             config_data *pConfigData = config->dataptr();
-            oceanmodel_data *pOceanModelData = oceanModelAdapter->dataptr();
+            cout << "Wacomm::run oceanModelAdapter->OceanTime()("<< ocean_time_idx <<"): " << oceanModelAdapter->OceanTime()(ocean_time_idx) << endl;
 
-            Array1<double> oceanTime(pOceanModelData->oceanTime.Nx(),
-                                     pOceanModelData->oceanTime.Ox());
 
-            Array2<double> mask(pOceanModelData->mask.Nx(), pOceanModelData->mask.Ny(),
-                                pOceanModelData->mask.Ox(), pOceanModelData->mask.Oy());
+            Array1<double> oceanTime(oceanModelAdapter->OceanTime().Nx(),
+                                     oceanModelAdapter->OceanTime().Ox());
 
-            Array2<double> lonRad(pOceanModelData->lonRad.Nx(), pOceanModelData->lonRad.Ny(),
-                                  pOceanModelData->lonRad.Ox(), pOceanModelData->lonRad.Oy());
+            Array2<double> mask(oceanModelAdapter->Mask().Nx(), oceanModelAdapter->Mask().Ny(),
+                                oceanModelAdapter->Mask().Ox(), oceanModelAdapter->Mask().Oy());
 
-            Array2<double> latRad(pOceanModelData->latRad.Nx(), pOceanModelData->latRad.Ny(),
-                                  pOceanModelData->latRad.Ox(), pOceanModelData->latRad.Oy());
+            Array2<double> lonRad(oceanModelAdapter->LonRad().Nx(), oceanModelAdapter->LonRad().Ny(),
+                                  oceanModelAdapter->LonRad().Ox(), oceanModelAdapter->LonRad().Oy());
 
-            Array1<double> depth(pOceanModelData->depth.Nx(),
-                                 pOceanModelData->depth.Ox());
+            Array2<double> latRad(oceanModelAdapter->LatRad().Nx(), oceanModelAdapter->LatRad().Ny(),
+                                  oceanModelAdapter->LatRad().Ox(), oceanModelAdapter->LatRad().Oy());
 
-            Array2<double> h(pOceanModelData->h.Nx(), pOceanModelData->h.Ny(),
-                             pOceanModelData->h.Ox(), pOceanModelData->h.Oy());
+            Array1<double> depth(oceanModelAdapter->Depth().Nx(),
+                                 oceanModelAdapter->Depth().Ox());
 
-            Array3<float> zeta(pOceanModelData->zeta.Nx(), pOceanModelData->zeta.Ny(), pOceanModelData->zeta.Nz(),
-                               pOceanModelData->zeta.Ox(), pOceanModelData->zeta.Oy(), pOceanModelData->zeta.Oz());
+            Array2<double> h(oceanModelAdapter->H().Nx(), oceanModelAdapter->H().Ny(),
+                             oceanModelAdapter->H().Ox(), oceanModelAdapter->H().Oy());
+
+            Array3<float> zeta(oceanModelAdapter->Zeta().Nx(), oceanModelAdapter->Zeta().Ny(), oceanModelAdapter->Zeta().Nz(),
+                               oceanModelAdapter->Zeta().Ox(), oceanModelAdapter->Zeta().Oy(), oceanModelAdapter->Zeta().Oz());
             Array4<float> u(
-                    pOceanModelData->u.Nx(), pOceanModelData->u.Ny(), pOceanModelData->u.Nz(), pOceanModelData->u.N4(),
-                    pOceanModelData->u.Ox(), pOceanModelData->u.Oy(), pOceanModelData->u.Oz(), pOceanModelData->u.O4());
+                    oceanModelAdapter->U().Nx(), oceanModelAdapter->U().Ny(), oceanModelAdapter->U().Nz(), oceanModelAdapter->U().N4(),
+                    oceanModelAdapter->U().Ox(), oceanModelAdapter->U().Oy(), oceanModelAdapter->U().Oz(), oceanModelAdapter->U().O4());
             Array4<float> v(
-                    pOceanModelData->v.Nx(), pOceanModelData->v.Ny(), pOceanModelData->v.Nz(), pOceanModelData->v.N4(),
-                    pOceanModelData->v.Ox(), pOceanModelData->v.Oy(), pOceanModelData->v.Oz(), pOceanModelData->v.O4());
+                    oceanModelAdapter->V().Nx(), oceanModelAdapter->V().Ny(), oceanModelAdapter->V().Nz(), oceanModelAdapter->V().N4(),
+                    oceanModelAdapter->V().Ox(), oceanModelAdapter->V().Oy(), oceanModelAdapter->V().Oz(), oceanModelAdapter->V().O4());
             Array4<float> w(
-                    pOceanModelData->w.Nx(), pOceanModelData->w.Ny(), pOceanModelData->w.Nz(), pOceanModelData->w.N4(),
-                    pOceanModelData->w.Ox(), pOceanModelData->w.Oy(), pOceanModelData->w.Oz(), pOceanModelData->w.O4());
+                    oceanModelAdapter->W().Nx(), oceanModelAdapter->W().Ny(), oceanModelAdapter->W().Nz(), oceanModelAdapter->W().N4(),
+                    oceanModelAdapter->W().Ox(), oceanModelAdapter->W().Oy(), oceanModelAdapter->W().Oz(), oceanModelAdapter->W().O4());
             Array4<float> akt(
-                    pOceanModelData->akt.Nx(), pOceanModelData->akt.Ny(), pOceanModelData->akt.Nz(),
-                    pOceanModelData->akt.N4(),
-                    pOceanModelData->akt.Ox(), pOceanModelData->akt.Oy(), pOceanModelData->akt.Oz(),
-                    pOceanModelData->akt.O4());
+                    oceanModelAdapter->AKT().Nx(), oceanModelAdapter->AKT().Ny(), oceanModelAdapter->AKT().Nz(),
+                    oceanModelAdapter->AKT().N4(),
+                    oceanModelAdapter->AKT().Ox(), oceanModelAdapter->AKT().Oy(), oceanModelAdapter->AKT().Oz(),
+                    oceanModelAdapter->AKT().O4());
 
-            memcpy(oceanTime(), pOceanModelData->oceanTime(),
-                   pOceanModelData->oceanTime.Nx() *
-                   sizeof(double));
+            oceanTime.Load(oceanModelAdapter->OceanTime()());
+            cout << "Wacomm::run oceanModelAdapter->OceanTime()("<< ocean_time_idx <<"): " << oceanModelAdapter->OceanTime()(ocean_time_idx) << endl;
+            cout << "Wacomm::run oceanModelAdapter->Mask()(650,550):" << oceanModelAdapter->Mask()(650,550) << endl;
+            cout << "Wacomm::run oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
+            mask.Load(oceanModelAdapter->Mask()());
+            cout << "Wacomm::run oceanModelAdapter->Mask()(650,550):" << oceanModelAdapter->Mask()(650,550) << endl;
+            cout << "Wacomm::run oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
+            exit(1);
+            lonRad.Load(oceanModelAdapter->LonRad()());
+            latRad.Load(oceanModelAdapter->LatRad()());
+            depth.Load(oceanModelAdapter->Depth()());
+            zeta.Load(oceanModelAdapter->Zeta()());
+            u.Load(oceanModelAdapter->U()());
+            v.Load(oceanModelAdapter->V()());
+            w.Load(oceanModelAdapter->W()());
+            akt.Load(oceanModelAdapter->AKT()());
 
-            memcpy(mask(), pOceanModelData->mask(),
-                   pOceanModelData->mask.Nx() * pOceanModelData->mask.Ny() *
-                   sizeof(double));
+            h.Load(oceanModelAdapter->H()());
 
-            memcpy(lonRad(), pOceanModelData->lonRad(),
-                   pOceanModelData->lonRad.Nx() * pOceanModelData->lonRad.Ny() *
-                   sizeof(double));
-
-            memcpy(latRad(), pOceanModelData->latRad(),
-                   pOceanModelData->latRad.Nx() * pOceanModelData->latRad.Ny() *
-                   sizeof(double));
-
-            memcpy(depth(), pOceanModelData->depth(),
-                   pOceanModelData->depth.Nx() *
-                   sizeof(double));
-
-            memcpy(h(), pOceanModelData->h(),
-                   pOceanModelData->h.Nx() * pOceanModelData->h.Ny() *
-                   sizeof(double));
-
-            memcpy(zeta(), pOceanModelData->zeta(),
-                   pOceanModelData->zeta.Nx() * pOceanModelData->zeta.Ny() * pOceanModelData->zeta.Nz() *
-                   sizeof(float));
-
-            memcpy(u(), pOceanModelData->u(),
-                   pOceanModelData->u.Nx() * pOceanModelData->u.Ny() * pOceanModelData->u.Nz() *
-                   pOceanModelData->u.N4() *
-                   sizeof(float));
-
-            memcpy(v(), pOceanModelData->v(),
-                   pOceanModelData->v.Nx() * pOceanModelData->v.Ny() * pOceanModelData->v.Nz() *
-                   pOceanModelData->v.N4() *
-                   sizeof(float));
-
-            memcpy(w(), pOceanModelData->w(),
-                   pOceanModelData->w.Nx() * pOceanModelData->w.Ny() * pOceanModelData->w.Nz() *
-                   pOceanModelData->w.N4() *
-                   sizeof(float));
-
-            memcpy(akt(), pOceanModelData->akt(),
-                   pOceanModelData->akt.Nx() * pOceanModelData->akt.Ny() * pOceanModelData->akt.Nz() *
-                   pOceanModelData->akt.N4() *
-                   sizeof(float));
+            cout << "Wacomm::run oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
+            cout << "Wacomm::run h(650,550):" << h(650,550) << endl;
 
             size_t nLocalParticles = pLocalParticles->size();
 
