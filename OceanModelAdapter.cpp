@@ -183,11 +183,6 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
 
 }
 
-void OceanModelAdapter::process() {
-    LOG4CPLUS_ERROR(logger,"OceanModelAdapter::process must be implemented in a concrete adapter!");
-    exit(-1);
-}
-
 oceanmodel_data *OceanModelAdapter::dataptr() {
     return &_data;
 }
@@ -361,5 +356,7 @@ void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double
 
 // Returns -1 if a < 0 and 1 if a > 0
 double OceanModelAdapter::sgn(double a) { return (a > 0) - (a < 0); }
+
+
 
 
