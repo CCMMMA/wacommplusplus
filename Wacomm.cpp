@@ -182,8 +182,6 @@ void Wacomm::run()
             LOG4CPLUS_DEBUG(logger, world_rank << ": Local particles:" << pLocalParticles->size());
 
             config_data *pConfigData = config->dataptr();
-            cout << "Wacomm::run oceanModelAdapter->OceanTime()("<< ocean_time_idx <<"): " << oceanModelAdapter->OceanTime()(ocean_time_idx) << endl;
-
 
             Array1<double> oceanTime(oceanModelAdapter->OceanTime().Nx(),
                                      oceanModelAdapter->OceanTime().Ox());
@@ -221,13 +219,7 @@ void Wacomm::run()
                     oceanModelAdapter->AKT().O4());
 
             oceanTime.Load(oceanModelAdapter->OceanTime()());
-            cout << "Wacomm::run oceanModelAdapter->OceanTime()("<< ocean_time_idx <<"): " << oceanModelAdapter->OceanTime()(ocean_time_idx) << endl;
-            cout << "Wacomm::run oceanModelAdapter->Mask()(650,550):" << oceanModelAdapter->Mask()(650,550) << endl;
-            cout << "Wacomm::run oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
             mask.Load(oceanModelAdapter->Mask()());
-            cout << "Wacomm::run oceanModelAdapter->Mask()(650,550):" << oceanModelAdapter->Mask()(650,550) << endl;
-            cout << "Wacomm::run oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
-            exit(1);
             lonRad.Load(oceanModelAdapter->LonRad()());
             latRad.Load(oceanModelAdapter->LatRad()());
             depth.Load(oceanModelAdapter->Depth()());
@@ -236,11 +228,7 @@ void Wacomm::run()
             v.Load(oceanModelAdapter->V()());
             w.Load(oceanModelAdapter->W()());
             akt.Load(oceanModelAdapter->AKT()());
-
             h.Load(oceanModelAdapter->H()());
-
-            cout << "Wacomm::run oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
-            cout << "Wacomm::run h(650,550):" << h(650,550) << endl;
 
             size_t nLocalParticles = pLocalParticles->size();
 
