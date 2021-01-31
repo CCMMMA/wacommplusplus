@@ -79,7 +79,11 @@ int main(int argc, char **argv) {
     logger.addAppender(appender);
 
     // Set the logging level
+#ifdef DEBUG
+    log4cplus::LogLevel logLevel = log4cplus::DEBUG_LOG_LEVEL;
+#else
     log4cplus::LogLevel logLevel = log4cplus::INFO_LOG_LEVEL;
+#endif
     std::string logLevelString = Utils::getEnvVar("WACOMM_LOGLEVEL");
     if (!logLevelString.empty()) {
         logLevel = std::stoi(logLevelString);
