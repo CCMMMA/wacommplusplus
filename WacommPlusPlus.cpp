@@ -4,7 +4,8 @@
 
 #include "WacommPlusPlus.hpp"
 #include "JulianDate.hpp"
-
+#include "OceanModelAdapters/WacommAdapter.hpp"
+#include "OceanModelAdapters/ROMSAdapter.hpp"
 #ifdef USE_MPI
 #include <mpi.h>
 #endif
@@ -37,13 +38,23 @@ void WacommPlusPlus::run() {
     int idx = 0;
     for (auto &ncInput : config->NcInputs()) {
 
-        if (world_rank==0) {
+        if (world_rank == 0) {
             LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
         }
-        ROMSAdapter romsAdapter(ncInput);
-        romsAdapter.process();
-        shared_ptr<OceanModelAdapter> oceanModelAdapter;
-        oceanModelAdapter = make_shared<OceanModelAdapter>(romsAdapter);
+
+        OceanModelAdapter *pOceanModelAdapter;
+        if (config->OceanModel() == "ROMS") {
+            ROMSAdapter romsAdapter(ncInput);
+            pOceanModelAdapter=&romsAdapter;
+        } else {
+            WacommAdapter wacommAdapter(ncInput);
+            pOceanModelAdapter=&wacommAdapter;
+        }
+        pOceanModelAdapter->process();
+        auto oceanModelAdapter = make_shared<OceanModelAdapter>(*pOceanModelAdapter);
+
+        cout << "WacommPlusPlus::run --oceanModelAdapter->OceanTime()(0): " << oceanModelAdapter->OceanTime()(0) << endl;
+        cout << "WacommPlusPlus::run --oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
 
         Calendar cal;
 
@@ -71,12 +82,18 @@ void WacommPlusPlus::run() {
             }
         }
 
+        cout << "WacommPlusPlus::run ++oceanModelAdapter->OceanTime()(0): " << oceanModelAdapter->OceanTime()(0) << endl;
+        cout << "WacommPlusPlus::run ++oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
+
+
+
         if (world_rank == 0) {
             if (config->SaveInput()) {
                 string inputFilename = config->NcInputRoot() + cal.asNCEPdate() + ".nc";
                 oceanModelAdapter->saveAsNetCDF(inputFilename);
             }
         }
+
 
         Wacomm wacomm(config, oceanModelAdapter, sources, particles);
         wacomm.run();
