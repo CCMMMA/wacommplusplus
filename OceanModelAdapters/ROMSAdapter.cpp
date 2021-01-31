@@ -10,7 +10,7 @@ ROMSAdapter::ROMSAdapter(string &fileName): fileName(fileName) {
 
 void ROMSAdapter::process()
 {
-    LOG4CPLUS_DEBUG(logger,"Loading:"+fileName);
+    LOG4CPLUS_DEBUG(logger,"ROMS file loading:"+fileName);
 
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, NcFile::read);
@@ -127,10 +127,15 @@ void ROMSAdapter::process()
     this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
 
     LOG4CPLUS_DEBUG(logger,"Copying 1D ...");
-    
+
+    /*
     memcpy( this->OceanTime(), oceanTime(), ocean_time*sizeof(double) );
     memcpy( this->SRho(), sRho(), s_rho*sizeof(double) );
     memcpy( this->SW(), sW(), s_w*sizeof(double) );
+     */
+    this->OceanTime().Load(oceanTime());
+    this->SRho().Load(sRho());
+    this->SW().Load(sW());
 
     for(int k=-(int)s_w+2; k<=0;k++) {
         this->Depth().operator()(k)=sW(k)-sW(k-1);
@@ -138,13 +143,20 @@ void ROMSAdapter::process()
 
     LOG4CPLUS_DEBUG(logger,"Copying 2D...");
 
+    /*
     memcpy( this->Mask(), mask_rho(), eta_rho*xi_rho*sizeof(double) );
     memcpy( this->Lat(), lat_rho(), eta_rho*xi_rho*sizeof(double) );
     memcpy( this->Lon(), lon_rho(), eta_rho*xi_rho*sizeof(double) );
     memcpy( this->H().operator double *(), h(), eta_rho*xi_rho*sizeof(double) );
+     */
+    this->Mask().Load(mask_rho());
+    this->Lat().Load(lat_rho());
+    this->Lon().Load(lon_rho());
+    this->H().Load(h());
 
     LOG4CPLUS_DEBUG(logger,"Copying 3D...");
-    memcpy( this->Zeta().operator float *(), zeta(), ocean_time*eta_rho*xi_rho*sizeof(float) );
+    //memcpy( this->Zeta().operator float *(), zeta(), ocean_time*eta_rho*xi_rho*sizeof(float) );
+    this->Zeta().Load(zeta());
 
     LOG4CPLUS_DEBUG(logger,"Convert lon & lat in radiants...");
     // lon_u, lat_v in radiants
