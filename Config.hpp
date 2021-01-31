@@ -85,6 +85,9 @@ public:
     void NumberOfInputs(int value);
     int NumberOfInputs();
 
+    string OceanModel() const;
+    void OceanModel(string value);
+
     void saveAsJson(const string &fileName);
     void loadFromJson(const string &fileName);
     void loadFromNamelist(const string &fileName);

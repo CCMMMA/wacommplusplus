@@ -412,6 +412,14 @@ void Config::EmbeddedHistroy(bool value) {
     embeddedHistory = value;
 }
 
+string Config::OceanModel() const {
+    return oceanModel;
+}
+
+void Config::OceanModel(string value) {
+    oceanModel = value;
+}
+
 void Config::saveAsJson(const string &fileName) {
 
     Calendar calStart, calEnd;
