@@ -69,7 +69,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                     Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
                     Array4<float> &akt) {
 
-    srand( Random::get<unsigned>(0, UINT32_MAX) );
+    unsigned seed = Random::get<unsigned>(0, UINT32_MAX);
 
     particle_data localParticleData;
     memcpy(&localParticleData, &_data, sizeof(particle_data));
@@ -191,7 +191,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         float z4=zeta(ocean_time_idx,    jI  ,  iI+1)  *     iF   *(1.0-jF);
 
         // The current zeta at the particle position
-        float zeta=z1+z2+z3+z4;
+        float zz=z1+z2+z3+z4;
 
         // Perform the bilinear interpolation (2D) in order to get
         // the h (depth) at the particle position.
@@ -201,7 +201,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         double h4=h(jI  ,  iI+1)  *     iF   *(1.0-jF);
 
         // The current h (depth) at the particle position
-        double h=h1+h2+h3+h4;
+        double hh=h1+h2+h3+h4;
 
         // The particle is alive!
         // Perform the bilinear interpolation (2D) in order to get
@@ -286,9 +286,9 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         if (random) {
             for (int a = 0; a < 12; a++) {
-                gi = gi + gen() - 0.5;
-                gj = gj + gen() - 0.5;
-                gk = gk + gen() - 0.5;
+                gi = gi + rand_r(&seed)/RAND_MAX - 0.5;
+                gj = gj + rand_r(&seed)/RAND_MAX - 0.5;
+                gk = gk + rand_r(&seed)/RAND_MAX - 0.5;
             }
         }
 
@@ -330,7 +330,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         //double hcbz=oceanModelAdapter->HCorrectedByZeta(ocean_time_idx,jI,iI);
         //cout << "jI:" << jI << " iI:" << iI << " depth(" << kI <<"):"<<depth<< " hcbz:"<< hcbz << endl;
         //kdist=oceanModelData->depth(kI)*oceanModelAdapter->HCorrectedByZeta(ocean_time_idx,jI,iI);
-        kdist=depth(kI)*(h+zeta);
+        kdist=depth(kI)*(hh+zz);
         if ( abs(kleap) > abs(kdist) ) {
             kleap=sign(kdist,kleap);
         }
