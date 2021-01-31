@@ -42,19 +42,14 @@ void WacommPlusPlus::run() {
             LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
         }
 
-        OceanModelAdapter *pOceanModelAdapter;
+        shared_ptr<OceanModelAdapter> oceanModelAdapter;
         if (config->OceanModel() == "ROMS") {
-            ROMSAdapter romsAdapter(ncInput);
-            pOceanModelAdapter=&romsAdapter;
-        } else {
-            WacommAdapter wacommAdapter(ncInput);
-            pOceanModelAdapter=&wacommAdapter;
-        }
-        pOceanModelAdapter->process();
-        auto oceanModelAdapter = make_shared<OceanModelAdapter>(*pOceanModelAdapter);
+            oceanModelAdapter = make_shared<ROMSAdapter>(ncInput);
 
-        cout << "WacommPlusPlus::run --oceanModelAdapter->OceanTime()(0): " << oceanModelAdapter->OceanTime()(0) << endl;
-        cout << "WacommPlusPlus::run --oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
+        } else {
+            oceanModelAdapter = make_shared<WacommAdapter>(ncInput);
+        }
+        oceanModelAdapter->process();
 
         Calendar cal;
 
@@ -82,22 +77,27 @@ void WacommPlusPlus::run() {
             }
         }
 
-        cout << "WacommPlusPlus::run ++oceanModelAdapter->OceanTime()(0): " << oceanModelAdapter->OceanTime()(0) << endl;
-        cout << "WacommPlusPlus::run ++oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
-
-
-
+        // Check if the rank is 0
         if (world_rank == 0) {
+
+            // Check if the processed input must be saved
             if (config->SaveInput()) {
+
+                // Create the filename
                 string inputFilename = config->NcInputRoot() + cal.asNCEPdate() + ".nc";
+
+                // Save the processed input
                 oceanModelAdapter->saveAsNetCDF(inputFilename);
             }
         }
 
-
+        // Create a new Wacomm object
         Wacomm wacomm(config, oceanModelAdapter, sources, particles);
+
+        // Run the model
         wacomm.run();
 
+        // Go to the next input file
         idx++;
     }
 }
