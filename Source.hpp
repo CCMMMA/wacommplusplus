@@ -38,6 +38,8 @@ public:
     void ParticlesPerHour(int value);
     void Mode(int value);
 
+
+
 private:
     log4cplus::Logger logger;
 
