@@ -128,11 +128,7 @@ void ROMSAdapter::process()
 
     LOG4CPLUS_DEBUG(logger,"Copying 1D ...");
 
-    /*
-    memcpy( this->OceanTime(), oceanTime(), ocean_time*sizeof(double) );
-    memcpy( this->SRho(), sRho(), s_rho*sizeof(double) );
-    memcpy( this->SW(), sW(), s_w*sizeof(double) );
-     */
+
     this->OceanTime().Load(oceanTime());
     this->SRho().Load(sRho());
     this->SW().Load(sW());
@@ -141,21 +137,33 @@ void ROMSAdapter::process()
         this->Depth().operator()(k)=sW(k)-sW(k-1);
     }
 
-    LOG4CPLUS_DEBUG(logger,"Copying 2D...");
 
-    /*
-    memcpy( this->Mask(), mask_rho(), eta_rho*xi_rho*sizeof(double) );
-    memcpy( this->Lat(), lat_rho(), eta_rho*xi_rho*sizeof(double) );
-    memcpy( this->Lon(), lon_rho(), eta_rho*xi_rho*sizeof(double) );
-    memcpy( this->H().operator double *(), h(), eta_rho*xi_rho*sizeof(double) );
-     */
+
+
     this->Mask().Load(mask_rho());
     this->Lat().Load(lat_rho());
     this->Lon().Load(lon_rho());
+
+    #pragma omp parallel for collapse(2) default(none) shared(eta_rho, xi_rho, mask_rho, h )
+    for ( int j=0; j<eta_rho;j++) {
+        for (int i=0;i<xi_rho;i++) {
+            if (mask_rho(j,i)==0) {
+                h(j,i)=0;
+            }
+        }
+    }
     this->H().Load(h());
 
-    LOG4CPLUS_DEBUG(logger,"Copying 3D...");
-    //memcpy( this->Zeta().operator float *(), zeta(), ocean_time*eta_rho*xi_rho*sizeof(float) );
+    #pragma omp parallel for collapse(3) default(none) shared(ocean_time, eta_rho, xi_rho, mask_rho, zeta )
+    for (int t=0; t < ocean_time; t++) {
+        for (int j = 0; j < eta_rho; j++) {
+            for (int i = 0; i < xi_rho; i++) {
+                if (mask_rho(j, i) == 0) {
+                    zeta(t, j, i) = 0;
+                }
+            }
+        }
+    }
     this->Zeta().Load(zeta());
 
     LOG4CPLUS_DEBUG(logger,"Convert lon & lat in radiants...");
