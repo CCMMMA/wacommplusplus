@@ -73,7 +73,7 @@ void Wacomm::run()
         }
     }
 
-    if (!config->Dry()) {
+    {
         int itemSize = sizeof(struct particle_data);
         Calendar cal;
 
