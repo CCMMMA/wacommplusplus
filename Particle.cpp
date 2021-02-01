@@ -286,9 +286,9 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         if (random) {
             for (int a = 0; a < 12; a++) {
-                gi = gi + rand_r(&seed)/RAND_MAX - 0.5;
-                gj = gj + rand_r(&seed)/RAND_MAX - 0.5;
-                gk = gk + rand_r(&seed)/RAND_MAX - 0.5;
+                gi = gi + gen(&seed) - 0.5;
+                gj = gj + gen(&seed) - 0.5;
+                gk = gk + gen(&seed) - 0.5;
             }
         }
 
@@ -404,7 +404,7 @@ double Particle::I() const { return _data.i; }
 // Returns a single pseudorandom number from the uniform distribution over the range [0,1[.
 // https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html
 //double Particle::gen() { return Random::get<double>(0.0, 1.0); }
-double Particle::gen() { return (float) rand()/RAND_MAX; }
+double Particle::gen(unsigned int *seed) { return (double) rand_r(seed)/RAND_MAX; }
 
 // Returns -1 if a < 0 and 1 if a > 0
 double Particle::sgn(double a) { return (a > 0) - (a < 0); }

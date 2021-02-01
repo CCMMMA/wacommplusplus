@@ -69,7 +69,7 @@ class Particle {
         double Time() const;
         unsigned long Id() const;
 
-        static double gen();
+        static double gen(unsigned int *seed);
 
         std::string to_string() const;
 
