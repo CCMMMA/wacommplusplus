@@ -123,7 +123,18 @@ int main(int argc, char **argv) {
         LOG4CPLUS_INFO(logger, "Configuration: " << configFile);
     }
 
+    // Load the configuration file
     auto config = std::make_shared<Config>(configFile);
+
+    // Check if it is the main process
+    if (world_rank == 0) {
+
+        // Show a message if it is a dry run
+        if (config->Dry()) {
+            LOG4CPLUS_INFO(logger, "*** Dry run ***");
+        }
+    }
+
     //config->NumberOfInputs(1);
     //config->SaveInput(true);
     //config->UseSources(true);
