@@ -200,17 +200,16 @@ add_dependencies(${PROJECT_NAME} random)
 target_link_libraries(${PROJECT_NAME} ${LIBOMP} ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS}  pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json)
 
 
-ExternalProject_Add(
-        wacomm-data
-        PREFIX "wacomm-data-prefix"
-        URL https://neptunia.uniparthenope.it/data/wacomm-data.tar.gz
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ""
-)
-
-
-#add_custom_target(data mv -f ${CMAKE_BINARY_DIR}/wacomm-data-prefix/src/wacomm-data/* ${CMAKE_BINARY_DIR}/)
-add_custom_target(data tar -xvzf  ${CMAKE_BINARY_DIR}/wacomm-data-prefix/src/wacomm-data.tar.gz -C ${CMAKE_BINARY_DIR}/)
-
-add_dependencies(data wacomm-data)
+#ExternalProject_Add(
+#        wacomm-data
+#        PREFIX "wacomm-data-prefix"
+#        URL https://neptunia.uniparthenope.it/data/wacomm-data.tar.gz
+#        CONFIGURE_COMMAND ""
+#        BUILD_COMMAND ""
+#        INSTALL_COMMAND ""
+#)
+#
+#
+#add_custom_target(data tar -xvzf  ${CMAKE_BINARY_DIR}/wacomm-data-prefix/src/wacomm-data.tar.gz -C ${CMAKE_BINARY_DIR}/)
+#
+#add_dependencies(data wacomm-data)
