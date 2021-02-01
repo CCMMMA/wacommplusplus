@@ -86,17 +86,22 @@ void WacommPlusPlus::run() {
                 // Create the filename
                 string inputFilename = config->NcInputRoot() + cal.asNCEPdate() + ".nc";
 
+                // Show a information message
+                LOG4CPLUS_INFO(logger,  "Saving processed output: " << inputFilename);
+
                 // Save the processed input
                 oceanModelAdapter->saveAsNetCDF(inputFilename);
             }
         }
 
-        // Create a new Wacomm object
-        Wacomm wacomm(config, oceanModelAdapter, sources, particles);
+        // Check if it is a dry run
+        if (!config->Dry()) {
+            // Create a new Wacomm object
+            Wacomm wacomm(config, oceanModelAdapter, sources, particles);
 
-        // Run the model
-        wacomm.run();
-
+            // Run the model
+            wacomm.run();
+        }
         // Go to the next input file
         idx++;
     }
