@@ -158,7 +158,7 @@ void ROMSAdapter::process()
     for (int t=0; t < ocean_time; t++) {
         for (int j = 0; j < eta_rho; j++) {
             for (int i = 0; i < xi_rho; i++) {
-                if (mask_rho(j, i) == 0) {
+                if (mask_rho(j, i) == 0 || zeta(t, j, i)==1e+37) {
                     zeta(t, j, i) = 0;
                 }
             }
