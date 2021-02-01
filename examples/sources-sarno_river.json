@@ -1,0 +1,17 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+  {
+    "type": "Feature",
+    "properties": {
+      "id": "Sarno River",
+      "particlesPerHour": 10000
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [ 14.466590881347654,
+          40.72813686316017, 0 ]
+    }
+  }
+  ]
+}

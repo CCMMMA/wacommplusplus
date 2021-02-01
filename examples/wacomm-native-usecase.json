@@ -1,0 +1,56 @@
+{
+	"simulation": {
+		"name": "Da Gaeta a Maratea",
+		"institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
+		"url": "https://meteo.uniparthenope.it",
+		"start": "20201130Z00",
+		"end": "20201201Z00"
+	},
+	"io": {
+		"base_path": "processed/",
+		"nc_inputs": [
+			"ocm3_d03_20201130Z0000.nc",
+			"ocm3_d03_20201130Z0100.nc",
+			"ocm3_d03_20201130Z0200.nc",
+			"ocm3_d03_20201130Z0300.nc",
+			"ocm3_d03_20201130Z0400.nc",
+			"ocm3_d03_20201130Z0500.nc",
+			"ocm3_d03_20201130Z0600.nc",
+			"ocm3_d03_20201130Z0700.nc",
+			"ocm3_d03_20201130Z0800.nc",
+			"ocm3_d03_20201130Z0900.nc",
+			"ocm3_d03_20201130Z1000.nc",
+			"ocm3_d03_20201130Z1100.nc",
+			"ocm3_d03_20201130Z1200.nc",
+			"ocm3_d03_20201130Z1300.nc",
+			"ocm3_d03_20201130Z1400.nc",
+			"ocm3_d03_20201130Z1500.nc",
+			"ocm3_d03_20201130Z1600.nc",
+			"ocm3_d03_20201130Z1700.nc",
+			"ocm3_d03_20201130Z1800.nc",
+			"ocm3_d03_20201130Z1900.nc",
+			"ocm3_d03_20201130Z2000.nc",
+			"ocm3_d03_20201130Z2100.nc",
+			"ocm3_d03_20201130Z2200.nc",
+			"ocm3_d03_20201130Z2300.nc",
+			"ocm3_d03_20201201Z0000.nc"
+		],
+                "ocean_model":"WaComM",
+		"nc_output_root": "output/wacomm_his_",
+		"timestep": 3600,
+		"save_input": false,
+		"nc_input_root":"processed/ocm3_d03_"
+	},
+	"restart": {
+		"active": false,
+		"restart_file": "http://data.meteo.uniparthenope.it/opendap/opendap/wcm3/d03/2020/11/30/wpp3_d03_20201130Z0000.nc"
+	},
+	"sources": {
+		"active": true,
+		"sources_file": "sources-campania_region.json"
+	},
+	"physics": {
+		"tau0": 86400.0,
+		"survprob": 1.0e-4
+	}
+}
