@@ -10,6 +10,7 @@
 #include "JulianDate.hpp"
 
 #ifdef USE_MPI
+#define OMPI_SKIP_MPICXX
 #include <mpi.h>
 #endif
 

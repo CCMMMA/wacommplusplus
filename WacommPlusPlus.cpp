@@ -6,7 +6,9 @@
 #include "JulianDate.hpp"
 #include "OceanModelAdapters/WacommAdapter.hpp"
 #include "OceanModelAdapters/ROMSAdapter.hpp"
+
 #ifdef USE_MPI
+#define OMPI_SKIP_MPICXX
 #include <mpi.h>
 #endif
 

@@ -3,6 +3,7 @@
 #include <string>
 
 #ifdef USE_MPI
+#define OMPI_SKIP_MPICXX
 #include <mpi.h>
 #endif
 
