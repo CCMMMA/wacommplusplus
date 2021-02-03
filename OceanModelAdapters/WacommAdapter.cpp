@@ -86,8 +86,12 @@ void WacommAdapter::process()  {
     NcVar aktVar = dataFile.getVar("akt");
     aktVar.getVar(this->AKT()());
 
+    for(int k=-(int)s_w+2; k<=0;k++) {
+        this->Depth().operator()(k)=this->SW()(k)-this->SW()(k-1);
+    }
+
     // lon_u, lat_v in radiants
-#pragma omp parallel for collapse(2) default(none) shared(eta_rho, xi_rho )
+    #pragma omp parallel for collapse(2) default(none) shared(eta_rho, xi_rho )
     for ( int j=0; j<eta_rho;j++) {
         for (int i=0;i<xi_rho;i++) {
             this->LonRad().operator()(j,i)=0.0174533*this->Lon()(j,i);
