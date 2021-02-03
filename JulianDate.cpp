@@ -11,10 +11,12 @@ double JulianDate::toJulian(Calendar cal) {
     return toJulian(cal.get(Calendar::YEAR),
                     cal.get(Calendar::MONTH)+1,
                     cal.get(Calendar::DAY_OF_MONTH),
-                    cal.get(Calendar::HOUR_OF_DAY));
+                    cal.get(Calendar::HOUR_OF_DAY),
+                    cal.get(Calendar::MINUTES),
+                    cal.get(Calendar::SECONDS));
 }
 
-double JulianDate::toJulian(int year, int month, int day, int hour) {
+double JulianDate::toJulian(int year, int month, int day, int hour, int minute, int second) {
     int julianYear = year;
     if (year < 0) julianYear++;
     int julianMonth = month;
@@ -33,18 +35,20 @@ double JulianDate::toJulian(int year, int month, int day, int hour) {
         int ja = (int)(0.01 * julianYear);
         julian += 2 - ja + (0.25 * ja);
     }
-    julian=floor(julian)+hour/24.;
+    julian=floor(julian)+hour/24.+minute/1440.+second/86400.;
 
     return julian;
 }
 
 void JulianDate::fromJulian(double injulian, Calendar &cal) {
-    int year, month, day, hour;
-    fromJulian(injulian,year, month, day, hour);
+    int year, month, day, hour, minute, second;
+    fromJulian(injulian,year, month, day, hour, minute, second);
     cal.set(Calendar::YEAR, year);
     cal.set(Calendar::MONTH, month-1);
     cal.set(Calendar::DAY_OF_MONTH, day);
     cal.set(Calendar::HOUR_OF_DAY, hour);
+    cal.set(Calendar::MINUTES, minute);
+    cal.set(Calendar::SECONDS, second);
 }
 
 /**
@@ -52,10 +56,14 @@ void JulianDate::fromJulian(double injulian, Calendar &cal) {
  * ref :
  * Numerical Recipes in C, 2nd ed., Cambridge University Press 1992
  */
-void JulianDate::fromJulian(double injulian, int &year, int &month, int &day, int &hour) {
+void JulianDate::fromJulian(double injulian, int &year, int &month, int &day, int &hour, int &minute, int &second) {
     int jalpha,ja,jb,jc,jd,je;
     double hf=injulian-floor(injulian);
     hour=(int)round(24*hf);
+    double mf=24*hf - hour;
+    minute=(int)round(60*mf);
+    double sf=60*mf-minute;
+    second=(int)round(60*sf);
     double julian = injulian + HALFSECOND / 86400.0;
     ja = (int) julian;
     if (ja>= JGREG) {
@@ -94,22 +102,22 @@ void JulianDate::fromModJulian(double modJulian, Calendar &cal) {
 }
 
 double JulianDate::get19680523() {
-    return toJulian(1968, 5, 23,0 );
+    return toJulian(1968, 5, 23,0, 0,0 );
 }
 
 double JulianDate::get19700101() {
-    return toJulian(1970, 1, 1,0 );
+    return toJulian(1970, 1, 1,0,0,0 );
 }
 
 void JulianDate::playground() {
     // FIRST TEST reference point
-    double jd=toJulian( 1968, 5, 23, 0 );
+    double jd=toJulian( 1968, 5, 23, 0,0,0 );
     cout << "Julian date for May 23, 1968 : " << jd << endl;
     // output : 2440000
-    int year, month, day, hour;
-    jd=toJulian(1968, 5, 23,0 );
-    fromJulian(jd, year, month, day, hour);
-    cout << "... back to calendar : " << year << " " << month << " " << day << " " << hour << endl;
+    int year, month, day, hour, minute, second;
+    jd=toJulian(1968, 5, 23,0,0,0 );
+    fromJulian(jd, year, month, day, hour, minute, second);
+    cout << "... back to calendar : " << year << " " << month << " " << day << " " << hour << " " << minute << " " << second << endl;
 
 
     // SECOND TEST today
@@ -118,16 +126,18 @@ void JulianDate::playground() {
             today.get(Calendar::YEAR),
             today.get(Calendar::MONTH)+1,
             today.get(Calendar::DAY_OF_MONTH),
-            today.get(Calendar::HOUR_OF_DAY)
+            today.get(Calendar::HOUR_OF_DAY),
+            today.get(Calendar::MINUTES),
+            today.get(Calendar::SECONDS)
     );
 
     cout << "Julian date for today : " << todayJulian << endl;
-    fromJulian(todayJulian, year,month, day, hour);
+    fromJulian(todayJulian, year,month, day, hour, minute, second);
     cout << "... back to calendar : " << year << " " << month << " " << day << " " << hour << endl;
 
     // THIRD TEST
-    double date1 = toJulian(2005,1,1,0);
-    double date2 = toJulian(2005,1,31,0);
+    double date1 = toJulian(2005,1,1,0,0,0);
+    double date2 = toJulian(2005,1,31,0,0,0);
     cout << "Between 2005-01-01 and 2005-01-31 : " <<
          (date2 - date1) << " days" << endl;
 
@@ -148,6 +158,8 @@ string Calendar::format(string format) {
     my_tm.tm_mon = _data[MONTH];
     my_tm.tm_mday = _data[DAY_OF_MONTH];
     my_tm.tm_hour = _data[HOUR_OF_DAY];
+    my_tm.tm_min = _data[MINUTES];
+    my_tm.tm_sec = _data[SECONDS];
     char s[256];
     strftime(s,256,format.c_str(),&my_tm);
     return string(s);
@@ -160,6 +172,8 @@ void Calendar::parse(string format, string value) {
     _data[MONTH] = my_tm.tm_mon;
     _data[DAY_OF_MONTH] = my_tm.tm_mday;
     _data[HOUR_OF_DAY] = my_tm.tm_hour;
+    _data[MINUTES] = my_tm.tm_min;
+    _data[SECONDS] = my_tm.tm_sec;
 }
 
 Calendar::Calendar() {
@@ -171,6 +185,8 @@ Calendar::Calendar() {
     _data[MONTH]=dateTime->tm_mon;
     _data[DAY_OF_MONTH]=dateTime->tm_mday;
     _data[HOUR_OF_DAY]=dateTime->tm_hour;
+    _data[MINUTES]=dateTime->tm_min;
+    _data[SECONDS]=dateTime->tm_sec;
 }
 
 Calendar::Calendar(string value) {
@@ -182,11 +198,13 @@ Calendar::Calendar(string format, string value) {
     parse(format, value);
 }
 
-Calendar::Calendar(int year, int month, int day, int hour) {
+Calendar::Calendar(int year, int month, int day, int hour, int minute, int second) {
     _data[YEAR]=year;
     _data[MONTH]=month-1;
     _data[DAY_OF_MONTH]=day;
     _data[HOUR_OF_DAY]=hour;
+    _data[MINUTES]=minute;
+    _data[SECONDS]=second;
 }
 
 Calendar::~Calendar() = default;
@@ -195,6 +213,6 @@ int Calendar::get(int idx) { return _data[idx];}
 void Calendar::set(int idx, int value) { _data[idx] = value;}
 
 string Calendar::asNCEPdate() {
-    return format("%Y%m%dZ%H");
+    return format("%Y%m%dZ%H%M");
 }
 

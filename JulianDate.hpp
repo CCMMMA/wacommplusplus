@@ -18,11 +18,13 @@ public:
     constexpr static const int MONTH = 1;
     constexpr static const int DAY_OF_MONTH = 2;
     constexpr static const int HOUR_OF_DAY = 3;
+    constexpr static const int MINUTES = 4;
+    constexpr static const int SECONDS = 5;
 
     Calendar();
     Calendar(string value);
     Calendar(string format, string value);
-    Calendar(int year, int month, int day, int hour);
+    Calendar(int year, int month, int day, int hour, int minute, int second);
     ~Calendar();
 
     int get(int idx);
@@ -33,7 +35,7 @@ public:
     void parse(string format, string value);
 
 private:
-    int _data[4];
+    int _data[6];
 
 };
 
@@ -64,8 +66,8 @@ public:
     static double toJulian(Calendar cal);
     static void fromJulian(double injulian, Calendar &cal);
 
-    static double toJulian(int y, int m, int d, int h);
-    static void fromJulian(double injulian, int &y, int &m, int &d, int &h);
+    static double toJulian(int y, int m, int d, int h, int mn, int sc);
+    static void fromJulian(double injulian, int &y, int &m, int &d, int &h, int &mn, int &sc);
 
     static void playground();
 
