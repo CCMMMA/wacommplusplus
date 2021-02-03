@@ -327,15 +327,11 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
 
 
-        //double hcbz=oceanModelAdapter->HCorrectedByZeta(ocean_time_idx,jI,iI);
         //cout << "jI:" << jI << " iI:" << iI << " depth(" << kI <<"):"<<depth<< " hcbz:"<< hcbz << endl;
-        //kdist=oceanModelData->depth(kI)*oceanModelAdapter->HCorrectedByZeta(ocean_time_idx,jI,iI);
         kdist=depth(kI)*(hh+zz);
         if ( abs(kleap) > abs(kdist) ) {
             kleap=sign(kdist,kleap);
         }
-
-
 
         // Calculate the new particle j candidate
         jdet=localParticleData.j+0.001*jleap/jidist;
