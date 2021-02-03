@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(wacommplusplus)
 
-#enable_language(C)
-#enable_language(CXX)
 enable_language(Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -124,7 +122,7 @@ ExternalProject_Add(curl
         URL https://curl.haxx.se/download/curl-7.73.0.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/
+        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --without-libidn --disable-ldap
         BUILD_COMMAND make
         INSTALL_COMMAND make install
         )
@@ -198,18 +196,3 @@ add_dependencies(${PROJECT_NAME} random)
 
 
 target_link_libraries(${PROJECT_NAME} ${LIBOMP} ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS}  pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json)
-
-
-#ExternalProject_Add(
-#        wacomm-data
-#        PREFIX "wacomm-data-prefix"
-#        URL https://neptunia.uniparthenope.it/data/wacomm-data.tar.gz
-#        CONFIGURE_COMMAND ""
-#        BUILD_COMMAND ""
-#        INSTALL_COMMAND ""
-#)
-#
-#
-#add_custom_target(data tar -xvzf  ${CMAKE_BINARY_DIR}/wacomm-data-prefix/src/wacomm-data.tar.gz -C ${CMAKE_BINARY_DIR}/)
-#
-#add_dependencies(data wacomm-data)
