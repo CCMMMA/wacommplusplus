@@ -35,7 +35,7 @@
 			"ocm3_d03_20201130Z2300.nc",
 			"ocm3_d03_20201201Z0000.nc"
 		],
-                "ocean_model":"WaComM",
+		"ocean_model":"WaComM",
 		"nc_output_root": "output/wacomm_his_",
 		"timestep": 3600,
 		"save_input": false,
@@ -47,7 +47,7 @@
 	},
 	"sources": {
 		"active": true,
-		"sources_file": "sources-campania_region.json"
+		"sources_file": "sources.json"
 	},
 	"physics": {
 		"tau0": 86400.0,
