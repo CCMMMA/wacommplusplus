@@ -18,7 +18,6 @@ class Particles : private vector<Particle> {
 
 public:
     Particles();
-    Particles(string fileName);
     ~Particles();
 
     using vector::push_back;
@@ -31,6 +30,8 @@ public:
     using vector::erase;
 
     void loadFromTxt(const string& fileName);
+    void loadFromJson(const string &fileName);
+    void loadFromNetCDF(const string &fileName);
 
     void saveAsTxt(const string& fileName);
     void saveAsJson(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);

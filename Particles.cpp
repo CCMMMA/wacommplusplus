@@ -8,6 +8,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <iomanip>
+#include <cpr/cpr.h>
 
 // for convenience
 using json = nlohmann::json;
@@ -20,16 +21,6 @@ Particles::Particles() {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
     LOG4CPLUS_DEBUG(logger, "Empty Particles");
-}
-
-Particles::Particles(string fileName) {
-
-    logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
-
-    LOG4CPLUS_DEBUG(logger, "Reading restart file:"+fileName);
-
-    loadFromTxt(fileName);
-
 }
 
 void Particles::saveAsTxt(const string& fileName)
@@ -275,6 +266,14 @@ void Particles::loadFromTxt(const string &fileName) {
         }
         count++;
     }
+}
+
+void Particles::loadFromJson(const string &fileName) {
+    std::ifstream infile(fileName);
+}
+
+void Particles::loadFromNetCDF(const string &fileName) {
+    std::ifstream infile(fileName);
 }
 
 Particles::~Particles() = default;
