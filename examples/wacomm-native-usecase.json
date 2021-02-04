@@ -39,11 +39,13 @@
 		"nc_output_root": "output/wacomm_his_",
 		"timestep": 3600,
 		"save_input": false,
+		"save_history": "text",
+		"history_root": "restart/WACOMM_rst_",
 		"nc_input_root":"processed/ocm3_d03_"
 	},
 	"restart": {
-		"active": false,
-		"restart_file": "http://data.meteo.uniparthenope.it/opendap/opendap/wcm3/d03/2020/11/30/wpp3_d03_20201130Z0000.nc"
+		"active": true,
+		"restart_file": "WACOMM_rst_20201130Z00.txt"
 	},
 	"sources": {
 		"active": true,
@@ -51,6 +53,7 @@
 	},
 	"physics": {
 		"tau0": 86400.0,
-		"survprob": 1.0e-4
+		"survprob": 1.0e-4,
+		"shorelimit": 0.5
 	}
 }

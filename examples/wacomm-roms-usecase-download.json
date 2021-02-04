@@ -53,6 +53,7 @@
 	},
 	"physics": {
 		"tau0": 86400.0,
-		"survprob": 1.0e-4
+		"survprob": 1.0e-4,
+		"shorelimit": 0.5
 	}
 }
