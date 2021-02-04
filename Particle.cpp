@@ -95,6 +95,9 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
     // Sedimentation velocity (m-1. default )
     double sv=configData->sv;
 
+    // Sigma (deviation of particle distribution Baccaciola et Al. 1993.
+    double sigma=3.46;
+
     // Shore limit (positive depth: default 0.25)
     double shoreLimit=configData->shoreLimit;
 
@@ -106,16 +109,63 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
     // Get the number of the sigma levels
     size_t s_w = w.Ny();
 
+    double kLowerLimit=-(int)s_w + 2;
+
     // Get the domain size in south-north number of rows
     size_t eta_rho = mask.Nx();
 
     // Get the domain size in west-east number of columns
     size_t xi_rho = mask.Ny();
 
+    // Check if the particle jumped outside the water :-)
+    if (localParticleData.k>0) {
+        switch (configData->upperClosure) {
+
+            case Config::CLOSURE_MODE_CONSTRAINT:
+                // The particle must stay in the water
+                localParticleData.k=0;
+                break;
+
+            case Config::CLOSURE_MODE_KILL:
+                // Kill the particle
+                localParticleData.health=-1;
+                break;
+
+            case Config::CLOSURE_MODE_REFLECTION:
+                // Reflect the particle
+                localParticleData.k=-localParticleData.k;
+                break;
+        }
+
+    }
+
+    // Check if the new k have to be limited by the seafoor
+    if (localParticleData.k < kLowerLimit) {
+
+        switch (configData->lowerClosure) {
+
+            case Config::CLOSURE_MODE_CONSTRAINT:
+                // Limit it on the bottom
+                localParticleData.k = kLowerLimit ;
+                break;
+
+            case Config::CLOSURE_MODE_KILL:
+                // The particle must stay in the water
+                localParticleData.health=-1;
+                break;
+
+            case Config::CLOSURE_MODE_REFLECTION:
+                // The particle must stay in the water
+                localParticleData.k=2.0 * kLowerLimit - localParticleData.k;
+                break;
+        }
+
+    }
+
     // For each integration interval
     for (int t=0;t<iint;t++) {
 
-        // Check if the paticle is not yet active
+        // Check if the particle is not yet active
         if (localParticleData.time>(oceanTime(ocean_time_idx)+(t*dti))) {
             // The particle is not already active (already emitted, but not active)
             break;
@@ -153,33 +203,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             break;
         }
 
-        /*
-        // Check if the particle beached
-        if (mask(jI,iI)<=0) {
 
-            // Set the particle health
-            localParticleData.health=-1;
-
-            // no reason to continue,  exit the integration loop
-            break;
-        }
-        */
-        /*
-        // Check if the particle jumped outside the water :-)
-        if (k>0) {
-            // The particle must stay in the water
-            k=0;
-        }
-
-        // Check if the particle sunk
-        if (k>=s_w) {
-            // Set the particle health as dead
-            health=-1;
-
-            // no reason to continue,  exit the integration loop
-            break;
-        }
-        */
 
 #ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, this->to_string());
@@ -287,9 +311,8 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             double dkleap = (sv + ww) * dti;
 
             // Calculation of sigma profile
-            // sigmaPROF=sigma(Ixx,Iyy)*(1-Zdet/(-H(Ixx,Iyy))) ! Here is H
-            //double sigmaProf=oceanModelAdapter->sigma()(jI, iI)*(1-kdet/(-oceanModelAdapter->H()(jI,iI)))
-            double sigmaprof = 3.46 * (1 + localParticleData.k / s_w);
+            //double sigmaprof = sigma * (1 + localParticleData.k / s_w);
+            double sigmaprof = sigma * (1 + localParticleData.k / kLowerLimit);
 
             // Extract 3 pseudorandom numbers
             double gi = 0, gj = 0, gk = 0;
@@ -333,13 +356,17 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                  pow(sin(0.5 * d2), 2) *
                  cos(latRad(jI + 1, iI)) *
                  cos(latRad(jI, iI));
+
+            // Diagonal horizontal dimension of a cell
             jidist = 2.0 * atan2(pow(dd, .5), pow(1.0 - dd, .5)) * 6371.0;
 
-
-
-            //cout << "jI:" << jI << " iI:" << iI << " depth(" << kI <<"):"<<depth<< " hcbz:"<< hcbz << endl;
+            // Vertical dimension of a grid cell
             kdist = depth(kI) * (hh + zz);
+
+            // Check if the vertical leap is greather than the vertical distance between two grid cells
             if (abs(kleap) > abs(kdist)) {
+
+                // Limit the leap to the vertical grid cell size, but in the direction of the leap
                 kleap = sign(kdist, kleap);
             }
 
@@ -352,31 +379,47 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             // Calculate the new particle k candidate
             kdet = localParticleData.k + kleap / kdist;
 
-            /*
-            // Reflect if out-of-column
-            // Check if the new k have to be limited by the sealfoor
-            if (kdet < (-(int) s_w + 2)) {
-                // Limit it on the bottom
-                kdet = 2.0 * (-(int) s_w + 2) - kdet;
-            }
 
             // Check if the new k have to be limited by the seafloor
             if (kdet > 0.) {
-                // Limit it on the surface
-                kdet = -kdet;
+                switch (configData->upperClosure) {
+
+                    case Config::CLOSURE_MODE_CONSTRAINT:
+                        // The particle must stay in the water
+                        kdet=0;
+                        break;
+
+                    case Config::CLOSURE_MODE_KILL:
+                        // The particle must stay in the water
+                        localParticleData.health=-1;
+                        break;
+
+                    case Config::CLOSURE_MODE_REFLECTION:
+                        // The particle must stay in the water
+                        kdet = -kdet;
+                        break;
+                }
             }
-            */
 
             // Check if the new k have to be limited by the sealfoor
-            if (kdet < (-(int) s_w + 2)) {
-                // Limit it on the bottom
-                kdet = (-(int) s_w + 2) ;
-            }
+            if (kdet < kLowerLimit) {
+                switch (configData->lowerClosure) {
 
-            // Check if the new k have to be limited by the seafloor
-            if (kdet > 0.) {
-                // Limit it on the surface
-                kdet = 0;
+                    case Config::CLOSURE_MODE_CONSTRAINT:
+                        // Limit it on the bottom
+                        kdet = kLowerLimit ;
+                        break;
+
+                    case Config::CLOSURE_MODE_KILL:
+                        // The particle must stay in the water
+                        localParticleData.health=-1;
+                        break;
+
+                    case Config::CLOSURE_MODE_REFLECTION:
+                        // The particle is reflected
+                        kdet=2.0 * kLowerLimit - kdet;
+                        break;
+                }
             }
 
             // Reflect if crossed the coastline
@@ -387,22 +430,33 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Check if the candidate position is within the domain
             if (jdetI >= 0 && idetI >= 0 && jdetI < eta_rho && idetI < xi_rho) {
-                /*
-                // Check if the candidate new particle position is on land (mask=0)
-                if (mask(jdetI, idetI) <= 0.0) {
-                    // Reflect the particle
-                    if (idetI < iI) {
-                        idet = (double) iI + abs(localParticleData.i - idet);
-                    } else if (idetI > iI) {
-                        idet = (double) idetI - mod(idet, 1.0);
-                    }
-                    if (jdetI < jdet) {
-                        jdet = (double) jdetI + abs(localParticleData.j - jdet);
-                    } else if (jdetI > jI) {
-                        jdet = (double) jdetI - mod(jdet, 1.0);
+
+                // Check if the candidate new particle position is on land (cfr. shoreLimit)
+                if (hc <= shoreLimit) {
+                    switch (configData->horizontalClosure) {
+
+                        case Config::CLOSURE_MODE_CONSTRAINT:
+                            break;
+
+                        case Config::CLOSURE_MODE_KILL:
+                            localParticleData.health=-1;
+                            break;
+
+                        case Config::CLOSURE_MODE_REFLECTION:
+                            // Reflect the particle
+                            if (idetI < iI) {
+                                idet = (double) iI + abs(localParticleData.i - idet);
+                            } else if (idetI > iI) {
+                                idet = (double) idetI - mod(idet, 1.0);
+                            }
+                            if (jdetI < jdet) {
+                                jdet = (double) jdetI + abs(localParticleData.j - jdet);
+                            } else if (jdetI > jI) {
+                                jdet = (double) jdetI - mod(jdet, 1.0);
+                            }
+                            break;
                     }
                 }
-                */
 
                 // Assign the new particle position
                 localParticleData.i = idet;
@@ -413,7 +467,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         }
 
-        // Update the paticle age
+        // Update the particle age
         localParticleData.age=localParticleData.age+dti;
 
         // Decay the particle
