@@ -17,11 +17,10 @@ WacommPlusPlus::~WacommPlusPlus() = default;
 WacommPlusPlus::WacommPlusPlus(std::shared_ptr<Config> config): config(config) {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
-    if (config->UseRestart()) {
-        particles = std::make_shared<Particles>(config->RestartFile());
-    } else {
-        particles = std::make_shared<Particles>();
-    }
+    // Create the particles
+    particles = std::make_shared<Particles>();
+
+    // Create the sources
     sources =  std::make_shared<Sources>();
 }
 
@@ -36,6 +35,7 @@ void WacommPlusPlus::run() {
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 #endif
+
 
     int idx = 0;
     for (auto &ncInput : config->NcInputs()) {
@@ -63,24 +63,26 @@ void WacommPlusPlus::run() {
 
         JulianDate::fromModJulian(modJulian, cal);
 
-        // Check if it is needed to load the sources
-        if (config->UseSources() && sources->empty()) {
-            string fileName = config->SourcesFile();
-            if (fileName.empty()) {
-                sources->loadFromNamelist(config->ConfigFile());
-            } else {
-                if (fileName.substr(fileName.find_last_of('.') + 1) == "json") {
-                    // The configuration is a json
-                    sources->loadFromJson(fileName, oceanModelAdapter);
-                } else {
-                    // the configuration is a fortran style namelist
-                    sources->loadFromNamelist(fileName);
-                }
-            }
-        }
+
 
         // Check if the rank is 0
         if (world_rank == 0) {
+
+            // Check if it is needed to load the sources
+            if (config->UseSources() && sources->empty()) {
+                string fileName = config->SourcesFile();
+                if (fileName.empty()) {
+                    sources->loadFromNamelist(config->ConfigFile());
+                } else {
+                    if (fileName.substr(fileName.find_last_of('.') + 1) == "json") {
+                        // The configuration is a json
+                        sources->loadFromJson(fileName, oceanModelAdapter);
+                    } else {
+                        // the configuration is a fortran style namelist
+                        sources->loadFromNamelist(fileName);
+                    }
+                }
+            }
 
             // Check if the processed input must be saved
             if (config->SaveInput()) {
@@ -93,6 +95,31 @@ void WacommPlusPlus::run() {
 
                 // Save the processed input
                 oceanModelAdapter->saveAsNetCDF(inputFilename);
+            }
+
+            // Check if using the restart file (only if it is the first iteration)
+            if (idx==0 && config->UseRestart() && !config->RestartFile().empty()) {
+
+                // Get the file name
+                string fileName = config->RestartFile();
+
+                // Check if the restart is a NetCDF
+                if (fileName.substr(fileName.find_last_of('.') + 1) == "nc") {
+
+                    // The restart is a NetCDF
+                    particles->loadFromJson(fileName);
+
+                    // Check if the restart is a geojson
+                } else if (fileName.substr(fileName.find_last_of('.') + 1) == "json") {
+
+                    // The restart is a json
+                    particles->loadFromJson(fileName);
+                } else {
+
+                    // the restart is a fortran style text file
+                    particles->loadFromTxt(fileName);
+                }
+
             }
         }
 
