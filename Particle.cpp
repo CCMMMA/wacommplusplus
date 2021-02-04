@@ -95,6 +95,9 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
     // Sedimentation velocity (m-1. default )
     double sv=configData->sv;
 
+    // Shore limit (positive depth: default 0.25)
+    double shoreLimit=configData->shoreLimit;
+
     double idet=0,jdet=0,kdet=0;
 
     // Number of integration intervals
@@ -150,6 +153,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             break;
         }
 
+        /*
         // Check if the particle beached
         if (mask(jI,iI)<=0) {
 
@@ -159,7 +163,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             // no reason to continue,  exit the integration loop
             break;
         }
-
+        */
         /*
         // Check if the particle jumped outside the water :-)
         if (k>0) {
@@ -185,13 +189,13 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         // Perform the bilinear interpolation (2D) in order to get
         // the zeta at the particle position.
-        float z1=zeta(ocean_time_idx,    jI,    iI)    *(1.0-iF)  *(1.0-jF);
-        float z2=zeta(ocean_time_idx,    jI+1,  iI)    *(1.0-iF)  *     jF;
-        float z3=zeta(ocean_time_idx,    jI+1,  iI+1)  *     iF   *     jF;
-        float z4=zeta(ocean_time_idx,    jI  ,  iI+1)  *     iF   *(1.0-jF);
+        float z1 = zeta(ocean_time_idx, jI, iI) * (1.0 - iF) * (1.0 - jF);
+        float z2 = zeta(ocean_time_idx, jI + 1, iI) * (1.0 - iF) * jF;
+        float z3 = zeta(ocean_time_idx, jI + 1, iI + 1) * iF * jF;
+        float z4 = zeta(ocean_time_idx, jI, iI + 1) * iF * (1.0 - jF);
 
         // The current zeta at the particle position
-        float zz=z1+z2+z3+z4;
+        float zz = z1 + z2 + z3 + z4;
 
         // Perform the bilinear interpolation (2D) in order to get
         // the h (depth) at the particle position.
@@ -203,186 +207,211 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         // The current h (depth) at the particle position
         double hh=h1+h2+h3+h4;
 
-        // The particle is alive!
-        // Perform the bilinear interpolation (2D) in order to get
-        // the u component of the current field in the particle position.
-        float u1=u(ocean_time_idx,   kI,    jI,    iI)    *(1.0-iF)  *(1.0-jF);
-        float u2=u(ocean_time_idx,   kI,    jI+1,  iI)    *(1.0-iF)  *     jF;
-        float u3=u(ocean_time_idx,   kI,    jI+1,  iI+1)  *     iF   *     jF;
-        float u4=u(ocean_time_idx,   kI,    jI  ,  iI+1)  *     iF   *(1.0-jF);
+        // Calulate the corrected depth
+        double hc=hh+zz;
 
-        // The current u component in the particle position
-        float uu=u1+u2+u3+u4;
+        // Check if the partiche is still floating...
+        if (hc>shoreLimit) {
+            // The particle is still floating
 
-#ifdef DEBUG
-        LOG4CPLUS_DEBUG(logger, "uu:" << uu);
-#endif
+            // Perform the bilinear interpolation (2D) in order to get
+            // the u component of the current field in the particle position.
+            float u1 = u(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
+            float u2 = u(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF;
+            float u3 = u(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF;
+            float u4 = u(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF);
 
-        // Perform the bilinear interpolation (2D) in order to get
-        // the v component of the current field in the particle position.
-        float v1=v(ocean_time_idx,    kI, jI,     iI)     *(1.0-iF)   *(1.0-jF);
-        float v2=v(ocean_time_idx,    kI, jI+1,   iI)     *(1.0-iF)   *     jF;
-        float v3=v(ocean_time_idx,    kI, jI+1,   iI+1)   *     iF    *     jF;
-        float v4=v(ocean_time_idx,    kI, jI,     iI+1)   *     iF    *(1.0-jF);
-
-        // The current v component in the particle position
-        float vv=v1+v2+v3+v4;
+            // The current u component in the particle position
+            float uu = u1 + u2 + u3 + u4;
 
 #ifdef DEBUG
-        LOG4CPLUS_DEBUG(logger, "vv:" << vv );
+            LOG4CPLUS_DEBUG(logger, "uu:" << uu);
 #endif
 
-        // 0,0,690,533
+            // Perform the bilinear interpolation (2D) in order to get
+            // the v component of the current field in the particle position.
+            float v1 = v(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
+            float v2 = v(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF;
+            float v3 = v(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF;
+            float v4 = v(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF);
 
-        // Perform the bilinear interpolation (3D) in order to get
-        // the w component of the current field in the particle position.
-        float w1=w(ocean_time_idx,    kI,     jI,     iI)*(1.0-iF)  *(1.0-jF)  *(1.0-kF);
-        float w2=w(ocean_time_idx,    kI,     jI+1,   iI)*(1.0-iF)  *     jF   *(1.0-kF);
-        float w3=w(ocean_time_idx,    kI,     jI+1,   iI+1)*     iF   *     jF   *(1.0-kF);
-        float w4=w(ocean_time_idx,    kI,     jI,     iI+1)*     iF   *(1.0-jF)  *(1.0-kF);
-        float w5=w(ocean_time_idx,kI-1, jI, iI)*(1.0-iF)*(1.0-jF)*kF;
-        float w6=w(ocean_time_idx,kI-1,jI+1,iI)*(1.0-iF)*jF*kF;
-        float w7=w(ocean_time_idx,kI-1,jI+1,iI+1)*iF*jF*kF;
-        float w8=w(ocean_time_idx, kI-1, jI, iI+1)*iF*(1.0-jF)*kF;
-
-        // The current w component in the particle position
-        float ww=w1+w2+w3+w4+w5+w6+w7+w8;
+            // The current v component in the particle position
+            float vv = v1 + v2 + v3 + v4;
 
 #ifdef DEBUG
-        LOG4CPLUS_DEBUG(logger, "ww:" << ww);
+            LOG4CPLUS_DEBUG(logger, "vv:" << vv );
 #endif
 
+            // 0,0,690,533
 
-        // Perform the bilinear interpolation (3D) in order to get
-        // the akt in the particle position.
-        float a1=akt(ocean_time_idx,  kI,     jI,     iI)*(1.0-iF)   *(1.0-jF)   *(1.0-kF);
-        float a2=akt(ocean_time_idx,  kI,     jI+1,   iI)*(1.0-iF)   *     jF    *(1.0-kF);
-        float a3=akt(ocean_time_idx,  kI,     jI+1,   iI+1)*     iF    *     jF    *(1.0-kF);
-        float a4=akt(ocean_time_idx,  kI,     jI,     iI+1)*     iF    *(1.0-jF)   *(1.0-kF);
-        float a5=akt(ocean_time_idx,  kI-1,   jI,     iI)*(1.0-iF)*(1.0-jF)*kF;
-        float a6=akt(ocean_time_idx,  kI-1,   jI+1,   iI)*(1.0-iF)*jF*kF;
-        float a7=akt(ocean_time_idx,  kI-1,   jI+1,   iI+1)*iF*jF*kF; ;
-        float a8=akt(ocean_time_idx,kI-1,jI,iI+1)*iF*(1.0-jF)*kF;
+            // Perform the bilinear interpolation (3D) in order to get
+            // the w component of the current field in the particle position.
+            float w1 = w(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
+            float w2 = w(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
+            float w3 = w(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
+            float w4 = w(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
+            float w5 = w(ocean_time_idx, kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
+            float w6 = w(ocean_time_idx, kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
+            float w7 = w(ocean_time_idx, kI - 1, jI + 1, iI + 1) * iF * jF * kF;
+            float w8 = w(ocean_time_idx, kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
 
-        // The AKT at the particle position.
-        float aa=a1+a2+a3+a4+a5+a6+a7+a8;
+            // The current w component in the particle position
+            float ww = w1 + w2 + w3 + w4 + w5 + w6 + w7 + w8;
 
 #ifdef DEBUG
-        LOG4CPLUS_DEBUG(logger, "aa:" << aa);
+            LOG4CPLUS_DEBUG(logger, "ww:" << ww);
 #endif
 
-        // Evaluate the particle leap due to the current field (deterministic leap).
-        double dileap=uu*dti;
-        double djleap=vv*dti;
-        double dkleap=(sv+ww)*dti;
 
-        // Calculation of sigma profile
-        // sigmaPROF=sigma(Ixx,Iyy)*(1-Zdet/(-H(Ixx,Iyy))) ! Here is H
-        //double sigmaProf=oceanModelAdapter->sigma()(jI, iI)*(1-kdet/(-oceanModelAdapter->H()(jI,iI)))
-        double sigmaprof=3.46*(1+localParticleData.k/s_w);
+            // Perform the bilinear interpolation (3D) in order to get
+            // the akt in the particle position.
+            float a1 = akt(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
+            float a2 = akt(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
+            float a3 = akt(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
+            float a4 = akt(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
+            float a5 = akt(ocean_time_idx, kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
+            float a6 = akt(ocean_time_idx, kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
+            float a7 = akt(ocean_time_idx, kI - 1, jI + 1, iI + 1) * iF * jF * kF;;
+            float a8 = akt(ocean_time_idx, kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
 
-        // Extract 3 pseudorandom numbers
-        double gi=0,gj=0,gk=0;
-
-        if (random) {
-            for (int a = 0; a < 12; a++) {
-                gi = gi + gen(&seed) - 0.5;
-                gj = gj + gen(&seed) - 0.5;
-                gk = gk + gen(&seed) - 0.5;
-            }
-        }
-
-
-        // Random leap
-        double rileap=gi*sigmaprof;
-        double rjleap=gj*sigmaprof;
-        double rkleap=gk*aa*crid;
-
-        // Final leap
-        double ileap=dileap+rileap;
-        double jleap=djleap+rjleap;
-        double kleap=dkleap+rkleap;
+            // The AKT at the particle position.
+            float aa = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8;
 
 #ifdef DEBUG
-        LOG4CPLUS_DEBUG(logger, "kleap:" << kleap << " jleap:" << jleap << " ileap:" << ileap );
+            LOG4CPLUS_DEBUG(logger, "aa:" << aa);
 #endif
 
-        double d1,d2,dd,jidist, kdist;
+            // Evaluate the particle leap due to the current field (deterministic leap).
+            double dileap = uu * dti;
+            double djleap = vv * dti;
+            double dkleap = (sv + ww) * dti;
 
-        // Calculate the distance in radiants of latitude between the grid cell where is
-        // currently located the particle and the next one.
-        d1=(latRad(jI+1,iI)-latRad(jI,iI));
+            // Calculation of sigma profile
+            // sigmaPROF=sigma(Ixx,Iyy)*(1-Zdet/(-H(Ixx,Iyy))) ! Here is H
+            //double sigmaProf=oceanModelAdapter->sigma()(jI, iI)*(1-kdet/(-oceanModelAdapter->H()(jI,iI)))
+            double sigmaprof = 3.46 * (1 + localParticleData.k / s_w);
 
-        // Calculate the distance in radiants of longitude between the grid cell where is
-        // currently located the particle and the next one.
-        d2=(lonRad(jI,iI+1)-lonRad(jI,iI));
+            // Extract 3 pseudorandom numbers
+            double gi = 0, gj = 0, gk = 0;
 
-        // Calculate the grid cell diagonal horizontal size using the Haversine method
-        // https://www.movable-type.co.uk/scripts/latlong.html
-        dd=pow(sin(0.5*d1),2) +
-                pow(sin(0.5*d2),2)*
-                cos(latRad(jI+1,iI))*
-                cos(latRad(jI,iI));
-        jidist=2.0*atan2(pow(dd,.5),pow(1.0-dd,.5))*6371.0;
-
-
-
-        //cout << "jI:" << jI << " iI:" << iI << " depth(" << kI <<"):"<<depth<< " hcbz:"<< hcbz << endl;
-        kdist=depth(kI)*(hh+zz);
-        if ( abs(kleap) > abs(kdist) ) {
-            kleap=sign(kdist,kleap);
-        }
-
-        // Calculate the new particle j candidate
-        jdet=localParticleData.j+0.001*jleap/jidist;
-
-        // Calculate the new particle i candidate
-        idet=localParticleData.i+0.001*ileap/jidist;
-
-        // Calculate the new particle k candidate
-        kdet=localParticleData.k+kleap/kdist;
-
-        // Reflect if out-of-column
-        // Check if the new k have to be limited by the sealfoor
-        if ( kdet < (-(int)s_w+2)) {
-            // Limit it on the bottom
-            kdet=2.0*(-(int)s_w+2)-kdet;
-        }
-
-        // Check if the new k have to be limited by the seafloor
-        if ( kdet > 0. ) {
-            // Limit it on the surface
-            kdet=-kdet;
-        }
-
-        // Reflect if crossed the coastline
-
-        // Calculate the integer part of the j and i candidates
-        int jdetI=(int)(jdet);
-        int idetI=(int)(idet);
-
-        // Check if the candidate position is within the domain
-        if (jdetI>= 0 && idetI >= 0 && jdetI<eta_rho && idetI <xi_rho) {
-            // Check if the candidate new particle position is on land (mask=0)
-            if (mask(jdetI, idetI) <= 0.0) {
-                // Reflect the particle
-                if (idetI < iI) {
-                    idet = (double) iI + abs(localParticleData.i - idet);
-                } else if (idetI > iI) {
-                    idet = (double) idetI - mod(idet, 1.0);
-                }
-                if (jdetI < jdet) {
-                    jdet = (double) jdetI + abs(localParticleData.j - jdet);
-                } else if (jdetI > jI) {
-                    jdet = (double) jdetI - mod(jdet, 1.0);
+            if (random) {
+                for (int a = 0; a < 12; a++) {
+                    gi = gi + gen(&seed) - 0.5;
+                    gj = gj + gen(&seed) - 0.5;
+                    gk = gk + gen(&seed) - 0.5;
                 }
             }
-        }
 
-        // Assign the new particle position
-        localParticleData.i=idet;
-        localParticleData.j=jdet;
-        localParticleData.k=kdet;
+
+            // Random leap
+            double rileap = gi * sigmaprof;
+            double rjleap = gj * sigmaprof;
+            double rkleap = gk * aa * crid;
+
+            // Final leap
+            double ileap = dileap + rileap;
+            double jleap = djleap + rjleap;
+            double kleap = dkleap + rkleap;
+
+#ifdef DEBUG
+            LOG4CPLUS_DEBUG(logger, "kleap:" << kleap << " jleap:" << jleap << " ileap:" << ileap );
+#endif
+
+            double d1, d2, dd, jidist, kdist;
+
+            // Calculate the distance in radiants of latitude between the grid cell where is
+            // currently located the particle and the next one.
+            d1 = (latRad(jI + 1, iI) - latRad(jI, iI));
+
+            // Calculate the distance in radiants of longitude between the grid cell where is
+            // currently located the particle and the next one.
+            d2 = (lonRad(jI, iI + 1) - lonRad(jI, iI));
+
+            // Calculate the grid cell diagonal horizontal size using the Haversine method
+            // https://www.movable-type.co.uk/scripts/latlong.html
+            dd = pow(sin(0.5 * d1), 2) +
+                 pow(sin(0.5 * d2), 2) *
+                 cos(latRad(jI + 1, iI)) *
+                 cos(latRad(jI, iI));
+            jidist = 2.0 * atan2(pow(dd, .5), pow(1.0 - dd, .5)) * 6371.0;
+
+
+
+            //cout << "jI:" << jI << " iI:" << iI << " depth(" << kI <<"):"<<depth<< " hcbz:"<< hcbz << endl;
+            kdist = depth(kI) * (hh + zz);
+            if (abs(kleap) > abs(kdist)) {
+                kleap = sign(kdist, kleap);
+            }
+
+            // Calculate the new particle j candidate
+            jdet = localParticleData.j + 0.001 * jleap / jidist;
+
+            // Calculate the new particle i candidate
+            idet = localParticleData.i + 0.001 * ileap / jidist;
+
+            // Calculate the new particle k candidate
+            kdet = localParticleData.k + kleap / kdist;
+
+            /*
+            // Reflect if out-of-column
+            // Check if the new k have to be limited by the sealfoor
+            if (kdet < (-(int) s_w + 2)) {
+                // Limit it on the bottom
+                kdet = 2.0 * (-(int) s_w + 2) - kdet;
+            }
+
+            // Check if the new k have to be limited by the seafloor
+            if (kdet > 0.) {
+                // Limit it on the surface
+                kdet = -kdet;
+            }
+            */
+
+            // Check if the new k have to be limited by the sealfoor
+            if (kdet < (-(int) s_w + 2)) {
+                // Limit it on the bottom
+                kdet = (-(int) s_w + 2) ;
+            }
+
+            // Check if the new k have to be limited by the seafloor
+            if (kdet > 0.) {
+                // Limit it on the surface
+                kdet = 0;
+            }
+
+            // Reflect if crossed the coastline
+
+            // Calculate the integer part of the j and i candidates
+            int jdetI = (int) (jdet);
+            int idetI = (int) (idet);
+
+            // Check if the candidate position is within the domain
+            if (jdetI >= 0 && idetI >= 0 && jdetI < eta_rho && idetI < xi_rho) {
+                /*
+                // Check if the candidate new particle position is on land (mask=0)
+                if (mask(jdetI, idetI) <= 0.0) {
+                    // Reflect the particle
+                    if (idetI < iI) {
+                        idet = (double) iI + abs(localParticleData.i - idet);
+                    } else if (idetI > iI) {
+                        idet = (double) idetI - mod(idet, 1.0);
+                    }
+                    if (jdetI < jdet) {
+                        jdet = (double) jdetI + abs(localParticleData.j - jdet);
+                    } else if (jdetI > jI) {
+                        jdet = (double) jdetI - mod(jdet, 1.0);
+                    }
+                }
+                */
+
+                // Assign the new particle position
+                localParticleData.i = idet;
+                localParticleData.j = jdet;
+                localParticleData.k = kdet;
+            }
+
+
+        }
 
         // Update the paticle age
         localParticleData.age=localParticleData.age+dti;
