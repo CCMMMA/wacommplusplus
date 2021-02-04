@@ -18,13 +18,14 @@ using namespace std;
 #include "log4cplus/loggingmacros.h"
 
 struct config_data {
-    bool random{};
-    double deltat{};
-    double dti{};
-    double survprob{};
-    double tau0{};
-    double sv{};
-    double crid{};
+    bool random;
+    double deltat;
+    double dti;
+    double survprob;
+    double tau0;
+    double sv;
+    double crid;
+    double shoreLimit;
 };
 
 class Config {
@@ -51,6 +52,7 @@ public:
     double Tau0() const;
     double Dti() const;
     double Deltat() const;
+    double ShoreLimit() const;
     double SedimentationVelocity() const;
 
     void SaveHistory(string value);

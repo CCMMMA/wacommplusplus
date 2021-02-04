@@ -59,6 +59,9 @@ void Config::setDefault() {
     // Reduction Coefficient
     _data.crid=1;
 
+    // Shore limit (less deeper than shore limit, a particle is beached
+    _data.shoreLimit=.25;
+
     // File system root where the outputs will be saved ( default current directory )
     ncOutputRoot = "";
 
@@ -272,6 +275,10 @@ double Config::Deltat() const { return _data.deltat; }
 
 double Config::Survprob() const {
     return _data.survprob;
+}
+
+double Config::ShoreLimit() const {
+    return _data.shoreLimit;
 }
 
 double Config::Tau0() const {
@@ -535,6 +542,7 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("sv")) { _data.sv = physics["sv"]; }
         if (physics.contains("random")) { _data.random = physics["random"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
+        if (physics.contains("shorelimit")) { _data.survprob = physics["shorelimit"]; }
     }
 }
 
