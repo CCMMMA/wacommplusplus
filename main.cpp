@@ -136,13 +136,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    //config->NumberOfInputs(1);
-    //config->SaveInput(true);
-    //config->UseSources(true);
-    //config->UseRestart(true);
-    //config->SourcesFile("sarno_river.json");
-    //config->Dry(false);
-
     WacommPlusPlus wacommPlusPlus(config);
     wacommPlusPlus.run();
 
