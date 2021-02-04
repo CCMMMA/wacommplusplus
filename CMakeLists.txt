@@ -182,6 +182,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.dylib)
 endif()
 
+FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git GIT_TAG c8d33915dbd88ad6c92b258869b03aba06587ff9) # the commit hash for 1.5.0
+FetchContent_MakeAvailable(cpr)
+
 add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h Source.cpp Source.hpp Sources.cpp Sources.hpp OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/ROMSAdapter.hpp Config.cpp Config.hpp OceanModelAdapter.cpp OceanModelAdapter.hpp Utils.cpp Utils.hpp WacommPlusPlus.cpp WacommPlusPlus.hpp JulianDate.cpp JulianDate.hpp OceanModelAdapters/WacommAdapter.cpp OceanModelAdapters/WacommAdapter.hpp)
 
 # Expicit the dependencies
@@ -195,4 +198,4 @@ add_dependencies(${PROJECT_NAME} log4cplus)
 add_dependencies(${PROJECT_NAME} random)
 
 
-target_link_libraries(${PROJECT_NAME} ${LIBOMP} ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS}  pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json)
+target_link_libraries(${PROJECT_NAME} ${LIBOMP} ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS}  pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json cpr::cpr)
