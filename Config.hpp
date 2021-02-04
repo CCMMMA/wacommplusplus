@@ -26,6 +26,9 @@ struct config_data {
     double sv;
     double crid;
     double shoreLimit;
+    int upperClosure;
+    int lowerClosure;
+    int horizontalClosure;
 };
 
 class Config {
@@ -42,7 +45,9 @@ public:
     void Dry(bool value);
     bool Dry() const;
 
-
+    int UpperClosure() const;
+    int LowerClosure() const;
+    int HorizontalClosure() const;
 
     void Random(bool value);
     bool Random() const;
@@ -94,6 +99,9 @@ public:
     void loadFromJson(const string &fileName);
     void loadFromNamelist(const string &fileName);
 
+    static const int CLOSURE_MODE_CONSTRAINT=0;
+    static const int CLOSURE_MODE_KILL=1;
+    static const int CLOSURE_MODE_REFLECTION=2;
 
 private:
     log4cplus::Logger logger;

@@ -105,6 +105,16 @@ void Config::setDefault() {
 
     // Root for saved input files.
     ncInputRoot="ocm_";
+
+    // Upper closure mode: 0: constraint; 1: kill; 2: reflection
+    _data.upperClosure = Config::CLOSURE_MODE_REFLECTION;
+
+    // Lower closure mode: 0: constraint; 1: kill; 2: reflection
+    _data.lowerClosure = Config::CLOSURE_MODE_REFLECTION;
+
+    // Horizontal closure mode: 0: constraint; 1: kill; 2: reflection
+    _data.horizontalClosure = Config::CLOSURE_MODE_REFLECTION;
+
 }
 
 void Config::loadFromNamelist(const string &fileName) {
@@ -295,6 +305,18 @@ bool Config::Dry() const {
 
 void Config::Dry(bool value) {
     dry=value;
+}
+
+int Config::UpperClosure() const {
+    return _data.upperClosure;
+}
+
+int Config::LowerClosure() const {
+    return _data.lowerClosure;
+}
+
+int Config::HorizontalClosure() const {
+    return _data.horizontalClosure;
 }
 
 double Config::ReductionCoefficient() const {
@@ -542,7 +564,7 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("sv")) { _data.sv = physics["sv"]; }
         if (physics.contains("random")) { _data.random = physics["random"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
-        if (physics.contains("shorelimit")) { _data.survprob = physics["shorelimit"]; }
+        if (physics.contains("shorelimit")) { _data.shoreLimit = physics["shorelimit"]; }
     }
 }
 
