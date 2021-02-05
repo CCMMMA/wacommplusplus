@@ -84,14 +84,6 @@ if(NOT json_POPULATED)
     add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
 endif()
 
-ExternalProject_Add(random
-        GIT_REPOSITORY https://github.com/effolkronium/random.git
-        TIMEOUT 360
-        CMAKE_ARGS -DRandom_BuildTests=OFF -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
-        BUILD_COMMAND make
-        INSTALL_COMMAND make install
-)
-
 ExternalProject_Add(szlib
         URL https://support.hdfgroup.org/ftp/lib-external/szip/2.1.1/src/szip-2.1.1.tar.gz
         TIMEOUT 360
@@ -195,7 +187,5 @@ add_dependencies(netcdf hdf5 )
 add_dependencies(netcdfcxx netcdf )
 add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
-add_dependencies(${PROJECT_NAME} random)
-
 
 target_link_libraries(${PROJECT_NAME} ${LIBOMP} ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS}  pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json cpr::cpr)
