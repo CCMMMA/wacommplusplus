@@ -97,7 +97,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
     double sv=configData->sv;
 
     // Sigma (deviation of particle distribution Baccaciola et Al. 1993.
-    double sigma=3.46;
+    double sigma=configData->sigma;
 
     // Shore limit (positive depth: default 0.25)
     double shoreLimit=configData->shoreLimit;
