@@ -120,11 +120,33 @@ make
 # Testing
 Download the data.
 
-## CLion
+1) Open a console application (I.e. Terminal)
+2) Change the current working directory as the WaComM++ building directory
+3) Create the input, processed, output and restarts directories
+```bash
+mkdir input processed output restarts
+```
+4) Link the sources file
+```bash
+ln -sf ../examples/sources-campania_region.json sources.json
+```
+5) Link the configuration file
+```bash
+ln -sf ../examples/wacomm-roms-usecase-download.json wacomm.json
+```
+6) Launch WaComM++
+```bash
+./wacommplusplus
+```
+WaComM++ will perform a dry run (the model will not actually calculate the particles transport and diffusion).
+The demo data files will be downloaded from [meteo@uniparthenope](http://data.meteo.uniparthenope.it:/opendap/opendap/wcm3/d04/),
+preprocessed, and saved in processed directory.
 
-1) Select *data | Debug*
-2) Click on menu *Build*, option *Build data*
-3) Wait
+7) Link the configuration file
+```bash
+ln -sf ../examples/wacomm-native-usecase.json wacomm.json
+```
+Now WaComM++ is ready to run.
 
 # Running
 Be sure to have a configuration file.
@@ -142,7 +164,7 @@ Computing cluster is warmly raccomanded.
 Automatically search for namelist.wacomm or wacomm.json configuration file.
 
 ```bash
-./wacommplusplus -c namelist|json
+./wacommplusplus namelist|json
 ```
 
 Use a namelist or a json configuration file.
