@@ -65,7 +65,7 @@ bool Particle::isAlive() const {
 
 
 void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> &oceanTime, Array2<double> &mask,
-                    Array2<double> &lonRad, Array2<double> &latRad, Array1<double> &depth,
+                    Array2<double> &lonRad, Array2<double> &latRad, Array1<double> &sW, Array1<double> &depth,
                     Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
                     Array4<float> &akt) {
 
@@ -102,7 +102,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
     // Shore limit (positive depth: default 0.25)
     double shoreLimit=configData->shoreLimit;
 
-    double idet=0,jdet=0,kdet=0;
+
 
     // Number of integration intervals
     double iint=deltat/dti;
@@ -166,6 +166,12 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
     // For each integration interval
     for (int t=0;t<iint;t++) {
 
+#ifdef DEBUG
+        LOG4CPLUS_DEBUG(logger,"t:" << t);
+        LOG4CPLUS_DEBUG(logger, "k:" << localParticleData.k << " j:" << localParticleData.j << " i:" << localParticleData.i );
+        LOG4CPLUS_DEBUG(logger, "age:" << localParticleData.age << " health:" << localParticleData.health << " time:" << localParticleData.time );
+#endif
+
         // Check if the particle is not yet active
         if (localParticleData.time>(oceanTime(ocean_time_idx)+(t*dti))) {
             // The particle is not already active (already emitted, but not active)
@@ -207,7 +213,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
 
 #ifdef DEBUG
-        LOG4CPLUS_DEBUG(logger, this->to_string());
+        LOG4CPLUS_DEBUG(logger, "Alive");
 #endif
 
         // The particle is alive!
@@ -232,12 +238,19 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         // The current h (depth) at the particle position
         double hh=h1+h2+h3+h4;
 
-        // Calulate the corrected depth
+        // Calculate the corrected depth
         double hc=hh+zz;
+
+        // Calculate the depth of the particle in meters
+        //double particleDepth=-(hc*abs(sW(kI))+abs(kF*depth(kI)));
 
         // Check if the partiche is still floating...
         if (hc>shoreLimit) {
             // The particle is still floating
+
+#ifdef DEBUG
+            LOG4CPLUS_DEBUG(logger, "Floating: kI:" << kI << " jI:" << jI << " iI:" << iI);
+#endif
 
             // Perform the bilinear interpolation (2D) in order to get
             // the u component of the current field in the particle position.
@@ -248,6 +261,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // The current u component in the particle position
             float uu = u1 + u2 + u3 + u4;
+
 
 #ifdef DEBUG
             LOG4CPLUS_DEBUG(logger, "uu:" << uu);
@@ -323,13 +337,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
                 // Generate a distribution probability with mean=0 and stdev=sigmaDepth
                 std::normal_distribution<double> distribution(0,sigmaDepth);
-                double gi = distribution(generator);
-                double gj = distribution(generator);
-                double gk = distribution(generator);
+                rileap= distribution(generator);
+                rjleap = distribution(generator);
+                rkleap  = distribution(generator) * aa * crid;
 
-                rileap = gi * sigmaDepth;
-                rjleap = gj * sigmaDepth;
-                rkleap = gk * aa * crid;
             }
 
 
@@ -364,7 +375,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             jidist = 2.0 * atan2(pow(dd, .5), pow(1.0 - dd, .5)) * 6371.0;
 
             // Vertical dimension of a grid cell
-            kdist = depth(kI) * (hh + zz);
+            kdist = depth(kI) * hc;
 
             // Check if the vertical leap is greather than the vertical distance between two grid cells
             if (abs(kleap) > abs(kdist)) {
@@ -374,14 +385,18 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             }
 
             // Calculate the new particle j candidate
-            jdet = localParticleData.j + 0.001 * jleap / jidist;
+            double jdet = localParticleData.j + 0.001 * jleap / jidist;
 
             // Calculate the new particle i candidate
-            idet = localParticleData.i + 0.001 * ileap / jidist;
+            double idet = localParticleData.i + 0.001 * ileap / jidist;
 
             // Calculate the new particle k candidate
-            kdet = localParticleData.k + kleap / kdist;
+            double kdet = localParticleData.k + kleap / kdist;
 
+
+#ifdef DEBUG
+            LOG4CPLUS_DEBUG(logger, "kdet:" << kdet << " jdet:" << jdet << " idet:" << idet );
+#endif
 
             // Check if the new k have to be limited by the seafloor
             if (kdet > 0.) {
@@ -470,11 +485,21 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         }
 
-        // Update the particle age
-        localParticleData.age=localParticleData.age+dti;
+        // Check if the particle is still alive
+        if (localParticleData.health>0) {
 
-        // Decay the particle
-        localParticleData.health=health0*exp(-localParticleData.age/tau0);
+            // Update the particle age
+            localParticleData.age = localParticleData.age + dti;
+
+            // Decay the particle
+            localParticleData.health = health0 * exp(-localParticleData.age / tau0);
+        }
+
+#ifdef DEBUG
+        LOG4CPLUS_DEBUG(logger, "k:" << localParticleData.k << " j:" << localParticleData.j << " i:" << localParticleData.i );
+        LOG4CPLUS_DEBUG(logger, "age:" << localParticleData.age << " health:" << localParticleData.health << " time:" << localParticleData.time );
+        LOG4CPLUS_DEBUG(logger,"t:" << t);
+#endif
     }
     memcpy(&_data, &localParticleData, sizeof(particle_data));
 }
