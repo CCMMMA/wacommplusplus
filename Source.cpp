@@ -3,6 +3,7 @@
 //
 
 #include "Source.hpp"
+#include <random>
 
 Source::Source(string id, double k, double j, double i, double start, double end, int particlesPerHour, int mode):
     id(id),k(k),j(j),i(i),start(start),end(end),particlesPerHour(particlesPerHour),mode(mode) {
@@ -13,6 +14,13 @@ Source::Source(string id, double k, double j, double i, double start, double end
 Source::~Source() = default;
 
 void Source::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles, double currentOceanTime) {
+
+    // Create a random number generator
+    std::default_random_engine generator;
+
+    // Create a distribution probability with mean=0 and stddev=0.25
+    std::normal_distribution<double> distribution(0.0,0.25);
+
     // Check if the source is active
     if (mode>0) {
         unsigned long id=0;
@@ -28,20 +36,15 @@ void Source::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particl
                 double jj = j;
                 double ii = i;
                 if (config->Random()) {
-                    kk = k + gen() * 0.5 - 0.25;
-                    jj = j + gen() * 0.5 - 0.25;
-                    ii = i + gen() * 0.5 - 0.25;
+                    kk = k + distribution(generator);
+                    jj = j + distribution(generator);
+                    ii = i + distribution(generator);
                 }
                 particles->push_back(Particle(id, kk, jj, ii, currentOceanTime));
                 id++;
             }
         }
     }
-}
-
-double Source::gen()
-{
-    return Random::get<double>(0.0, 1.0);
 }
 
 Source::Source() {

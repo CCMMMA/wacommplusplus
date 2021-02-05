@@ -5,10 +5,6 @@
 #ifndef WACOMMPLUSPLUS_SOURCE_HPP
 #define WACOMMPLUSPLUS_SOURCE_HPP
 
-// random https://github.com/effolkronium/random
-#include "effolkronium/random.hpp"
-// get base random alias which is auto seeded and has static API and internal state
-using Random = effolkronium::random_static;
 
 #include "Particles.hpp"
 
@@ -52,7 +48,7 @@ private:
     int particlesPerHour;
     int mode;
 
-    static double gen();
+
 };
 
 
