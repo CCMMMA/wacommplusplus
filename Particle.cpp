@@ -2,11 +2,11 @@
 // Created by Raffaele Montella on 12/5/20.
 //
 
-#include <cfloat>
+
 #include <utility>
 #include "Particle.hpp"
 #include "Config.hpp"
-
+#include <random>
 
 Particle::Particle(unsigned long id, double k, double j, double i,
                    double health, double age, double time)
@@ -69,7 +69,8 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                     Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
                     Array4<float> &akt) {
 
-    unsigned seed = Random::get<unsigned>(0, UINT32_MAX);
+    // Create a random number generator
+    std::default_random_engine generator;
 
     particle_data localParticleData;
     memcpy(&localParticleData, &_data, sizeof(particle_data));
@@ -310,26 +311,28 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             double djleap = vv * dti;
             double dkleap = (sv + ww) * dti;
 
-            // Calculation of sigma profile
-            //double sigmaprof = sigma * (1 + localParticleData.k / s_w);
-            double sigmaprof = sigma * (1 + localParticleData.k / kLowerLimit);
 
-            // Extract 3 pseudorandom numbers
-            double gi = 0, gj = 0, gk = 0;
+            double rileap=0;
+            double rjleap=0;
+            double rkleap=0;
+
 
             if (random) {
-                for (int a = 0; a < 12; a++) {
-                    gi = gi + gen(&seed) - 0.5;
-                    gj = gj + gen(&seed) - 0.5;
-                    gk = gk + gen(&seed) - 0.5;
-                }
+                // Calculation of sigma for the particle depth
+                double sigmaDepth = sigma * (1 - localParticleData.k / kLowerLimit);
+
+                // Generate a distribution probability with mean=0 and stdev=sigmaDepth
+                std::normal_distribution<double> distribution(0,sigmaDepth);
+                double gi = distribution(generator);
+                double gj = distribution(generator);
+                double gk = distribution(generator);
+
+                rileap = gi * sigmaDepth;
+                rjleap = gj * sigmaDepth;
+                rkleap = gk * aa * crid;
             }
 
 
-            // Random leap
-            double rileap = gi * sigmaprof;
-            double rjleap = gj * sigmaprof;
-            double rkleap = gk * aa * crid;
 
             // Final leap
             double ileap = dileap + rileap;
@@ -480,10 +483,7 @@ double Particle::K() const  { return _data.k; }
 double Particle::J() const { return _data.j; }
 double Particle::I() const { return _data.i; }
 
-// Returns a single pseudorandom number from the uniform distribution over the range [0,1[.
-// https://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fNUMBER.html
-//double Particle::gen() { return Random::get<double>(0.0, 1.0); }
-double Particle::gen(unsigned int *seed) { return (double) rand_r(seed)/RAND_MAX; }
+
 
 // Returns -1 if a < 0 and 1 if a > 0
 double Particle::sgn(double a) { return (a > 0) - (a < 0); }

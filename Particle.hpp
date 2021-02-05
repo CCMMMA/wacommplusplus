@@ -14,10 +14,7 @@
 #include <sstream>
 #include <string>
 
-// random https://github.com/effolkronium/random
-#include "effolkronium/random.hpp"
-// get base random alias which is auto seeded and has static API and internal state
-using Random = effolkronium::random_static;
+
 
 
 // log4cplus - https://github.com/log4cplus/log4cplus
@@ -68,8 +65,6 @@ class Particle {
 
         double Time() const;
         unsigned long Id() const;
-
-        static double gen(unsigned int *seed);
 
         std::string to_string() const;
 
