@@ -307,6 +307,7 @@ void Wacomm::run()
                       oceanModelAdapter->Mask(),
                       oceanModelAdapter->LonRad(),
                       oceanModelAdapter->LatRad(),
+                      oceanModelAdapter->SW(),
                       oceanModelAdapter->Depth(),
                       oceanModelAdapter->H(),
                       oceanModelAdapter->Zeta(),
@@ -343,11 +344,13 @@ void Wacomm::run()
 
             // Calculate the local particles per second
             double nParticlesPerSecondLocal = pLocalParticles->size() / elapsedLocal.count();
-            LOG4CPLUS_INFO(logger, "Locally processed " << pLocalParticles->size() << " in " << elapsedLocal.count() << " seconds ("<< nParticlesPerSecondLocal <<" particles/second).");
+            LOG4CPLUS_INFO(logger, "Locally processed " << pLocalParticles->size() << " in " << elapsedLocal.count()
+                                                        << " seconds (" << nParticlesPerSecondLocal
+                                                        << " particles/second).");
 
 #ifdef USE_MPI
             // For each particle...
-            for (int idx=0;idx<particles->size();idx++) {
+            for (int idx = 0; idx < particles->size(); idx++) {
                 // Copy the particle status from the sending buffer
                 particles->at(idx).data(sendbuf[idx]);
             }
@@ -361,14 +364,14 @@ void Wacomm::run()
                              particles->end());
 
             size_t nParticles = particles->size();
-            LOG4CPLUS_INFO(logger, "Removed particles: " << (nParticles0-nParticles) << " Particles: " << nParticles);
+            LOG4CPLUS_INFO(logger, "Removed particles: " << (nParticles0 - nParticles) << " Particles: " << nParticles);
 
             LOG4CPLUS_INFO(logger, "Evaluate concentration");
 
             // Evaluate the concentration of particles per grid cell
-            #pragma omp parallel for default(none) shared(nParticles, ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
+#pragma omp parallel for default(none) shared(nParticles, ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
             // For each particle...
-            for (int idx=0; idx<nParticles;idx++) {
+            for (int idx = 0; idx < nParticles; idx++) {
                 // Get the reference to the particle
                 const Particle &particle = particles->at(idx);
 
@@ -381,7 +384,7 @@ void Wacomm::run()
                     int i = (int) round(particle.I());
 
                     // Check if the indices are consistent
-                    if (j>=0 && j<eta_rho && i>0 && i<xi_rho && k>=(-(int)s_rho+1) && k<=0) {
+                    if (j >= 0 && j < eta_rho && i > 0 && i < xi_rho && k >= (-(int) s_rho + 1) && k <= 0) {
 
                         // Increment the count of the particles in the grid cell
                         conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i) + 1;
@@ -389,22 +392,24 @@ void Wacomm::run()
                 }
             }
 
-            // Mask all grid cells belonging to the land
-            #pragma omp parallel for collapse(3) default(none) shared(ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
-            // For each level...
-            for (int k = -(int) s_rho + 1; k <= 0; k++) {
+            if (config->MaskOutput()) {
+                // Mask all grid cells belonging to the land
+#pragma omp parallel for collapse(3) default(none) shared(ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
+                // For each level...
+                for (int k = -(int) s_rho + 1; k <= 0; k++) {
 
-                // For each row...
-                for (int j = 0; j < eta_rho; j++) {
+                    // For each row...
+                    for (int j = 0; j < eta_rho; j++) {
 
-                    // For each column...
-                    for (int i = 0; i < xi_rho; i++) {
+                        // For each column...
+                        for (int i = 0; i < xi_rho; i++) {
 
-                        // Check if the cell is land
-                        if (oceanModelAdapter->Mask()(j, i) != 1) {
+                            // Check if the cell is land
+                            if (oceanModelAdapter->Mask()(j, i) != 1) {
 
-                            // Mask the cell
-                            conc(ocean_time_idx, k, j, i) = 1e37;
+                                // Mask the cell
+                                conc(ocean_time_idx, k, j, i) = 1e37;
+                            }
                         }
                     }
                 }
