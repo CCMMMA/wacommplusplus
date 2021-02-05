@@ -25,6 +25,7 @@ struct config_data {
     double tau0;
     double sv;
     double crid;
+    double sigma;
     double shoreLimit;
     int upperClosure;
     int lowerClosure;
@@ -51,6 +52,8 @@ public:
 
     void Random(bool value);
     bool Random() const;
+
+    double Sigma() const;
 
     double ReductionCoefficient() const;
     double Survprob() const;

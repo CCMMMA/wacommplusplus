@@ -59,6 +59,9 @@ void Config::setDefault() {
     // Reduction Coefficient
     _data.crid=1;
 
+    // Diffusion standard deviaion defalt = 3.46
+    _data.sigma = 3.46;
+
     // Shore limit (less deeper than shore limit, a particle is beached
     _data.shoreLimit=.25;
 
@@ -570,6 +573,7 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("deltat")) { _data.deltat = physics["deltat"]; }
         if (physics.contains("dti")) { _data.dti = physics["dti"]; }
         if (physics.contains("sv")) { _data.sv = physics["sv"]; }
+        if (physics.contains("sigma")) { _data.sigma = physics["sigma"]; }
         if (physics.contains("random")) { _data.random = physics["random"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
         if (physics.contains("shore_limit")) { _data.shoreLimit = physics["shore_limit"]; }
@@ -585,6 +589,10 @@ bool Config::MaskOutput() const {
 
 void Config::MaskOutput(bool value) {
     maskOutput = value;
+}
+
+double Config::Sigma() const {
+    return _data.sigma;
 }
 
 
