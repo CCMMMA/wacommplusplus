@@ -82,6 +82,9 @@ void Config::setDefault() {
     // Restart interval
     restartInterval = 3600;
 
+    // Apply mask to the output (default false)
+    maskOutput = false;
+
     // Save history (to be used as restart) default true
     saveHistory = "none";
 
@@ -534,6 +537,7 @@ void Config::loadFromJson(const string &fileName) {
     if (config.contains("io")) {
         json io=config["io"];
         if (io.contains("embedded_history")) { embeddedHistory = io["embedded_history"]; }
+        if (io.contains("mask_output")) { maskOutput = io["mask_output"]; }
         if (io.contains("save_history")) { saveHistory = io["save_history"]; }
         if (io.contains("history_root")) {  historyRoot= io["history_root"]; }
         if (io.contains("save_input")) { saveInput = io["save_input"]; }
@@ -568,11 +572,19 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("sv")) { _data.sv = physics["sv"]; }
         if (physics.contains("random")) { _data.random = physics["random"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
-        if (physics.contains("shorelimit")) { _data.shoreLimit = physics["shorelimit"]; }
-        if (physics.contains("upperclosure")) { _data.upperClosure = dictionary[physics["upperclosure"]]; }
-        if (physics.contains("lowerclosure")) { _data.lowerClosure = dictionary[physics["lowerclosure"]]; }
-        if (physics.contains("horizontalclosure")) { _data.horizontalClosure = dictionary[physics["horizontalclosure"]]; }
+        if (physics.contains("shore_limit")) { _data.shoreLimit = physics["shore_limit"]; }
+        if (physics.contains("upper_closure")) { _data.upperClosure = dictionary[physics["upper_closure"]]; }
+        if (physics.contains("lower_closure")) { _data.lowerClosure = dictionary[physics["lower_closure"]]; }
+        if (physics.contains("horizontal_closure")) { _data.horizontalClosure = dictionary[physics["horizontal_closure"]]; }
     }
+}
+
+bool Config::MaskOutput() const {
+    return maskOutput;
+}
+
+void Config::MaskOutput(bool value) {
+    maskOutput = value;
 }
 
 

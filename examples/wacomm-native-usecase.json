@@ -37,6 +37,7 @@
 		],
 		"ocean_model":"WaComM",
 		"nc_output_root": "output/wacomm_his_",
+		"mask_output": false,
 		"timestep": 3600,
 		"save_input": false,
 		"save_history": "text",
@@ -54,9 +55,9 @@
 	"physics": {
 		"tau0": 86400.0,
 		"survprob": 1.0e-4,
-		"shorelimit": 0.5,
-		"upperclousere": "constraint",
-		"lowerclousere": "kill",
-		"horizontalclousere": "reflection"
+		"shore_limit": 0.5,
+		"upper_clousere": "reflection",
+		"lower_clousere": "kill",
+		"horizontal_clousere": "kill"
 	}
 }

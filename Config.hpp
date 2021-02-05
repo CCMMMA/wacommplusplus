@@ -81,6 +81,9 @@ public:
     string RestartFile() const;
     void RestartFile(string value);
 
+    bool MaskOutput() const;
+    void MaskOutput(bool value);
+
     bool UseSources() const;
     void UseSources(bool value);
     string SourcesFile() const;
@@ -111,7 +114,7 @@ private:
     string configFile;
 
     bool dry;
-
+    bool maskOutput;
     config_data _data;
 
     string name;
