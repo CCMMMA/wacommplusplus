@@ -55,6 +55,7 @@
 	"physics": {
 		"tau0": 86400.0,
 		"survprob": 1.0e-4,
+		"signa": 3.46,
 		"shore_limit": 0.5,
 		"upper_clousere": "constraint",
 		"lower_clousere": "kill",
