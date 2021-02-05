@@ -107,14 +107,18 @@ void Config::setDefault() {
     ncInputRoot="ocm_";
 
     // Upper closure mode: 0: constraint; 1: kill; 2: reflection
-    _data.upperClosure = Config::CLOSURE_MODE_REFLECTION;
+    _data.upperClosure = Config::CLOSURE_MODE_CONSTRAINT;
 
     // Lower closure mode: 0: constraint; 1: kill; 2: reflection
-    _data.lowerClosure = Config::CLOSURE_MODE_REFLECTION;
+    _data.lowerClosure = Config::CLOSURE_MODE_KILL;
 
     // Horizontal closure mode: 0: constraint; 1: kill; 2: reflection
     _data.horizontalClosure = Config::CLOSURE_MODE_REFLECTION;
 
+    // Define the dictionary
+    dictionary["constraint"]=Config::CLOSURE_MODE_CONSTRAINT;
+    dictionary["kill"]=Config::CLOSURE_MODE_KILL;
+    dictionary["reflection"]=Config::CLOSURE_MODE_REFLECTION;
 }
 
 void Config::loadFromNamelist(const string &fileName) {
@@ -565,6 +569,11 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("random")) { _data.random = physics["random"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
         if (physics.contains("shorelimit")) { _data.shoreLimit = physics["shorelimit"]; }
+        if (physics.contains("upperclosure")) { _data.upperClosure = dictionary[physics["upperclosure"]]; }
+        if (physics.contains("lowerclosure")) { _data.lowerClosure = dictionary[physics["lowerclosure"]]; }
+        if (physics.contains("horizontalclosure")) { _data.horizontalClosure = dictionary[physics["horizontalclosure"]]; }
     }
 }
+
+
 

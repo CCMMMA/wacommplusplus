@@ -99,16 +99,18 @@ public:
     void loadFromJson(const string &fileName);
     void loadFromNamelist(const string &fileName);
 
-    static const int CLOSURE_MODE_CONSTRAINT=0;
-    static const int CLOSURE_MODE_KILL=1;
-    static const int CLOSURE_MODE_REFLECTION=2;
+    static const int CLOSURE_MODE_CONSTRAINT=1;
+    static const int CLOSURE_MODE_KILL=2;
+    static const int CLOSURE_MODE_REFLECTION=3;
 
 private:
     log4cplus::Logger logger;
 
+    std::map<std::string, int> dictionary;
+
     string configFile;
 
-    bool dry{};
+    bool dry;
 
     config_data _data;
 
@@ -150,6 +152,7 @@ private:
     void namelistParseChm(ifstream &infile);
     void namelistParseRst(ifstream &infile);
     void namelistParseHst(ifstream &infile);
+
 
 };
 
