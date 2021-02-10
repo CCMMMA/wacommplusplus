@@ -63,6 +63,28 @@ WaComM++ is developed using C++17. Be sure a compatible toolchain is installed a
     
 * Windows: Visual Sutudio
 
+## Dependencies
+The most part of the dependencies involved in the WaComM++ building are automatically resolved by cmake at the source
+preparation time (when cmake is invoked). Nevertheless some dependencies have to be satisfied a priori:
+
+1) [CMake](https://cmake.org): the latest is the better, the minimum required is the 3.13, but we are currently using the 3.19.
+If your environment doesn't support an updated cmake version, you can install it in your user space.
+   
+
+2) [MPI](https://www.mpich.org): usually the most part of cluster environments offer one or more versions of already compiled MPI libraries.
+Those MPI libraries are already integrated with the local scheduler and configured/optimized for the networking hardware 
+available in the cluster. [OpenMPI](https://www.open-mpi.org) and [MVAPICH2](https://mvapich.cse.ohio-state.edu) have been tested. In conjunction with infiniband networks we experienced 
+some troubles in mixing MPI and OpenMP while using OpenMPI, then we succesuffy switched to MVAPICH2.
+
+
+3) [CUDA](https://developer.nvidia.com/cuda-toolkit): we tested WaComM++ with CUDA 10.1 on GeeForce TitanX, Quadro and Tesla V100 equipments with success.
+At the current development state, just the computing capabilities level 3.0 are required, so it could be possible the
+usage of not really recent CUDA enabled devices. Be aware that the production usage of non-Tesla devices could result
+in rreversible hardware damages. By default the CUDA Toolkit libraries are statically linked. If your environment uses
+GPU remoting as [GVirtuS](https://github.com/gvirtus/) or [rCUDA](http://www.rcuda.net), please link the libraries
+dynamically. **NB:** Since the version 11.0, the CUDA Toolkit is not anymore available for MacOS. The latest supported
+MacOS version is the 10.13.
+   
 ## Using the command line interface
 
 1) Clone the repository
@@ -93,12 +115,12 @@ must be specified using the cmake3 command.
 
 - Example: compile vanilla WaComM++ (No parallelization)
 ```bash
-cmake3 ..
+cmake ..
 ```
 
-- Example: compile with both OpenMP and MPI support:
+- Example: compile with CUDA, OpenMP and MPI support, but without extra debug logging:
 ```bash
-cmake3 -DUSE_OMP=ON -DUSE_MPI=ON ..
+cmake -DUSE_OMP=ON -DUSE_MPI=ON -DUSE_CUDA=ON -DDEBUG=OFF ..
 ```
 
 6) Run make and wait
