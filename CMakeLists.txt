@@ -44,10 +44,19 @@ if(OpenACC_FOUND AND USE_OPENACC)
     message(STATUS "Use OpenACC acceleration.")
 endif()
 
+set(CUDART_LIBRARY "")
+set(gpu_h_files "")
+set(gpu_cu_files "")
 find_package(CUDA)
 if(CUDA_FOUND AND USE_CUDA)
     add_definitions(-DUSE_CUDA)
     message(STATUS "Use CUDA acceleration.")
+    enable_language("CUDA")
+    set(CUDA_NVCC_FLAGS "-arch=sm_30")
+    file(GLOB gpu_h_files "${CMAKE_SOURCE_DIR}/cuda/*.h")
+    file(GLOB gpu_cu_files "${CMAKE_SOURCE_DIR}/cuda/*.cu")
+    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 endif()
 
 # Include the support to external projects
@@ -177,7 +186,7 @@ endif()
 FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git GIT_TAG c8d33915dbd88ad6c92b258869b03aba06587ff9) # the commit hash for 1.5.0
 FetchContent_MakeAvailable(cpr)
 
-add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h Source.cpp Source.hpp Sources.cpp Sources.hpp OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/ROMSAdapter.hpp Config.cpp Config.hpp OceanModelAdapter.cpp OceanModelAdapter.hpp Utils.cpp Utils.hpp WacommPlusPlus.cpp WacommPlusPlus.hpp JulianDate.cpp JulianDate.hpp OceanModelAdapters/WacommAdapter.cpp OceanModelAdapters/WacommAdapter.hpp)
+add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h Source.cpp Source.hpp Sources.cpp Sources.hpp OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/ROMSAdapter.hpp Config.cpp Config.hpp OceanModelAdapter.cpp OceanModelAdapter.hpp Utils.cpp Utils.hpp WacommPlusPlus.cpp WacommPlusPlus.hpp JulianDate.cpp JulianDate.hpp OceanModelAdapters/WacommAdapter.cpp OceanModelAdapters/WacommAdapter.hpp ${gpu_cu_files} ${gpu_h_files})
 
 # Expicit the dependencies
 add_dependencies(zlib szlib)
@@ -188,4 +197,4 @@ add_dependencies(netcdfcxx netcdf )
 add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
 
-target_link_libraries(${PROJECT_NAME} ${LIBOMP} ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS}  pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json cpr::cpr)
+target_link_libraries(${PROJECT_NAME} ${LIBOMP} ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} ${CUDART_LIBRARY} pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json cpr::cpr)
