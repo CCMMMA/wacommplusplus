@@ -126,15 +126,19 @@ Download the data.
 ```bash
 mkdir input processed output restarts
 ```
-4) Link the sources file
+4) Download the restart file
+```bash
+wget http://data.meteo.uniparthenope.it/opendap/opendap/wcm3/restart/WACOMM_rst_20201130Z00.txt
+```
+5) Link the sources file
 ```bash
 ln -sf ../examples/sources-campania_region.json sources.json
 ```
-5) Link the configuration file
+6) Link the configuration file
 ```bash
 ln -sf ../examples/wacomm-roms-usecase-download.json wacomm.json
 ```
-6) Launch WaComM++
+7) Launch WaComM++
 ```bash
 ./wacommplusplus
 ```
@@ -142,7 +146,7 @@ WaComM++ will perform a dry run (the model will not actually calculate the parti
 The demo data files will be downloaded from [meteo@uniparthenope](http://data.meteo.uniparthenope.it:/opendap/opendap/wcm3/d04/),
 preprocessed, and saved in processed directory.
 
-7) Link the configuration file
+8) Link the configuration file
 ```bash
 ln -sf ../examples/wacomm-native-usecase.json wacomm.json
 ```
