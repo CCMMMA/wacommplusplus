@@ -2,6 +2,11 @@
 #include <stdlib.h> /* getenv */
 #include <string>
 
+#ifdef USE_CUDA
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#endif
+
 #ifdef USE_MPI
 #define OMPI_SKIP_MPICXX
 #include <mpi.h>
@@ -36,7 +41,7 @@ using namespace std;
 log4cplus::Logger logger;
 
 int main(int argc, char **argv) {
-
+    int num_gpus = 0;
     int world_size=1, world_rank=0;
     int ompMaxThreads=1;
 
@@ -54,6 +59,10 @@ int main(int argc, char **argv) {
 
     // Get the number of the current process (world_rank=0 is for the main process)
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#endif
+
+#ifdef USE_CUDA
+    cudaGetDeviceCount(&num_gpus);
 #endif
 
     // This variables can be set via the command line.
@@ -114,7 +123,16 @@ int main(int argc, char **argv) {
 #ifdef USE_OPENACC
         LOG4CPLUS_INFO(logger, "Acceleration: OpenAcc");
 #elif USE_CUDA
-        LOG4CPLUS_INFO(logger, "Acceleration: CUDA");
+        LOG4CPLUS_INFO(logger, "Acceleration: CUDA " << num_gpus << " device(s)");
+        for (int i=0; i<num_gpus; i++){
+		cudaDeviceProp prop;
+    		cudaGetDeviceProperties(&prop, i);
+    		LOG4CPLUS_INFO(logger, "Device Number: " << i);
+    		LOG4CPLUS_INFO(logger, "Device name: " <<  prop.name);
+    		LOG4CPLUS_INFO(logger, "Memory Clock Rate (KHz): " << prop.memoryClockRate);
+    		LOG4CPLUS_INFO(logger, "Memory Bus Width (bits): " << prop.memoryBusWidth);
+    		LOG4CPLUS_INFO(logger, "Peak Memory Bandwidth (GB/s): " << 2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+	}
 #else
         LOG4CPLUS_INFO(logger, "Acceleration: None");
 #endif
