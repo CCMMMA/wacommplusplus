@@ -1,3 +1,7 @@
+//
+// Created by Ciro Giuseppe De Vita and Gennaro Mellone on 24/12/20.
+//
+
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <curand_kernel.h>
