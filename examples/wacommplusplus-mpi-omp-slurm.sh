@@ -7,6 +7,9 @@
 #SBATCH --tasks-per-node=2
 #SBATCH --cpus-per-task=16
 
+# Set the test codename
+CODE_NAME="N01P01T01G00"
+
 # Set the scratch directory base
 SCRATCH_DIR_BASE=$HOME/wacommplusplus_work
 
@@ -15,6 +18,9 @@ WACOMMPLUSPLUS_EXEC=""
 
 # The path to the config file
 CONFIG_FILE=""
+
+# The path to the processed input file directory
+PROCESSED_DIR=""
 
 # The path to the restart file
 RESTART_FILE=""
@@ -33,7 +39,7 @@ else
 fi
 
 # Set the path for the scratch directory
-SCRATCH_DIR=$SCRATCH_DIR_BASE/$SLURM_JOB_ID
+SCRATCH_DIR=$SCRATCH_DIR_BASE/${SLURM_JOB_ID}_${CODE_NAME}
 
 # Create the scratch directory
 mkdir -p $SCRATCH_DIR
