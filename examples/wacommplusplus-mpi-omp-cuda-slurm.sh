@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --tasks-per-node=4
 #SBATCH --cpus-per-task=8
-#SBATCG --gres=gpu:tesla:4
+#SBATCH --gres=gpu:tesla:4
 
 # Set the test codename
 CODE_NAME="N01P04T08G04"
