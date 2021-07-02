@@ -17,13 +17,17 @@ Array2<double> &OceanModelAdapter::Lon() { return _data.lon; }
 Array2<double> &OceanModelAdapter::Lat() { return _data.lat; }
 Array2<double> &OceanModelAdapter::LonRad() { return _data.lonRad; }
 Array2<double> &OceanModelAdapter::LatRad() { return _data.latRad; }
-Array1<double> &OceanModelAdapter::Depth() { return _data.depth; }
+Array1<double> &OceanModelAdapter::DepthIntervals() { return _data.depthIntervals; }
 Array2<double> &OceanModelAdapter::H() { return _data.h; }
 Array3<float> &OceanModelAdapter::Zeta() { return _data.zeta; }
 Array4<float> &OceanModelAdapter::U() { return _data.u; }
 Array4<float> &OceanModelAdapter::V() { return _data.v; }
 Array4<float> &OceanModelAdapter::W() { return _data.w; }
 Array4<float> &OceanModelAdapter::AKT() { return _data.akt; }
+
+Array1<double> &OceanModelAdapter::Latitude(){ return latitude; }
+Array1<double> &OceanModelAdapter::Longitude() { return longitude; }
+Array1<double> &OceanModelAdapter::Depth() { return depth; }
 
 
 
