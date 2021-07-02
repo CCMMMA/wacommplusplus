@@ -65,7 +65,7 @@ bool Particle::isAlive() const {
 
 
 void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> &oceanTime, Array2<double> &mask,
-                    Array2<double> &lonRad, Array2<double> &latRad, Array1<double> &sW, Array1<double> &depth,
+                    Array2<double> &lonRad, Array2<double> &latRad, Array1<double> &sW, Array1<double> &depthIntervals,
                     Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
                     Array4<float> &akt) {
 
@@ -375,7 +375,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             jidist = 2.0 * atan2(pow(dd, .5), pow(1.0 - dd, .5)) * 6371.0;
 
             // Vertical dimension of a grid cell
-            kdist = depth(kI) * hc;
+            kdist = depthIntervals(kI) * hc;
 
             // Check if the vertical leap is greather than the vertical distance between two grid cells
             if (abs(kleap) > abs(kdist)) {
