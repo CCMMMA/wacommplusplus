@@ -113,7 +113,7 @@ void ROMSAdapter::process()
     this->OceanTime().Allocate(ocean_time);
     this->SRho().Allocate(s_rho, -(int)s_rho+1);
     this->SW().Allocate(s_w, -(int)s_w+1);
-    this->Depth().Allocate(s_w,-(int)s_w+2);
+    this->DepthIntervals().Allocate(s_w,-(int)s_w+2);
     this->Mask().Allocate(eta_rho,xi_rho);
     this->Lon().Allocate(eta_rho,xi_rho);
     this->Lat().Allocate(eta_rho,xi_rho);
@@ -134,7 +134,7 @@ void ROMSAdapter::process()
     this->SW().Load(sW());
 
     for(int k=-(int)s_w+2; k<=0;k++) {
-        this->Depth().operator()(k)=sW(k)-sW(k-1);
+        this->DepthIntervals().operator()(k)=sW(k)-sW(k-1);
     }
 
 
