@@ -96,6 +96,7 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     // https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/aphs04.html
     
     size_t particle_time=1;
+    size_t ocean_time=1;
 
     Array1<unsigned long> id(this->size());
     Array2<double> lat(this->size(),particle_time);
@@ -108,7 +109,28 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     Array2<double> age(this->size(),particle_time);
     Array2<double> time(this->size(),particle_time);
 
+    Array4<float> conc(particle_time,
+                        oceanModelAdapter->Depth().Nx(),
+                        oceanModelAdapter->Latitude().Nx(),
+                        oceanModelAdapter->Longitude().Nx());
+
+    for (int k=0; k<oceanModelAdapter->Depth().Nx(); k++) {
+        for (int j=0; k<oceanModelAdapter->Latitude().Nx(); j++) {
+            for (int i=0; k<oceanModelAdapter->Longitude().Nx(); i++) {
+                conc(0,k,j,i)=0;
+            }
+        }
+    }
+
     LOG4CPLUS_INFO(logger,"Preparing NetCDF...");
+
+    double maxDepth=oceanModelAdapter->Depth()[0];
+    double minDepth=oceanModelAdapter->Depth()[oceanModelAdapter->Depth().Nx()-1];
+    double minLat=oceanModelAdapter->Latitude()[0];
+    double maxLat=oceanModelAdapter->Latitude()[oceanModelAdapter->Latitude().Nx()-1];
+    double minLon=oceanModelAdapter->Longitude()[0];
+    double maxLon=oceanModelAdapter->Longitude()[oceanModelAdapter->Longitude().Nx()-1];
+
 
     int count=0;
     for (const auto& particle:*this) {
@@ -135,6 +157,12 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
         health(count,0)=particle.Health();
         age(count,0)=particle.Age();
         time(count,0)=particle.Time();
+
+        double concK=oceanModelAdapter->Depth().Nx()*depth/(maxDepth-minDepth);
+        double concJ=oceanModelAdapter->Latitude().Nx()*latitude/(maxLat-minLat);
+        double concI=oceanModelAdapter->Longitude().Nx()*longitude/(maxLon-minLon);
+
+        conc(ocean_time,concK,concJ,concI )++;
 
         count++;
     }
@@ -224,6 +252,49 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     //TimeVar.putAtt("_CoordinateAxisType","Time");
     TimeVar.putVar(time());
 
+/*
+    NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
+    NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);
+    oceanTimeVar.putAtt("long_name","time since initialization");
+    oceanTimeVar.putAtt("units","seconds since 1968-05-23 00:00:00 GMT");
+    oceanTimeVar.putAtt("calendar","gregorian");
+    oceanTimeVar.putAtt("field","time, scalar, series");
+    oceanTimeVar.putAtt("_CoordinateAxisType","Time");
+    oceanTimeVar.putVar(oceanModelAdapter->OceanTime()());
+
+    NcDim latitudeDim = dataFile.addDim("latitude", oceanModelAdapter->Latitude().Nx());
+    NcVar laitudeVar = dataFile.addVar("latitude", ncDouble, latitudeDim);
+    laitudeVar.putAtt("long_name","latitude o");
+    laitudeVar.putAtt("unit","degree_north");
+    laitudeVar.putAtt("standard_name","latitude");
+    laitudeVar.putAtt("field","latitude, scalar");
+    laitudeVar.putAtt("_coordinateaxistype","lat");
+    laitudeVar.putVar(oceanModelAdapter->Latitude()());
+
+    NcDim longitudeDim = dataFile.addDim("longitude", oceanModelAdapter->Longitude().Nx());
+    NcVar longitudeVar = dataFile.addVar("longitude", ncDouble, longitudeDim);
+    longitudeVar.putAtt("long_name","longitude o");
+    longitudeVar.putAtt("unit","degree_north");
+    longitudeVar.putAtt("standard_name","longitude");
+    longitudeVar.putAtt("field","latitude, scalar");
+    longitudeVar.putAtt("_coordinateaxistype","lon");
+    longitudeVar.putVar(oceanModelAdapter->Longitude()());
+
+    vector<NcDim> oceanTimeDepthLatitudeLongitudeDims;
+    oceanTimeDepthLatitudeLongitudeDims.push_back(oceanTimeDim);
+    oceanTimeDepthLatitudeLongitudeDims.push_back(depthDim);
+    oceanTimeDepthLatitudeLongitudeDims.push_back(latitudeDim);
+    oceanTimeDepthLatitudeLongitudeDims.push_back(longitudeDim);
+
+    NcVar concVar = dataFile.addVar("conc", ncFloat, oceanTimeDepthLatitudeLongitudeDims);
+    concVar.putAtt("long_name","concentration_of_suspended_matter_in_sea_water");
+    concVar.putAtt("units","1");
+    concVar.putAtt("coordinates","longitude latitude depth ocean_time");
+    concVar.putAtt("field","");
+    concVar.putAtt("time","ocean_time");
+    concVar.putAtt("_FillValue",ncFloat, 9.99999993e+36);
+    concVar.putVar(conc());
+    */
 }
 
 void Particles::loadFromTxt(const string &fileName) {
