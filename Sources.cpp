@@ -274,6 +274,8 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                                         dep = coordinates[2];
                                     }
                                     oceanModelAdapter->deplatlon2kji(dep, lat, lon, k, j, i);
+
+                                    //cout << "k:" << k << " j:" << j << " i:" << i;
                                 }
                             }
                         }
