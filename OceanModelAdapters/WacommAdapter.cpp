@@ -32,7 +32,7 @@ void WacommAdapter::process()  {
     this->OceanTime().Allocate(ocean_time);
     this->SRho().Allocate(s_rho, -(int)s_rho+1);
     this->SW().Allocate(s_w, -(int)s_w+1);
-    this->Depth().Allocate(s_w,-(int)s_w+2);
+    this->DepthIntervals().Allocate(s_w,-(int)s_w+2);
     this->Mask().Allocate(eta_rho,xi_rho);
     this->Lon().Allocate(eta_rho,xi_rho);
     this->Lat().Allocate(eta_rho,xi_rho);
@@ -87,7 +87,7 @@ void WacommAdapter::process()  {
     aktVar.getVar(this->AKT()());
 
     for(int k=-(int)s_w+2; k<=0;k++) {
-        this->Depth().operator()(k)=this->SW()(k)-this->SW()(k-1);
+        this->DepthIntervals().operator()(k)=this->SW()(k)-this->SW()(k-1);
     }
 
     // lon_u, lat_v in radiants
