@@ -702,7 +702,8 @@ void Wacomm::save(const string &fileName, Array4<float> &conc) {
     LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
 
     // Open the file for read access
-    netCDF::NcFile dataFile(fileName, NcFile::write,NcFile::nc4);
+    netCDF::NcFile dataFile(fileName, NcFile::newFile,NcFile::nc4);
+    LOG4CPLUS_INFO(logger,"--------------: " << fileName);
 
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
     NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);
