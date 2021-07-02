@@ -8,6 +8,8 @@
 #include <nlohmann/json.hpp>
 #include <iomanip>
 
+#include "JulianDate.hpp"
+
 // for convenience
 using json = nlohmann::json;
 
@@ -173,13 +175,17 @@ void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanMo
         coordinates.push_back(lon);
         coordinates.push_back(lat);
 
+        Calendar calStart, calEnd;
+        JulianDate::fromModJulian(source.Start(),  calStart);
+        JulianDate::fromModJulian(source.End(),  calEnd);
+
         json properties = {
                 { "id", source.Id()},
                 { "k", source.K()},
                 { "j", source.J()},
                 { "i", source.I()},
-                { "start", source.Start()},
-                { "end", source.End()},
+                { "start", calStart.asNCEPdate()},
+                { "end", calEnd.asNCEPdate()},
                 { "particlesPerHour", source.ParticlesPerHour()},
                 { "mode", source.Mode()},
                 { "depth", dep}
@@ -234,11 +240,19 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                 if (feature.contains("properties")) {
                     auto properties = feature["properties"];
                     if (properties.contains("id")) { id = properties["id"]; }
-                    if (properties.contains("start")) { startOceanTime = properties["start"]; }
-                    if (properties.contains("end")) { endOceanTime = properties["end"]; }
+
+                    if (properties.contains("start")) {
+                        Calendar cal( properties["start"]);
+                        startOceanTime = JulianDate::toModJulian(cal);
+                    }
+                    if (properties.contains("end")) {
+                        Calendar cal( properties["end"]);
+                        endOceanTime = JulianDate::toModJulian(cal);
+                    }
                     if (properties.contains("k")) { k = atof(to_string(properties["k"]).c_str()); }
                     if (properties.contains("j")) { j = atof(to_string(properties["j"]).c_str()); }
                     if (properties.contains("i")) { i = atof(to_string(properties["i"]).c_str()); }
+
                     if (properties.contains("dep")) { dep = atof(to_string(properties["dep"]).c_str()); }
                     if (properties.contains("particlesPerHour")) {
                         particlesPerHour = stoi(to_string(properties["particlesPerHour"]));
