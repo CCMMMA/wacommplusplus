@@ -323,7 +323,7 @@ void Wacomm::run()
         }
 
 	    typedef struct WacommVariables{
-            double *oceanTimeDevice, *depthDevice, *lonRadDevice, *latRadDevice, *maskDevice, *hDevice;
+            double *oceanTimeDevice, *depthIntervalsDevice, *lonRadDevice, *latRadDevice, *maskDevice, *hDevice;
             float *zetaDevice, *uDevice, *vDevice, *wDevice, *aktDevice;
             struct config_data *configDevice;
         } WacommVariables;
@@ -439,7 +439,7 @@ void Wacomm::run()
                       	oceanModelAdapter->LonRad(),
                       	oceanModelAdapter->LatRad(),
                       	oceanModelAdapter->SW(),
-                      	oceanModelAdapter->Depth(),
+                      	oceanModelAdapter->DepthIntervals(),
                       	oceanModelAdapter->H(),
                       	oceanModelAdapter->Zeta(),
                       	oceanModelAdapter->U(),
@@ -478,7 +478,7 @@ void Wacomm::run()
                 stateVector[gpu_id].maskDevice,
                 stateVector[gpu_id].lonRadDevice,
                 stateVector[gpu_id].latRadDevice,
-                stateVector[gpu_id].depthDevice,
+                stateVector[gpu_id].depthIntervalsDevice,
                 stateVector[gpu_id].hDevice,
                 stateVector[gpu_id].zetaDevice,
                 stateVector[gpu_id].uDevice,
@@ -672,7 +672,7 @@ void Wacomm::run()
                 // Check if the history has to be saved as NetCDF file (new style, suggested)
             } else if (config->SaveHistory() == "nc") {
 
-                // Save tge history as NetCDF
+                // Save the history as NetCDF
                 particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter);
             }
         }
@@ -682,36 +682,27 @@ void Wacomm::run()
 
         LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
 
-        // Check if output have to embedd the history
-        if (config->EmbeddedHistory()) {
-            particles->saveAsNetCDF(ncOutputFilename, finalOceanTime, oceanModelAdapter);
-        }
-
         // Save the history
-        save(ncOutputFilename,conc, config->EmbeddedHistory());
+        save(ncOutputFilename,conc );
+        //save(ncOutputFilename);
     }
 };
 
 Wacomm::~Wacomm() = default;
 
-void Wacomm::save(string &fileName, Array4<float> &conc, bool add) {
+void Wacomm::save(const string &fileName, Array4<float> &conc) {
 
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
     size_t s_rho=oceanModelAdapter->SRho().Nx();
     size_t eta_rho=oceanModelAdapter->Mask().Nx();
     size_t xi_rho=oceanModelAdapter->Mask().Ny();
 
-    NcFile::FileMode fileMode=NcFile::replace;
-    if (add == true) {
-        fileMode=NcFile::write;
-    }
-
 
 
     LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
 
     // Open the file for read access
-    netCDF::NcFile dataFile(fileName, fileMode,NcFile::nc4);
+    netCDF::NcFile dataFile(fileName, NcFile::write,NcFile::nc4);
 
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
     NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);
@@ -799,4 +790,107 @@ void Wacomm::save(string &fileName, Array4<float> &conc, bool add) {
     concVar.putVar(conc());
 
 }
+/*
+void Wacomm::save(const string &fileName)
+{
+    size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
+    Array4<float> conc(ocean_time,
+                       oceanModelAdapter->Depth().Nx(),
+                       oceanModelAdapter->Latitude().Nx(),
+                       oceanModelAdapter->Longitude().Nx());
 
+    for (int k=0; k<oceanModelAdapter->Depth().Nx(); k++) {
+        for (int j=0; k<oceanModelAdapter->Latitude().Nx(); j++) {
+            for (int i=0; k<oceanModelAdapter->Longitude().Nx(); i++) {
+                conc(0,k,j,i)=0;
+            }
+        }
+    }
+
+    LOG4CPLUS_INFO(logger,"Preparing NetCDF...");
+
+    double maxDepth=oceanModelAdapter->Depth()[0];
+    double minDepth=oceanModelAdapter->Depth()[oceanModelAdapter->Depth().Nx()-1];
+    double minLat=oceanModelAdapter->Latitude()[0];
+    double maxLat=oceanModelAdapter->Latitude()[oceanModelAdapter->Latitude().Nx()-1];
+    double minLon=oceanModelAdapter->Longitude()[0];
+    double maxLon=oceanModelAdapter->Longitude()[oceanModelAdapter->Longitude().Nx()-1];
+
+    // Get the number of particles
+    size_t nParticles = particles->size();
+
+    // For each particle...
+    for (int idx = 0; idx < nParticles; idx++) {
+        // Get the reference to the particle
+        const Particle &particle = particles->at(idx);
+
+
+        if (particle.J() < 0 || particle.I() < 0 || particle.K() > 0) {
+            continue;
+        }
+
+
+        double depth, latitude, longitude;
+        oceanModelAdapter->kji2deplatlon(particle.K(), particle.J(), particle.I(), depth, latitude, longitude);
+
+        if (depth == 1e37 || latitude == 1e37 || longitude == 1e37) {
+            continue;
+        }
+
+        double concK=oceanModelAdapter->Depth().Nx()*depth/(maxDepth-minDepth);
+        double concJ=oceanModelAdapter->Latitude().Nx()*latitude/(maxLat-minLat);
+        double concI=oceanModelAdapter->Longitude().Nx()*longitude/(maxLon-minLon);
+
+        conc(ocean_time,concK,concJ,concI )++;
+    }
+
+
+    LOG4CPLUS_INFO(logger,"Saving NetCDF in: " << fileName);
+
+    // Open the file for read access
+    netCDF::NcFile dataFile(fileName, NcFile::write,NcFile::nc4);
+
+    NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
+    NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);
+    oceanTimeVar.putAtt("long_name","time since initialization");
+    oceanTimeVar.putAtt("units","seconds since 1968-05-23 00:00:00 GMT");
+    oceanTimeVar.putAtt("calendar","gregorian");
+    oceanTimeVar.putAtt("field","time, scalar, series");
+    oceanTimeVar.putAtt("_CoordinateAxisType","Time");
+    oceanTimeVar.putVar(oceanModelAdapter->OceanTime()());
+
+    NcDim latitudeDim = dataFile.addDim("latitude", oceanModelAdapter->Latitude().Nx());
+    NcVar laitudeVar = dataFile.addVar("latitude", ncDouble, latitudeDim);
+    laitudeVar.putAtt("long_name","latitude o");
+    laitudeVar.putAtt("unit","degree_north");
+    laitudeVar.putAtt("standard_name","latitude");
+    laitudeVar.putAtt("field","latitude, scalar");
+    laitudeVar.putAtt("_coordinateaxistype","lat");
+    laitudeVar.putVar(oceanModelAdapter->Latitude()());
+
+    NcDim longitudeDim = dataFile.addDim("longitude", oceanModelAdapter->Longitude().Nx());
+    NcVar longitudeVar = dataFile.addVar("longitude", ncDouble, longitudeDim);
+    longitudeVar.putAtt("long_name","longitude o");
+    longitudeVar.putAtt("unit","degree_north");
+    longitudeVar.putAtt("standard_name","longitude");
+    longitudeVar.putAtt("field","latitude, scalar");
+    longitudeVar.putAtt("_coordinateaxistype","lon");
+    longitudeVar.putVar(oceanModelAdapter->Longitude()());
+
+    vector<NcDim> oceanTimeDepthLatitudeLongitudeDims;
+    oceanTimeDepthLatitudeLongitudeDims.push_back(oceanTimeDim);
+    oceanTimeDepthLatitudeLongitudeDims.push_back(depthDim);
+    oceanTimeDepthLatitudeLongitudeDims.push_back(latitudeDim);
+    oceanTimeDepthLatitudeLongitudeDims.push_back(longitudeDim);
+
+    NcVar concVar = dataFile.addVar("conc", ncFloat, oceanTimeDepthLatitudeLongitudeDims);
+    concVar.putAtt("long_name","concentration_of_suspended_matter_in_sea_water");
+    concVar.putAtt("units","1");
+    concVar.putAtt("coordinates","longitude latitude depth ocean_time");
+    concVar.putAtt("field","");
+    concVar.putAtt("time","ocean_time");
+    concVar.putAtt("_FillValue",ncFloat, 9.99999993e+36);
+    concVar.putVar(conc());
+
+}
+*/
