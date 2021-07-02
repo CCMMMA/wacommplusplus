@@ -21,7 +21,7 @@ struct oceanmodel_data {
     Array1<double> oceanTime;
     Array1<double> sRho;
     Array1<double> sW;
-    Array1<double> depth;
+    Array1<double> depthIntervals;
     Array2<double> h;
     Array2<double> mask;
     Array2<double> lon;
@@ -59,7 +59,7 @@ public:
 
     Array2<double> &LonRad();
     Array2<double> &LatRad();
-    Array1<double> &Depth();
+    Array1<double> &DepthIntervals();
     Array2<double> &H();
     Array3<float> &Zeta();
     Array4<float> &U();
@@ -67,9 +67,17 @@ public:
     Array4<float> &W();
     Array4<float> &AKT();
 
+    Array1<double> &Latitude();
+    Array1<double> &Longitude();
+    Array1<double> &Depth();
+
 private:
     log4cplus::Logger logger;
     oceanmodel_data _data;
+
+    Array1<double> latitude;
+    Array1<double> longitude;
+    Array1<double> depth;
 
     double sgn(double a);
 };
