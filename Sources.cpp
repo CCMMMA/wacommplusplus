@@ -179,7 +179,7 @@ void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanMo
                 { "j", source.J()},
                 { "i", source.I()},
                 { "start", source.Start()},
-                { "end", source.Start()},
+                { "end", source.End()},
                 { "particlesPerHour", source.ParticlesPerHour()},
                 { "mode", source.Mode()},
                 { "depth", dep}
@@ -259,7 +259,7 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                                     if (coordinates.size() == 3 && dep == 0) {
                                         dep = coordinates[2];
                                     }
-                                    //oceanModelAdapter->deplatlon2kji(dep, lat, lon, k, j, i);
+                                    oceanModelAdapter->deplatlon2kji(dep, lat, lon, k, j, i);
                                 }
                             }
                         }
