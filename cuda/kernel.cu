@@ -21,7 +21,7 @@ __host__ __device__ double mod(double a, double p) { return a-p*(int)(a/p); }
 // https://gcc.gnu.org/onlinedocs/gfortran/SIGN.html
 __host__ __device__ double sign(double a, double b) { return abs(a)*sgn(b); }
 
-__global__ void move(config_data *pConfigData, particle_data *pParticleData, int ocean_time_idx, int ocean_time, int s_w, int s_rho, int eta_rho, int xi_rho, double *pOceanTime, double *pMask, double *pLonRad, double *pLatRad, double *pDepth, double *pH, float *pZeta, float *pU, float *pV, float *pW, float *pAkt, int sizeSectionParticles, int numThread){
+__global__ void move(config_data *pConfigData, particle_data *pParticleData, int ocean_time_idx, int ocean_time, int s_w, int s_rho, int eta_rho, int xi_rho, double *pOceanTime, double *pMask, double *pLonRad, double *pLatRad, double *pDepthIntervals, double *pH, float *pZeta, float *pU, float *pV, float *pW, float *pAkt, int sizeSectionParticles, int numThread){
 	int idx = threadIdx.x + blockIdx.x * blockDim.x;
 
 	if (idx < sizeSectionParticles){
@@ -228,7 +228,7 @@ __global__ void move(config_data *pConfigData, particle_data *pParticleData, int
                		   cos(pLatRad[xi_rho*(jI  )+iI]);
             		jidist=2.0*atan2(pow(dd,.5),pow(1.0-dd,.5))*6371.0;
 
-            		kdist=pDepth[kI-(-(int)s_w+2)]*(h+zeta);
+            		kdist=pDepthIntervals[kI-(-(int)s_w+2)]*(h+zeta);
             		if ( abs(kleap) > abs(kdist) ) {
                 		kleap=sign(kdist,kleap);
             		}
@@ -298,7 +298,7 @@ cudaError_t cudaMoveParticle(config_data *pConfigData, particle_data *pParticleD
 	dim3 nBlocchi, nThreadPerBlocco=16;
         nBlocchi = sizeSectionParticles/nThreadPerBlocco.x + ((sizeSectionParticles%nThreadPerBlocco.x) == 0?0:1);
 
-	move<<<nBlocchi, nThreadPerBlocco>>>(pConfigData, pParticleData, ocean_time_idx, ocean_time, s_w, s_rho, eta_rho, xi_rho, pOceanTime, pMask, pLonRad, pLatRad, pDepth, pH, pZeta, pU, pV, pW, pAkt, sizeSectionParticles, numThread);
+	move<<<nBlocchi, nThreadPerBlocco>>>(pConfigData, pParticleData, ocean_time_idx, ocean_time, s_w, s_rho, eta_rho, xi_rho, pOceanTime, pMask, pLonRad, pLatRad, pDepthIntervals, pH, pZeta, pU, pV, pW, pAkt, sizeSectionParticles, numThread);
 
 	cudaDeviceSynchronize();
 
