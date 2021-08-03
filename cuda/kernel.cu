@@ -293,7 +293,7 @@ __global__ void move(config_data *pConfigData, particle_data *pParticleData, int
 	}
 }
 
-cudaError_t cudaMoveParticle(config_data *pConfigData, particle_data *pParticleData, int ocean_time_idx, int ocean_time, int s_w, int s_rho, int eta_rho, int xi_rho, double *pOceanTime, double *pMask, double *pLonRad, double *pLatRad, double *pDepth, double *pH, float *pZeta, float *pU, float *pV, float *pW, float *pAkt, int sizeSectionParticles, int numThread, int numGPU){
+cudaError_t cudaMoveParticle(config_data *pConfigData, particle_data *pParticleData, int ocean_time_idx, int ocean_time, int s_w, int s_rho, int eta_rho, int xi_rho, double *pOceanTime, double *pMask, double *pLonRad, double *pLatRad, double *pDepthIntervals, double *pH, float *pZeta, float *pU, float *pV, float *pW, float *pAkt, int sizeSectionParticles, int numThread, int numGPU){
 	
 	dim3 nBlocchi, nThreadPerBlocco=16;
         nBlocchi = sizeSectionParticles/nThreadPerBlocco.x + ((sizeSectionParticles%nThreadPerBlocco.x) == 0?0:1);
