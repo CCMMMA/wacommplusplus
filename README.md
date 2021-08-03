@@ -63,6 +63,15 @@ WaComM++ is developed using C++17. Be sure a compatible toolchain is installed a
     
 * Windows: Visual Sutudio
 
+* Compiling on purpleJeans (http://rcf.uniparthenope.it) HPC-GPU-DNN Cluster.
+Set the environment:
+```bash
+module load gcc-8.3.1 
+module load ompi-4.1.0-gcc-8.3.1 
+module load cmake/3.19.2 
+module load cuda/10.1 
+```
+
 ## Dependencies
 The most part of the dependencies involved in the WaComM++ building are automatically resolved by cmake at the source
 preparation time (when cmake is invoked). Nevertheless some dependencies have to be satisfied a priori:
