@@ -367,7 +367,7 @@ void Wacomm::run()
 
                 //device memory allocation
                 cudaMalloc((void**) &(stateVector[i].oceanTimeDevice), oceanModelAdapter->OceanTime().Nx() *sizeof(double));
-                cudaMalloc((void**) &(stateVector[i].depthDevice), oceanModelAdapter->Depth().Nx() * sizeof(double));
+                cudaMalloc((void**) &(stateVector[i].depthIntervalsDevice), oceanModelAdapter->Depth().Nx() * sizeof(double));
                 cudaMalloc((void**) &(stateVector[i].lonRadDevice), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double));
                 cudaMalloc((void**) &(stateVector[i].latRadDevice), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double));
                 cudaMalloc((void**) &(stateVector[i].maskDevice), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double));
@@ -381,7 +381,7 @@ void Wacomm::run()
 
                 //copy data from host to device
                 cudaMemcpy(stateVector[i].oceanTimeDevice, oceanModelAdapter->OceanTime(), oceanModelAdapter->OceanTime().Nx() * sizeof(double), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].depthDevice, oceanModelAdapter->Depth(), oceanModelAdapter->Depth().Nx()*sizeof(double), cudaMemcpyHostToDevice);
+                cudaMemcpy(stateVector[i].depthIntervalsDevice, oceanModelAdapter->Depth(), oceanModelAdapter->Depth().Nx()*sizeof(double), cudaMemcpyHostToDevice);
                 cudaMemcpy(stateVector[i].lonRadDevice, oceanModelAdapter->LonRad(), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double), cudaMemcpyHostToDevice);
                 cudaMemcpy(stateVector[i].latRadDevice, oceanModelAdapter->LatRad(), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double), cudaMemcpyHostToDevice);
                 cudaMemcpy(stateVector[i].maskDevice, oceanModelAdapter->Mask(), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double), cudaMemcpyHostToDevice);
@@ -530,7 +530,7 @@ void Wacomm::run()
         for(int i=0; i<num_gpus; i++){
             cudaSetDevice(i);
 
-            cudaFree(stateVector[i].depthDevice);
+            cudaFree(stateVector[i].depthIntervalsDevice);
             cudaFree(stateVector[i].oceanTimeDevice);
             cudaFree(stateVector[i].lonRadDevice);
             cudaFree(stateVector[i].latRadDevice);
