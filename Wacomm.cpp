@@ -291,6 +291,7 @@ void Wacomm::run()
 #else
         // Get the pointer to the particles' container
         pLocalParticles = particles.get();
+        int particlesToProcess = particles->size();
 #endif
         LOG4CPLUS_DEBUG(logger, world_rank << ": Local particles:" << pLocalParticles->size());
 
