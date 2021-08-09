@@ -242,11 +242,11 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                     if (properties.contains("id")) { id = properties["id"]; }
 
                     if (properties.contains("start")) {
-                        Calendar cal( properties["start"]);
+                        Calendar cal(to_string(properties["start"]));
                         startOceanTime = JulianDate::toModJulian(cal);
                     }
                     if (properties.contains("end")) {
-                        Calendar cal( properties["end"]);
+                        Calendar cal( to_string(properties["end"]));
                         endOceanTime = JulianDate::toModJulian(cal);
                     }
                     if (properties.contains("k")) { k = atof(to_string(properties["k"]).c_str()); }
