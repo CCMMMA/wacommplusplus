@@ -147,6 +147,7 @@ void Wacomm::run()
             // Convert time in days based
             modJulian = modJulian / 86400;
 
+
             JulianDate::fromModJulian(modJulian, cal);
 
             LOG4CPLUS_INFO(logger, "Simulating:" << oceanModelAdapter->OceanTime()(ocean_time_idx) << " - "
@@ -163,7 +164,7 @@ void Wacomm::run()
             for (int idx = 0; idx < nSources; idx++) {
 
                 // Emit particles
-                sources->at(idx).emit(config, particles, oceanModelAdapter->OceanTime()(ocean_time_idx));
+                sources->at(idx).emit(config, particles, JulianDate::toModJulian(cal.asNCEPdate()));
             }
 
             // Get the total number of particles
