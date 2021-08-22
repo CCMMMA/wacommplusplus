@@ -243,7 +243,7 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
 
                     if (properties.contains("start")) {
                         if (properties["start"] < 0){
-                            endOceanTime = -1;
+                            startOceanTime = -1;
                         }
                         else{
                             Calendar cal(properties["start"]);
