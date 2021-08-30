@@ -7,6 +7,7 @@
 #include "Particle.hpp"
 #include "Config.hpp"
 #include <random>
+#include <chrono>
 
 Particle::Particle(unsigned long id, double k, double j, double i,
                    double health, double age, double time)
@@ -69,9 +70,6 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                     Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
                     Array4<float> &akt) {
 
-    // Create a random number generator
-    std::default_random_engine generator;
-
     particle_data localParticleData;
     memcpy(&localParticleData, &_data, sizeof(particle_data));
 
@@ -117,6 +115,13 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
     // Get the domain size in west-east number of columns
     size_t xi_rho = mask.Ny();
+
+    // Create a random number generator
+    std::default_random_engine generator;
+
+    // Initialize seed of number generator
+    if (random)
+        generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
 
     // Check if the particle jumped outside the water :-)
     if (localParticleData.k>0) {
@@ -342,8 +347,6 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 rkleap  = distribution(generator) * aa * crid;
 
             }
-
-
 
             // Final leap
             double ileap = dileap + rileap;
