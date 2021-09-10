@@ -22,6 +22,16 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include "cuda/kernel.h"
+
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"CUDA ERROR: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
 #endif
 
 Wacomm::Wacomm(std::shared_ptr<Config> config,
@@ -355,8 +365,7 @@ void Wacomm::run()
             // Copy each particle
             for(int i=0; i<pLocalParticles->size(); i++){
                 particlesHost[i] = pLocalParticles->at(i).data();
-            }
-
+		}
             // For each GPU...
             for (int i=0; i<num_gpus; i++){
 
@@ -369,7 +378,7 @@ void Wacomm::run()
 
                 //device memory allocation
                 cudaMalloc((void**) &(stateVector[i].oceanTimeDevice), oceanModelAdapter->OceanTime().Nx() *sizeof(double));
-                cudaMalloc((void**) &(stateVector[i].depthIntervalsDevice), oceanModelAdapter->Depth().Nx() * sizeof(double));
+                cudaMalloc((void**) &(stateVector[i].depthIntervalsDevice), oceanModelAdapter->DepthIntervals().Nx() * sizeof(double));
                 cudaMalloc((void**) &(stateVector[i].lonRadDevice), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double));
                 cudaMalloc((void**) &(stateVector[i].latRadDevice), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double));
                 cudaMalloc((void**) &(stateVector[i].maskDevice), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double));
@@ -383,7 +392,7 @@ void Wacomm::run()
 
                 //copy data from host to device
                 cudaMemcpy(stateVector[i].oceanTimeDevice, oceanModelAdapter->OceanTime(), oceanModelAdapter->OceanTime().Nx() * sizeof(double), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].depthIntervalsDevice, oceanModelAdapter->Depth(), oceanModelAdapter->Depth().Nx()*sizeof(double), cudaMemcpyHostToDevice);
+                cudaMemcpy(stateVector[i].depthIntervalsDevice, oceanModelAdapter->DepthIntervals(), oceanModelAdapter->DepthIntervals().Nx()*sizeof(double), cudaMemcpyHostToDevice);
                 cudaMemcpy(stateVector[i].lonRadDevice, oceanModelAdapter->LonRad(), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double), cudaMemcpyHostToDevice);
                 cudaMemcpy(stateVector[i].latRadDevice, oceanModelAdapter->LatRad(), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double), cudaMemcpyHostToDevice);
                 cudaMemcpy(stateVector[i].maskDevice, oceanModelAdapter->Mask(), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double), cudaMemcpyHostToDevice);
@@ -411,7 +420,6 @@ void Wacomm::run()
 #endif
         // Record start time
         auto startLocal = std::chrono::high_resolution_clock::now();
-
         // Begin the shared memory parallel section
         #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, ocean_time_idx, oceanModelAdapter,num_gpus,particlesHost,stateVector)
         {
@@ -426,7 +434,6 @@ void Wacomm::run()
 
             // Get the index (array pLocalParticles) of the last particle the thread must process
             size_t last=first+thread_counts[ompThreadNum];
-
             // Check if no GPU is available
             if (num_gpus<=0) {
 
@@ -456,19 +463,18 @@ void Wacomm::run()
             	typedef struct ThreadSectionDevice{
 			    struct particle_data *sectionParticlesDevice;
 		    } ThreadSectionDevice;
-
+		
             ThreadSectionDevice *threadSectionDevice = new ThreadSectionDevice[num_gpus];
-
             struct particle_data *particlesThread = &particlesHost[first];
-
-            int gpu_id = -1;
+            
+		int gpu_id = -1;
             cudaSetDevice(ompThreadNum % num_gpus);
             cudaGetDevice(&gpu_id);
 
             cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), thread_counts[ompThreadNum] * sizeof(struct particle_data));
             cudaMemcpy(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, thread_counts[ompThreadNum] * sizeof(struct particle_data), cudaMemcpyHostToDevice);
 
-            cudaError_t cudaMove = cudaMoveParticle(stateVector[gpu_id].configDevice,
+            gpuErrchk( cudaMoveParticle(stateVector[gpu_id].configDevice,
                 threadSectionDevice[gpu_id].sectionParticlesDevice,
                 ocean_time_idx,
                 oceanModelAdapter->OceanTime().Nx(),
@@ -487,12 +493,13 @@ void Wacomm::run()
                 stateVector[gpu_id].vDevice,
                 stateVector[gpu_id].wDevice,
                 stateVector[gpu_id].aktDevice,
-                thread_counts[ompThreadNum], ompThreadNum, gpu_id);
-
+                thread_counts[ompThreadNum], ompThreadNum, gpu_id) );
+/*
             	// Check for CUDA errors
             	if (cudaMove != cudaSuccess) {
                 	printf("[CUDA ERROR] %s\n", cudaGetErrorString(cudaMove));
             	}
+*/
 
             	//copy from device to host
             	cudaMemcpy(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, thread_counts[ompThreadNum] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
@@ -704,7 +711,7 @@ void Wacomm::save(const string &fileName, Array4<float> &conc) {
     LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
 
     // Open the file for read access
-    netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
+    netCDF::NcFile dataFile(fileName, netCDF::NcFile::replace,NcFile::nc4);
     LOG4CPLUS_INFO(logger,"--------------: " << fileName);
 
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
