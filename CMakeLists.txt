@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.18)
 project(wacommplusplus)
 
 enable_language(Fortran)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_STANDARD 14)
+set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL PGI)
   message(STATUS "Using PGI compilers.")
@@ -49,14 +51,55 @@ set(gpu_h_files "")
 set(gpu_cu_files "")
 find_package(CUDA)
 if(CUDA_FOUND AND USE_CUDA)
-    add_definitions(-DUSE_CUDA)
-    message(STATUS "Use CUDA acceleration.")
-    enable_language("CUDA")
-    set(CUDA_NVCC_FLAGS "-arch=sm_30")
-    file(GLOB gpu_h_files "${CMAKE_SOURCE_DIR}/cuda/*.h")
-    file(GLOB gpu_cu_files "${CMAKE_SOURCE_DIR}/cuda/*.cu")
-    include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+	message(STATUS "Use CUDA acceleration.")
+	message(STATUS "CUDA Version: ${CUDA_VERSION_STRING}")
+	enable_language("CUDA")
+	if(${CUDA_VERSION_STRING} VERSION_GREATER_EQUAL "11.1")
+      		execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --list-gpu-code RESULT_VARIABLE EXIT_CODE OUTPUT_VARIABLE OUTPUT_VAL)
+      		if(EXIT_CODE EQUAL 0)
+        		#Remove sm_
+        		string(REPLACE "sm_" "" OUTPUT_VAL ${OUTPUT_VAL})
+        		#Convert to list
+        		string(REPLACE "\n" ";" __CUDA_ARCH_BIN ${OUTPUT_VAL})
+        		#Remove last empty entry
+        		list(REMOVE_AT __CUDA_ARCH_BIN -1)
+      		else()
+        		message(FATAL_ERROR "Failed to run NVCC to get list of GPU codes: ${EXIT_CODE}")
+      		endif()
+    	elseif(${CUDA_VERSION_STRING} VERSION_GREATER_EQUAL "11.0")
+      		set(__CUDA_ARCH_BIN "35;37;50;52;53;60;61;62;70;72;75;80")
+    	elseif(${CUDA_VERSION_STRING} VERSION_GREATER_EQUAL "10.0")
+      		set(__CUDA_ARCH_BIN "30;32;35;37;50;52;53;60;61;62;70;72;75")
+    	elseif(${CUDA_VERSION_STRING} VERSION_GREATER_EQUAL "9.1")
+      		set(__CUDA_ARCH_BIN "30;32;35;37;50;52;53;60;61;62;70;72")
+    	else()
+      		set(__CUDA_ARCH_BIN "30;32;35;37;50;52;53;60;61;62;70")
+    	endif()
+	add_definitions(-DUSE_CUDA)
+    
+	set(CUDA_ARCH_BIN ${__CUDA_ARCH_BIN} CACHE STRING "Specify 'real' GPU architectures to build binaries for")
+    	
+    	if(POLICY CMP0104)
+		set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_BIN})
+    		message(STATUS "CUDA Architectures: ${CMAKE_CUDA_ARCHITECTURES}")
+	else()
+		# Generate SASS
+    		set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_BIN})
+    		# Generate PTX for last architecture
+    		list(GET CUDA_ARCH_BIN -1 ver)
+    		set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_${ver},code=compute_${ver}")
+    		message(STATUS "CMAKE_CUDA_FLAGS: ${CMAKE_CUDA_FLAGS}")
+    
+    		add_library(pcl_cuda INTERFACE)
+    		target_include_directories(pcl_cuda INTERFACE ${CUDA_TOOLKIT_INCLUDE})
+	endif()
+	#set(CUDA_NVCC_FLAGS "-gencode arch=sm_30")
+    	
+	file(GLOB gpu_h_files "${CMAKE_SOURCE_DIR}/cuda/*.h")
+    	file(GLOB gpu_cu_files "${CMAKE_SOURCE_DIR}/cuda/*.cu")
+    	
+	include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+    	find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 endif()
 
 # Include the support to external projects
