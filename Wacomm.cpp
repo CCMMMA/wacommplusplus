@@ -294,7 +294,7 @@ void Wacomm::run()
         pLocalParticles = particles.get();
         int particlesToProcess = particles->size();
 #endif
-        LOG4CPLUS_DEBUG(logger, world_rank << ": Local particles:" << pLocalParticles->size());
+        LOG4CPLUS_INFO(logger, world_rank << ": Local particles:" << pLocalParticles->size());
 
         // Get the number of particles to be processed by each thread
         size_t particlesPerThread = particlesToProcess / ompMaxThreads;
@@ -704,7 +704,7 @@ void Wacomm::save(const string &fileName, Array4<float> &conc) {
     LOG4CPLUS_INFO(logger,"Saving in: " << fileName);
 
     // Open the file for read access
-    netCDF::NcFile dataFile(fileName, NcFile::newFile,NcFile::nc4);
+    netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
     LOG4CPLUS_INFO(logger,"--------------: " << fileName);
 
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
