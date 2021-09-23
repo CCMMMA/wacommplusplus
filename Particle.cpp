@@ -167,7 +167,6 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         }
 
     }
-
     // For each integration interval
     for (int t=0;t<iint;t++) {
 
@@ -214,7 +213,18 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             // no reason to continue,  exit the integration loop
             break;
         }
+	
 
+	/*	
+	// Check if the particle beached
+	if (mask(jI,iI)<=0) {
+	
+		// Set the particle health
+		localParticleData.health=-1;
+	
+		// no reason to continue,  exit the integration loop
+		break;
+	}*/
 
 
 #ifdef DEBUG
@@ -245,14 +255,20 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         // Calculate the corrected depth
         double hc=hh+zz;
-
         // Calculate the depth of the particle in meters
-        //double particleDepth=-(hc*abs(sW(kI))+abs(kF*depth(kI)));
-
-        // Check if the partiche is still floating...
-        if (hc>shoreLimit) {
+        //double particleDepth=-(hc*abs(sW(kI))+abs(kF*depthIntervals(kI)));
+	
+	// Perform the linear interpolation (1D) in order tho get the particle depth.
+	float p1 = depthIntervals(kI) * (1.0 - kF);
+	float p2 = depthIntervals(kI + 1) * (1.0 - kF);
+	float pp = p1 + p2;
+	
+	double particleDepth = hc * pp ;	
+	
+	
+	// Check if the partiche is still floating...
+        if (particleDepth>shoreLimit) {
             // The particle is still floating
-
 #ifdef DEBUG
             LOG4CPLUS_DEBUG(logger, "Floating: kI:" << kI << " jI:" << jI << " iI:" << iI);
 #endif
@@ -403,7 +419,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Check if the new k have to be limited by the seafloor
             if (kdet > 0.) {
-                switch (configData->upperClosure) {
+		switch (configData->upperClosure) {
 
                     case Config::CLOSURE_MODE_CONSTRAINT:
                         // The particle must stay in the water
@@ -424,7 +440,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Check if the new k have to be limited by the sealfoor
             if (kdet < kLowerLimit) {
-                switch (configData->lowerClosure) {
+		switch (configData->lowerClosure) {
 
                     case Config::CLOSURE_MODE_CONSTRAINT:
                         // Limit it on the bottom
@@ -441,20 +457,57 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                         kdet=2.0 * kLowerLimit - kdet;
                         break;
                 }
-            }
+     	   }
 
             // Reflect if crossed the coastline
 
-            // Calculate the integer part of the j and i candidates
+            // Calculate the integer part of the j, i, k candidates
             int jdetI = (int) (jdet);
             int idetI = (int) (idet);
+            int kdetI = (int) (kdet);
 
-            // Check if the candidate position is within the domain
+		// Check if the candidate position is within the domain
             if (jdetI >= 0 && idetI >= 0 && jdetI < eta_rho && idetI < xi_rho) {
+		
+		// Check if the candidate new particle position is on land (cfr. shoreLimit)
+		double idetF = idet-idetI;
+		double jdetF = jdet-jdetI;
+		double kdetF = kdet - kdetI;
 
-                // Check if the candidate new particle position is on land (cfr. shoreLimit)
-                if (hc <= shoreLimit) {
-                    switch (configData->horizontalClosure) {
+		// Perform the bilinear interpolation (2D) in order to get
+		// the zeta at the new particle position.
+		z1 = zeta(ocean_time_idx, jdetI, idetI) * (1.0 - idetF) * (1.0 - jdetF);
+		z2 = zeta(ocean_time_idx, jdetI + 1, idetI) * (1.0 - idetF) * jdetF;
+		z3 = zeta(ocean_time_idx, jdetI + 1, idetI + 1) * idetF * jdetF;
+		z4 = zeta(ocean_time_idx, jdetI, idetI + 1) * idetF * (1.0 - jdetF);
+
+		// The new zeta at the particle position
+		float zzdet = z1 + z2 + z3 + z4;
+
+ 		// Perform the bilinear interpolation (2D) in order to get
+ 		// the h (depth) at the new particle position.
+ 		double h1=h(jdetI,    idetI)    *(1.0-idetF)  *(1.0-jdetF);
+ 		double h2=h(jdetI+1,  idetI)    *(1.0-idetF)  *     jdetF;
+ 		double h3=h(jdetI+1,  idetI+1)  *     idetF   *     jdetF;
+ 		double h4=h(jdetI  ,  idetI+1)  *     idetF   *(1.0-jdetF);
+
+ 		// The current h (depth) at the new particle position
+ 		double hhdet = h1+h2+h3+h4;
+
+ 		// Calculate the new corrected depth
+		double hcdet=hhdet + zzdet;
+		
+		// Perform the linear interpolation in order to get
+		// the new particle depth
+		p1 = depthIntervals(kdetI) * (1.0 - kdetF);
+        	p2 = depthIntervals(kdetI + 1) * (1.0 - kdetF);
+        	float ppdet = p1 + p2;
+		
+        	double particleDepthdet = hcdet * pp ;
+		
+		// Check if the new particle is landed
+		if (particleDepthdet <= shoreLimit) {
+			switch (configData->horizontalClosure) {
 
                         case Config::CLOSURE_MODE_CONSTRAINT:
                             break;
@@ -477,16 +530,16 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                             }
                             break;
                     }
-                }
-
+               }
+		
                 // Assign the new particle position
                 localParticleData.i = idet;
                 localParticleData.j = jdet;
                 localParticleData.k = kdet;
-            }
+           }
 
-
-        }
+	}
+        
 
         // Check if the particle is still alive
         if (localParticleData.health>0) {
