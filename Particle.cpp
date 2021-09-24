@@ -341,15 +341,15 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             LOG4CPLUS_DEBUG(logger, "aa:" << aa);
 #endif
 
-            // Evaluate the particle leap due to the current field (deterministic leap).
-            double dileap = uu * dti;
-            double djleap = vv * dti;
-            double dkleap = (sv + ww) * dti;
+            // Evaluate the particle leap (in meters along x,y,z) due to the current field (deterministic leap).
+            double dxleap = uu * dti;
+            double dyleap = vv * dti;
+            double dzleap = (sv + ww) * dti;
 
 
-            double rileap=0;
-            double rjleap=0;
-            double rkleap=0;
+            double rxleap=0;
+            double ryleap=0;
+            double rzleap=0;
 
 
             if (random) {
@@ -358,59 +358,71 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
                 // Generate a distribution probability with mean=0 and stdev=sigmaDepth
                 std::normal_distribution<double> distribution(0,sigmaDepth);
-                rileap= distribution(generator);
-                rjleap = distribution(generator);
-                rkleap  = distribution(generator) * aa * crid;
+                rxleap= distribution(generator);
+                ryleap = distribution(generator);
+                rzleap  = distribution(generator) * aa * crid;
 
             }
 
-            // Final leap
-            double ileap = dileap + rileap;
-            double jleap = djleap + rjleap;
-            double kleap = dkleap + rkleap;
+            // Final leap in meters
+            double xleap = dxleap + rxleap;
+            double yleap = dyleap + ryleap;
+            double zleap = dzleap + rzleap;
 
 #ifdef DEBUG
             LOG4CPLUS_DEBUG(logger, "kleap:" << kleap << " jleap:" << jleap << " ileap:" << ileap );
 #endif
 
-            double d1, d2, dd, jidist, kdist;
+            double dLat, dLon, dLatLon, ydist, xdist, zdist;
 
             // Calculate the distance in radiants of latitude between the grid cell where is
             // currently located the particle and the next one.
-            d1 = (latRad(jI + 1, iI) - latRad(jI, iI));
+            dLat = (latRad(jI + 1, iI) - latRad(jI, iI));
+            dLon = 0;
+
+            // Grid cell size along latitude using the Haversine method
+            // https://www.movable-type.co.uk/scripts/latlong.html
+            dLatLon = pow(sin(0.5 * dLat), 2) +
+                    pow(sin(0.5 * dLon), 2) *
+                    cos(latRad(jI + 1, iI)) *
+                    cos(latRad(jI, iI));
+
+            // Size of a grid cell along latitude in meters
+            ydist = 2.0 * atan2(pow(dLatLon, .5), pow(1.0 - dLatLon, .5)) * 6371000.0;
 
             // Calculate the distance in radiants of longitude between the grid cell where is
             // currently located the particle and the next one.
-            d2 = (lonRad(jI, iI + 1) - lonRad(jI, iI));
+            dLat = 0;
+            dLon = (lonRad(jI, iI + 1) - lonRad(jI, iI));
 
-            // Calculate the grid cell diagonal horizontal size using the Haversine method
+            // Grid cell size along latitude using the Haversine method
             // https://www.movable-type.co.uk/scripts/latlong.html
-            dd = pow(sin(0.5 * d1), 2) +
-                 pow(sin(0.5 * d2), 2) *
+            dLatLon = pow(sin(0.5 * dLat), 2) +
+                 pow(sin(0.5 * dLon), 2) *
                  cos(latRad(jI + 1, iI)) *
                  cos(latRad(jI, iI));
 
-            // Diagonal horizontal dimension of a cell
-            jidist = 2.0 * atan2(pow(dd, .5), pow(1.0 - dd, .5)) * 6371.0;
+            // Size of a grid cell along latitude in meters
+            xdist = 2.0 * atan2(pow(dLatLon, .5), pow(1.0 - dLatLon, .5)) * 6371000.0;
 
-            // Vertical dimension of a grid cell
-            kdist = depthIntervals(kI) * hc;
+            // Vertical dimension of a grid cell in meters
+            zdist = hc*(depthIntervals(kI)*kF-depthIntervals(kI+1)*(1-kF));
 
-            // Check if the vertical leap is greather than the vertical distance between two grid cells
-            if (abs(kleap) > abs(kdist)) {
+            // Check if the vertical leap is greather than the vertical dimension of the cell in meters
+            if (abs(zleap) > zdist) {
 
                 // Limit the leap to the vertical grid cell size, but in the direction of the leap
-                kleap = sign(kdist, kleap);
+                zleap = sign(zdist, zleap);
             }
 
             // Calculate the new particle j candidate
-            double jdet = localParticleData.j + 0.001 * jleap / jidist;
+            double jdet = localParticleData.j + yleap / ydist;
 
             // Calculate the new particle i candidate
-            double idet = localParticleData.i + 0.001 * ileap / jidist;
+            double idet = localParticleData.i + xleap / xdist;
 
             // Calculate the new particle k candidate
-            double kdet = localParticleData.k + kleap / kdist;
+            double kdet = localParticleData.k + zleap / zdist;
 
 
 #ifdef DEBUG
