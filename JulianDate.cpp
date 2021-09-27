@@ -169,11 +169,12 @@ void Calendar::parse(string format, string value) {
     tm my_tm;
     strptime(value.c_str(), format.c_str(), &my_tm);
     _data[YEAR]=my_tm.tm_year+1900;
-    _data[MONTH] = my_tm.tm_mon;
+    _data[MONTH] = my_tm.tm_mon + 1;
     _data[DAY_OF_MONTH] = my_tm.tm_mday;
     _data[HOUR_OF_DAY] = my_tm.tm_hour;
     _data[MINUTES] = my_tm.tm_min;
-    _data[SECONDS] = my_tm.tm_sec;
+    //_data[SECONDS] = my_tm.tm_sec;
+    _data[SECONDS] = 0;
 }
 
 Calendar::Calendar() {
@@ -182,7 +183,7 @@ Calendar::Calendar() {
     auto dateTime = std::gmtime(&dt);
 
     _data[YEAR]=dateTime->tm_year+1900;
-    _data[MONTH]=dateTime->tm_mon;
+    _data[MONTH]=dateTime->tm_mon + 1;
     _data[DAY_OF_MONTH]=dateTime->tm_mday;
     _data[HOUR_OF_DAY]=dateTime->tm_hour;
     _data[MINUTES]=dateTime->tm_min;
@@ -213,6 +214,6 @@ int Calendar::get(int idx) { return _data[idx];}
 void Calendar::set(int idx, int value) { _data[idx] = value;}
 
 string Calendar::asNCEPdate() {
-    return format("%Y%m%dZ%H%M");
+    return format("%Y%m%dZ%H");
 }
 
