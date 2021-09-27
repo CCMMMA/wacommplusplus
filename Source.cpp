@@ -28,7 +28,7 @@ void Source::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particl
             id = particles->at(particles->size() - 1).Id() + 1;
         }
         // Check if the particle have to be released
-        if ((mode == 1) && (start<0 || start>=currentOceanTime) && (end<0 || end<=currentOceanTime) ) {
+        if ((mode == 1) && (start<0 || start <= currentOceanTime) && (end<0 || end >= currentOceanTime) ) {
 
             // Release the particles
             for (int idx = 0; idx < particlesPerHour; idx++) {
