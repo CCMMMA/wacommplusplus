@@ -103,8 +103,11 @@ void Config::setDefault() {
     // Set the sources file name (defauly empty)
     sourcesFile = "";
 
-    // Use random leap (defaukt true. use false for model testing versus other imlementations
+    // Use random leap (default true. use false for model testing versus other implementations
     _data.random = true;
+
+    // Generate random sources (default true. use false for model testing versus other imlementations
+    _data.randomSources = true;
 
     // Save processed input files (default false)
     saveInput = false;
@@ -371,8 +374,16 @@ void Config::Random(bool value) {
     _data.random=value;
 }
 
+void Config::RandomSources(bool value) {
+    _data.randomSources=value;
+}
+
 bool Config::Random() const {
     return _data.random;
+}
+
+bool Config::RandomSources() const {
+    return _data.randomSources;
 }
 
 config_data *Config::dataptr() {
@@ -498,6 +509,7 @@ void Config::saveAsJson(const string &fileName) {
             { "tau0", _data.tau0 },
             { "survprob", _data.survprob },
             { "random", _data.random },
+            { "random_sources", _data.randomSources },
             { "sv", _data.sv },
             { "dti", _data.dti },
             { "deltat", _data.deltat },
@@ -575,6 +587,7 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("sv")) { _data.sv = physics["sv"]; }
         if (physics.contains("sigma")) { _data.sigma = physics["sigma"]; }
         if (physics.contains("random")) { _data.random = physics["random"]; }
+        if (physics.contains("random_sources")) { _data.randomSources = physics["random_sources"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
         if (physics.contains("shore_limit")) { _data.shoreLimit = physics["shore_limit"]; }
         if (physics.contains("upper_closure")) { _data.upperClosure = dictionary[physics["upper_closure"]]; }

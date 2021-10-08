@@ -19,6 +19,7 @@ using namespace std;
 
 struct config_data {
     bool random;
+    bool randomSources;
     double deltat;
     double dti;
     double survprob;
@@ -50,8 +51,13 @@ public:
     int LowerClosure() const;
     int HorizontalClosure() const;
 
+    // Random variable
     void Random(bool value);
     bool Random() const;
+
+    // Sources random variable
+    void RandomSources(bool value);
+    bool RandomSources() const;
 
     double Sigma() const;
 

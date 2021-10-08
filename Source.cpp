@@ -35,11 +35,14 @@ void Source::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particl
                 double kk = k;
                 double jj = j;
                 double ii = i;
-                if (config->Random()) {
+
+                if (config->RandomSources()) {
+
                     kk = k + distribution(generator);
                     jj = j + distribution(generator);
                     ii = i + distribution(generator);
                 }
+
                 particles->push_back(Particle(id, kk, jj, ii, currentOceanTime));
                 id++;
             }
