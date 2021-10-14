@@ -1,0 +1,47 @@
+{
+    "simulation": {
+      "name": "Sarno lite emission",
+      "institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
+      "url": "https://meteo.uniparthenope.it",
+      "start": "20210701Z09",
+      "end": "20210701Z11",
+      "dry": true
+    },
+    "io": {
+      "base_path": "processed/",
+      "nc_inputs": [
+        "ocm3_d03_20210701Z0900.nc",
+        "ocm3_d03_20210701Z1000.nc",
+        "ocm3_d03_20210701Z1100.nc"
+
+      ],
+      "ocean_model": "WaComM",
+      "nc_output_root": "output/wacomm_his_",
+      "mask_output": true,
+      "timestep": 3600,
+      "save_input": false,
+      "save_history": "",
+      "history_root": "restart/WACOMM_rst_",
+      "nc_input_root": "processed/ocm3_d03_"
+    },
+    "restart": {
+      "active": false,
+      "restart_file": ""
+    },
+    "sources": {
+      "active": true,
+      "sources_file": "./sources.json"
+    },
+    "physics": {
+      "random": true,
+      "random_sources": false,
+      "tau0": 86400,
+      "survprob": 0.0001,
+      "sigma": 3.46,
+      "sv": 0,
+      "shore_limit": 0.5,
+      "upper_closure": "reflection",
+      "lower_closure": "constraint",
+      "horizontal_closure": "kill"
+    }
+}
