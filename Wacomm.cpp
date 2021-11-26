@@ -365,7 +365,7 @@ void Wacomm::run()
             // Copy each particle
             for(int i=0; i<pLocalParticles->size(); i++){
                 particlesHost[i] = pLocalParticles->at(i).data();
-		}
+            }
             // For each GPU...
             for (int i=0; i<num_gpus; i++){
 
@@ -421,19 +421,20 @@ void Wacomm::run()
         // Record start time
         auto startLocal = std::chrono::high_resolution_clock::now();
         // Begin the shared memory parallel section
-        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, ocean_time_idx, oceanModelAdapter,num_gpus,particlesHost,stateVector)
+        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, particlesPerThread, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector)
         {
 
 #ifdef USE_OMP
             // Get the number of the current thread
-            ompThreadNum=omp_get_thread_num();
+            ompThreadNum = omp_get_thread_num();
 #endif
 
             // Get the index (array pLocalParticles) of the first particle the thread must process
-            size_t first=thread_displs[ompThreadNum];
+            size_t first = thread_displs[ompThreadNum];
 
             // Get the index (array pLocalParticles) of the last particle the thread must process
-            size_t last=first+thread_counts[ompThreadNum];
+            size_t last = first + thread_counts[ompThreadNum];
+
             // Check if no GPU is available
             if (num_gpus<=0) {
 
@@ -460,58 +461,93 @@ void Wacomm::run()
             }
 #ifdef USE_CUDA
 	        else {
-            	typedef struct ThreadSectionDevice{
-			    struct particle_data *sectionParticlesDevice;
-		    } ThreadSectionDevice;
-		
-            ThreadSectionDevice *threadSectionDevice = new ThreadSectionDevice[num_gpus];
-            struct particle_data *particlesThread = &particlesHost[first];
-            
-		int gpu_id = -1;
-            cudaSetDevice(ompThreadNum % num_gpus);
-            cudaGetDevice(&gpu_id);
+                if (num_gpus>0) {
+                    int particlesToProcessGPU = particlesPerThread;
 
-            cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), thread_counts[ompThreadNum] * sizeof(struct particle_data));
-            cudaMemcpy(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, thread_counts[ompThreadNum] * sizeof(struct particle_data), cudaMemcpyHostToDevice);
+                    if (particlesToProcessGPU > 0){
+                        // Get the number of particles to be processed by each GPU
+                        size_t particlesPerGPU = particlesToProcessGPU / num_gpus;
 
-            gpuErrchk( cudaMoveParticle(stateVector[gpu_id].configDevice,
-                threadSectionDevice[gpu_id].sectionParticlesDevice,
-                ocean_time_idx,
-                oceanModelAdapter->OceanTime().Nx(),
-                oceanModelAdapter->SW().Nx(),
-                oceanModelAdapter->SRho().Nx(),
-                oceanModelAdapter->Mask().Nx(),
-                oceanModelAdapter->Mask().Ny(),
-                stateVector[gpu_id].oceanTimeDevice,
-                stateVector[gpu_id].maskDevice,
-                stateVector[gpu_id].lonRadDevice,
-                stateVector[gpu_id].latRadDevice,
-                stateVector[gpu_id].depthIntervalsDevice,
-                stateVector[gpu_id].hDevice,
-                stateVector[gpu_id].zetaDevice,
-                stateVector[gpu_id].uDevice,
-                stateVector[gpu_id].vDevice,
-                stateVector[gpu_id].wDevice,
-                stateVector[gpu_id].aktDevice,
-                thread_counts[ompThreadNum], ompThreadNum, gpu_id) );
-/*
-            	// Check for CUDA errors
-            	if (cudaMove != cudaSuccess) {
-                	printf("[CUDA ERROR] %s\n", cudaGetErrorString(cudaMove));
-            	}
-*/
+                        // Get the number of spare particles for the GPU with idx==0
+                        size_t sparePerGPU = particlesToProcessGPU % num_gpus;
 
-            	//copy from device to host
-            	cudaMemcpy(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, thread_counts[ompThreadNum] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
+                        // Dafine an array with the number of particles to be processed by each GPU
+                        size_t GPU_counts[num_gpus];
 
-            	// Copy all thread particles to the local processor particles
-            	for(int i=first; i < last; i++){
-			        //printf("health: %f\n", particlesThread[k].health);
-                	pLocalParticles->at(i).data(particlesThread[i-first]);
-           	    }
+                        // Define an array with the displacement of particles to be processed by each GPU
+                        size_t GPU_displs[num_gpus];
 
-            	cudaFree(threadSectionDevice[gpu_id].sectionParticlesDevice);
-	        }
+                        // The first GPU get the spare
+                        GPU_counts[0] = (int)((particlesPerGPU + sparePerGPU));
+
+                        // The first GPU starts from 0
+                        GPU_displs[0] = 0;
+
+                        // For each available GPU...
+                        for (int gidx = 1; gidx < num_gpus; gidx++) {
+                            // Set the number of particles per GPU
+                            GPU_counts[gidx] = (int)(particlesPerGPU);
+
+                            // Set the displaement
+                            GPU_displs[gidx] = GPU_counts[0] + particlesPerGPU*(gidx-1);
+                        }
+
+                        typedef struct ThreadSectionDevice{
+                            struct particle_data *sectionParticlesDevice;
+                        } ThreadSectionDevice;
+
+                        ThreadSectionDevice *threadSectionDevice = new ThreadSectionDevice[num_gpus];
+
+                        for (int idx=0; idx < num_gpus; idx++){
+                            size_t GPU_first = GPU_displs[idx] + first;
+                            size_t GPU_last = GPU_first + GPU_counts[idx];
+
+                            //printf("GPU_first: %d, GPU_last: %d\n", GPU_first, GPU_last);
+
+                            struct particle_data *particlesThread = &particlesHost[GPU_first];
+
+                            int gpu_id = -1;
+                            cudaSetDevice(idx);
+                            cudaGetDevice(&gpu_id);
+
+                            cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), GPU_counts[idx] * sizeof(struct particle_data));
+                            cudaMemcpy(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyHostToDevice);
+
+                            gpuErrchk(cudaMoveParticle(stateVector[gpu_id].configDevice,
+                                threadSectionDevice[gpu_id].sectionParticlesDevice,
+                                ocean_time_idx,
+                                oceanModelAdapter->OceanTime().Nx(),
+                                oceanModelAdapter->SW().Nx(),
+                                oceanModelAdapter->SRho().Nx(),
+                                oceanModelAdapter->Mask().Nx(),
+                                oceanModelAdapter->Mask().Ny(),
+                                stateVector[gpu_id].oceanTimeDevice,
+                                stateVector[gpu_id].maskDevice,
+                                stateVector[gpu_id].lonRadDevice,
+                                stateVector[gpu_id].latRadDevice,
+                                stateVector[gpu_id].depthIntervalsDevice,
+                                stateVector[gpu_id].hDevice,
+                                stateVector[gpu_id].zetaDevice,
+                                stateVector[gpu_id].uDevice,
+                                stateVector[gpu_id].vDevice,
+                                stateVector[gpu_id].wDevice,
+                                stateVector[gpu_id].aktDevice,
+                                GPU_counts[idx], idx, gpu_id));
+
+                            //copy from device to host
+                            cudaMemcpy(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
+
+                            // Copy all thread particles to the local processor particles
+                            for(int i=GPU_first; i < GPU_last; i++){
+                                //printf("health: %f\n", particlesThread[k].health);
+                                pLocalParticles->at(i).data(particlesThread[i - GPU_first]);
+                            }
+
+                            cudaFree(threadSectionDevice[gpu_id].sectionParticlesDevice);
+                        }
+                    }
+                }
+            }
 #endif
         } 
             
@@ -534,23 +570,25 @@ void Wacomm::run()
 #endif
 
 #ifdef USE_CUDA
-        free(particlesHost);
+        if (num_gpus>0) {
+            free(particlesHost);
 
-        for(int i=0; i<num_gpus; i++){
-            cudaSetDevice(i);
+            for(int i=0; i<num_gpus; i++){
+                cudaSetDevice(i);
 
-            cudaFree(stateVector[i].depthIntervalsDevice);
-            cudaFree(stateVector[i].oceanTimeDevice);
-            cudaFree(stateVector[i].lonRadDevice);
-            cudaFree(stateVector[i].latRadDevice);
-            cudaFree(stateVector[i].maskDevice);
-            cudaFree(stateVector[i].hDevice);
-            cudaFree(stateVector[i].zetaDevice);
-            cudaFree(stateVector[i].uDevice);
-            cudaFree(stateVector[i].vDevice);
-            cudaFree(stateVector[i].wDevice);
-            cudaFree(stateVector[i].aktDevice);
-            cudaFree(stateVector[i].configDevice);
+                cudaFree(stateVector[i].depthIntervalsDevice);
+                cudaFree(stateVector[i].oceanTimeDevice);
+                cudaFree(stateVector[i].lonRadDevice);
+                cudaFree(stateVector[i].latRadDevice);
+                cudaFree(stateVector[i].maskDevice);
+                cudaFree(stateVector[i].hDevice);
+                cudaFree(stateVector[i].zetaDevice);
+                cudaFree(stateVector[i].uDevice);
+                cudaFree(stateVector[i].vDevice);
+                cudaFree(stateVector[i].wDevice);
+                cudaFree(stateVector[i].aktDevice);
+                cudaFree(stateVector[i].configDevice);
+            }
         }
 #endif
         // Check if the current process is the world_rank==0
