@@ -346,6 +346,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
 #ifdef USE_CUDA
         // Check if the number of GPUs is more than 0
         if (num_gpus>0) {
+            auto str = std::chrono::high_resolution_clock::now();
 
             // A pointer to the configuration data
             config_data *pConfigData = config->dataptr();
@@ -416,10 +417,17 @@ void Wacomm::run(double &time, double&part, double&cuda)
                            sizeof(float), cudaMemcpyHostToDevice);
                 cudaMemcpy(stateVector[i].configDevice, pConfigData, sizeof(struct config_data), cudaMemcpyHostToDevice);
             }
+            auto stp = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> elap = stp - str;
+            LOG4CPLUS_INFO(logger, "CUDA HOST2DEV sec: " << elap.count());
         }
 #endif
         // Record start time
         auto startLocal = std::chrono::high_resolution_clock::now();
+
+        double time_array[num_gpus];
+        double _time = 0;
+
         // Begin the shared memory parallel section
         #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, particlesPerThread, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector, _time, time_array)
         {

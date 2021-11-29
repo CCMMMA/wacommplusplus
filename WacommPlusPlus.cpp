@@ -133,7 +133,13 @@ void WacommPlusPlus::run() {
             Wacomm wacomm(config, oceanModelAdapter, sources, particles);
 
             // Run the model
-            wacomm.run();
+            double t=0, p=0, cuda=0;
+
+            wacomm.run(t,p,cuda);
+
+            time_average += t;
+            part_average += p;
+            cuda_average += cuda;
         }
         // Go to the next input file
         idx++;
