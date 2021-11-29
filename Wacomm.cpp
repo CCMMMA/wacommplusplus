@@ -48,7 +48,7 @@ Wacomm::Wacomm(std::shared_ptr<Config> config,
 
 }
 
-void Wacomm::run()
+void Wacomm::run(double &time, double&part, double&cuda)
 {
     LOG4CPLUS_DEBUG(logger,"Dry mode:" << config->Dry() );
     int num_gpus=0;
@@ -421,7 +421,7 @@ void Wacomm::run()
         // Record start time
         auto startLocal = std::chrono::high_resolution_clock::now();
         // Begin the shared memory parallel section
-        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, particlesPerThread, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector)
+        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, particlesPerThread, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector, _time, time_array)
         {
 
 #ifdef USE_OMP
@@ -511,7 +511,13 @@ void Wacomm::run()
                             cudaGetDevice(&gpu_id);
 
                             cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), GPU_counts[idx] * sizeof(struct particle_data));
-                            cudaMemcpy(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyHostToDevice);
+                            cudaMemcpyAsync(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyHostToDevice);
+
+                            cudaEvent_t start, stop;
+                            cudaEventCreate(&start);
+                            cudaEventCreate(&stop);
+
+                            cudaEventRecord(start);
 
                             gpuErrchk(cudaMoveParticle(stateVector[gpu_id].configDevice,
                                 threadSectionDevice[gpu_id].sectionParticlesDevice,
@@ -534,8 +540,14 @@ void Wacomm::run()
                                 stateVector[gpu_id].aktDevice,
                                 GPU_counts[idx], idx, gpu_id));
 
+                            cudaEventRecord(stop);
+                            cudaEventSynchronize(stop);
+
+                            cudaEventElapsedTime(&_time, start, stop);
+                            time_array[gpu_id] = _time;
+
                             //copy from device to host
-                            cudaMemcpy(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
+                            cudaMemcpyAsync(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
 
                             // Copy all thread particles to the local processor particles
                             for(int i=GPU_first; i < GPU_last; i++){
@@ -598,7 +610,26 @@ void Wacomm::run()
 
             // Calculate the local particles per second
             double nParticlesPerSecondLocal = pLocalParticles->size() / elapsedLocal.count();
-            LOG4CPLUS_INFO(logger, "Locally processed " << pLocalParticles->size() << " in " << elapsedLocal.count()
+            double elapsTime = elapsedLocal.count();
+
+            if (num_gpus <= 0)
+                cuda +=elapsTime;
+
+#ifdef USE_CUDA
+            float cuda_time = 0;
+            for (int i=0; i< num_gpus; i++){
+                LOG4CPLUS_INFO(logger, "GPU Processed in sec: " << time_array[i] / 1000);
+                cuda_time += time_array[i] / 1000;
+            }
+            cuda += cuda_time/num_gpus;
+
+            nParticlesPerSecondLocal = pLocalParticles->size() / ((double) _time / 1000);
+            elapsTime = (double) _time / 1000;
+
+#endif
+
+            // Calculate the local particles per second
+            LOG4CPLUS_INFO(logger, "Locally processed " << pLocalParticles->size() << " in " << elapsTime
                                                         << " seconds (" << nParticlesPerSecondLocal
                                                         << " particles/second).");
 
@@ -621,6 +652,8 @@ void Wacomm::run()
             LOG4CPLUS_INFO(logger, "Removed particles: " << (nParticles0 - nParticles) << " Particles: " << nParticles);
 
             LOG4CPLUS_INFO(logger, "Evaluate concentration");
+
+            auto _str = std::chrono::high_resolution_clock::now();
 
             // Evaluate the concentration of particles per grid cell
 #pragma omp parallel for default(none) shared(nParticles, ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
@@ -668,6 +701,9 @@ void Wacomm::run()
                     }
                 }
             }
+            auto _stp = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> _elap = _stp - _str;
+            LOG4CPLUS_INFO(logger, "EVALUATE sec: " << _elap.count());
         }
 
         // Check if this is the process with world_rank==0
@@ -681,6 +717,8 @@ void Wacomm::run()
 
             // Calculate the number of particles per second
             double nParticlesPerSecond = nParticles / elapsed.count();
+            time = elapsed.count();
+            part = nParticlesPerSecond;
 
             LOG4CPLUS_INFO(logger, "Processed " << nParticles << " in " << elapsed.count() << " seconds ("<< nParticlesPerSecond <<" particles/second).");
         }

@@ -294,13 +294,14 @@ __global__ void move(config_data *pConfigData, particle_data *pParticleData, int
 }
 
 cudaError_t cudaMoveParticle(config_data *pConfigData, particle_data *pParticleData, int ocean_time_idx, int ocean_time, int s_w, int s_rho, int eta_rho, int xi_rho, double *pOceanTime, double *pMask, double *pLonRad, double *pLatRad, double *pDepthIntervals, double *pH, float *pZeta, float *pU, float *pV, float *pW, float *pAkt, int sizeSectionParticles, int numThread, int numGPU){
-	
-	dim3 nBlocchi, nThreadPerBlocco=16;
-        nBlocchi = sizeSectionParticles/nThreadPerBlocco.x + ((sizeSectionParticles%nThreadPerBlocco.x) == 0?0:1);
 
-	move<<<nBlocchi, nThreadPerBlocco>>>(pConfigData, pParticleData, ocean_time_idx, ocean_time, s_w, s_rho, eta_rho, xi_rho, pOceanTime, pMask, pLonRad, pLatRad, pDepthIntervals, pH, pZeta, pU, pV, pW, pAkt, sizeSectionParticles, numThread);
+    dim3 nBlocks, nThreadPerBlock = 512;
 
-	cudaDeviceSynchronize();
+    nBlocks = sizeSectionParticles/nThreadPerBlock.x + ((sizeSectionParticles%nThreadPerBlock.x) == 0?0:1);
+
+    move<<<nBlocks, nThreadPerBlock>>>(pConfigData, pParticleData, ocean_time_idx, ocean_time, s_w, s_rho, eta_rho, xi_rho, pOceanTime, pMask, pLonRad, pLatRad, pDepthIntervals, pH, pZeta, pU, pV, pW, pAkt, sizeSectionParticles, numThread);
+
+    cudaDeviceSynchronize();
 
 	return cudaGetLastError();
 }

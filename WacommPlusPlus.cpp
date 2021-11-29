@@ -38,6 +38,10 @@ void WacommPlusPlus::run() {
 
 
     int idx = 0;
+    double time_average = 0.0;
+    double part_average = 0.0;
+    double cuda_average = 0.0;
+
     for (auto &ncInput : config->NcInputs()) {
 
         if (world_rank == 0) {
@@ -134,4 +138,7 @@ void WacommPlusPlus::run() {
         // Go to the next input file
         idx++;
     }
+    LOG4CPLUS_INFO(logger,  "Total Evaluation Time: " << time_average);
+    LOG4CPLUS_INFO(logger,  "Final Average Particles/sec: " << part_average / (idx-1));
+    LOG4CPLUS_INFO(logger,  "move() Average sec: " << cuda_average);
 }
