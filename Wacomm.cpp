@@ -425,8 +425,8 @@ void Wacomm::run(double &time, double&part, double&cuda)
         // Record start time
         auto startLocal = std::chrono::high_resolution_clock::now();
 
-        double time_array[num_gpus];
-        double _time = 0;
+        float time_array[ompMaxThreads][num_gpus];
+        float _time = 0;
 
         // Begin the shared memory parallel section
         #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, particlesPerThread, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector, _time, time_array)
@@ -518,6 +518,8 @@ void Wacomm::run(double &time, double&part, double&cuda)
                             cudaSetDevice(idx);
                             cudaGetDevice(&gpu_id);
 
+                            printf("GPU ID: %d, particles: %d\n", gpu_id, GPU_last-GPU_first);
+
                             cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), GPU_counts[idx] * sizeof(struct particle_data));
                             cudaMemcpyAsync(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyHostToDevice);
 
@@ -552,7 +554,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
                             cudaEventSynchronize(stop);
 
                             cudaEventElapsedTime(&_time, start, stop);
-                            time_array[gpu_id] = _time;
+                            time_array[ompThreadNum][gpu_id] = _time;
 
                             //copy from device to host
                             cudaMemcpyAsync(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
@@ -625,11 +627,13 @@ void Wacomm::run(double &time, double&part, double&cuda)
 
 #ifdef USE_CUDA
             float cuda_time = 0;
-            for (int i=0; i< num_gpus; i++){
-                LOG4CPLUS_INFO(logger, "GPU Processed in sec: " << time_array[i] / 1000);
-                cuda_time += time_array[i] / 1000;
+            for (int i=0; i<ompMaxThreads; i++){
+                for (int j=0; j< num_gpus; j++){
+                    LOG4CPLUS_INFO(logger, "GPU Processed in sec: " << time_array[i][j] / 1000);
+                    cuda_time += time_array[i][j] / 1000;
+                }
             }
-            cuda += cuda_time/num_gpus;
+            cuda += cuda_time/(num_gpus * ompMaxThreads);
 
             nParticlesPerSecondLocal = pLocalParticles->size() / ((double) _time / 1000);
             elapsTime = (double) _time / 1000;
