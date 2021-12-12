@@ -301,7 +301,5 @@ cudaError_t cudaMoveParticle(config_data *pConfigData, particle_data *pParticleD
 
     move<<<nBlocks, nThreadPerBlock>>>(pConfigData, pParticleData, ocean_time_idx, ocean_time, s_w, s_rho, eta_rho, xi_rho, pOceanTime, pMask, pLonRad, pLatRad, pDepthIntervals, pH, pZeta, pU, pV, pW, pAkt, sizeSectionParticles, numThread);
 
-    cudaDeviceSynchronize();
-
 	return cudaGetLastError();
 }

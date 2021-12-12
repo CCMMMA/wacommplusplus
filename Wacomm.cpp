@@ -518,8 +518,6 @@ void Wacomm::run(double &time, double&part, double&cuda)
                             cudaSetDevice(idx);
                             cudaGetDevice(&gpu_id);
 
-                            printf("GPU ID: %d, particles: %d\n", gpu_id, GPU_last-GPU_first);
-
                             cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), GPU_counts[idx] * sizeof(struct particle_data));
                             cudaMemcpyAsync(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyHostToDevice);
 
@@ -555,6 +553,19 @@ void Wacomm::run(double &time, double&part, double&cuda)
 
                             cudaEventElapsedTime(&_time, start, stop);
                             time_array[ompThreadNum][gpu_id] = _time;
+                        }
+
+                        for (int idx=0; idx < num_gpus; idx++){
+                            size_t GPU_first = GPU_displs[idx] + first;
+                            size_t GPU_last = GPU_first + GPU_counts[idx];
+
+                            struct particle_data *particlesThread = &particlesHost[GPU_first];
+
+                            int gpu_id = -1;
+                            cudaSetDevice(idx);
+                            cudaGetDevice(&gpu_id);
+
+                            cudaDeviceSynchronize();
 
                             //copy from device to host
                             cudaMemcpyAsync(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
@@ -571,7 +582,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
                 }
             }
 #endif
-        } 
+        }
             
         // Record end time
         auto finishLocal = std::chrono::high_resolution_clock::now();
