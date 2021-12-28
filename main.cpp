@@ -155,7 +155,14 @@ int main(int argc, char **argv) {
     }
 
     WacommPlusPlus wacommPlusPlus(config);
+
+    // Record start time
+    auto start_whole = std::chrono::high_resolution_clock::now();
+
     wacommPlusPlus.run();
+    auto end_whole = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsedLocal = end_whole - start_whole;
+    LOG4CPLUS_INFO(logger,  "Global Execution Time (sec): " << elapsedLocal.count() / 24);
 
 #ifdef USE_MPI
     // Finalize MPI

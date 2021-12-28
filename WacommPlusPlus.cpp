@@ -38,6 +38,10 @@ void WacommPlusPlus::run() {
 
 
     int idx = 0;
+    double time_average = 0.0;
+    double part_average = 0.0;
+    double cuda_average = 0.0;
+
     for (auto &ncInput : config->NcInputs()) {
 
         if (world_rank == 0) {
@@ -129,9 +133,18 @@ void WacommPlusPlus::run() {
             Wacomm wacomm(config, oceanModelAdapter, sources, particles);
 
             // Run the model
-            wacomm.run();
+            double t=0, p=0, cuda=0;
+
+            wacomm.run(t,p,cuda);
+
+            time_average += t;
+            part_average += p;
+            cuda_average += cuda;
         }
         // Go to the next input file
         idx++;
     }
+    LOG4CPLUS_INFO(logger,  "Outer Cycle Time (Average): " << time_average / (idx-1));
+    LOG4CPLUS_INFO(logger,  "Outer Cycle Particles/sec (Average): " << part_average / (idx-1));
+    LOG4CPLUS_INFO(logger,  "Inner Cycle (Average) sec: " << cuda_average / (idx-1));
 }
