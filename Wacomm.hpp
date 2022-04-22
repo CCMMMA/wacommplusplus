@@ -33,7 +33,7 @@ class Wacomm {
                std::shared_ptr<Particles> particles);
         ~Wacomm();
 
-        void run();
+    void run(double &time, double&part, double&cuda);
 
     private:
         friend class WacommPlusPlus;
