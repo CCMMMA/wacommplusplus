@@ -1,0 +1,22 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+  {
+    "type": "Feature",
+    "properties": {
+      "id": "Drift",
+      "start": "20190401Z0900",
+      "end": "20190401Z0900",
+      "particlesPerHour": 20000
+    },
+    "geometry": {
+      "type": "Point",
+      "coordinates": [
+        14.152580,
+        40.808380,
+        0
+      ]
+    }
+  }
+  ]
+}

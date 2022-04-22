@@ -1,0 +1,51 @@
+{
+	"simulation": {
+		"name": "Drift",
+		"institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
+		"url": "https://meteo.uniparthenope.it",
+		"start": "20190401Z0800",
+		"end": "20190401Z2000",
+		"dry": true
+	},
+	"io": {
+		"base_path": "http://data.meteo.uniparthenope.it/opendap/opendap/rms3/d03/history/",
+		"nc_inputs": [
+			"2019/04/01/rms3_d03_20190401Z0800.nc",
+			"2019/04/01/rms3_d03_20190401Z0900.nc",
+			"2019/04/01/rms3_d03_20190401Z1000.nc",
+			"2019/04/01/rms3_d03_20190401Z1100.nc",
+			"2019/04/01/rms3_d03_20190401Z1200.nc",
+			"2019/04/01/rms3_d03_20190401Z1300.nc",
+			"2019/04/01/rms3_d03_20190401Z1400.nc",
+			"2019/04/01/rms3_d03_20190401Z1500.nc",
+			"2019/04/01/rms3_d03_20190401Z1600.nc",
+			"2019/04/01/rms3_d03_20190401Z1700.nc",
+			"2019/04/01/rms3_d03_20190401Z1800.nc",
+			"2019/04/01/rms3_d03_20190401Z1900.nc",
+			"2019/04/01/rms3_d03_20190401Z2000.nc"
+		],
+		"ocean_model":"ROMS",
+		"nc_output_root": "output/wacomm_his_",
+		"mask_output": false,
+		"timestep": 3600,
+		"save_input": true,
+		"nc_input_root":"processed/ocm3_d03_"
+	},
+	"restart": {
+		"active": false,
+		"restart_file": "http://data.meteo.uniparthenope.it/opendap/opendap/wcm3/d03/2021/07/01/wpp3_d03_20210701Z0000.nc"
+	},
+	"sources": {
+		"active": false,
+		"sources_file": "sources-sar.json"
+	},
+	"physics": {
+		"tau0": 86400.0,
+		"survprob": 1.0e-4,
+		"signa": 3.46,
+		"shore_limit": 0.5,
+		"upper_clousere": "constraint",
+		"lower_clousere": "kill",
+		"horizontal_clousere": "reflection"
+	}
+}
