@@ -58,11 +58,15 @@ mkdir input processed output restarts results
 ```bash
 ln -sf ../examples/sources-webinar.json sources.json
 ```
-5) Link the "dry" configuration file. In this demo the dry configuration will be skipped because needed files have been already downoaded.
+(NOT REQUIRED FOR DEMO) Link the "dry" configuration file. In this demo the dry configuration will be skipped because needed files have been already downoaded.
 ```bash
 ln -sf ../examples/webinar-roms-usecase-download.json wacomm.json
 ```
-6) Launch WaComM++
+(NOT REQUIRED FOR DEMO) Launch WaComM++ in "dry" mode, to download required data.
+```bash
+./wacommplusplus
+```
+5) Copy the required files:
 ```bash
 ./wacommplusplus
 ```
