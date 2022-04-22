@@ -129,7 +129,7 @@ A correct result file will look like:
 ...
 ```
 
-1)The introductive section describe used hardware and configuration chose:
+1) The introductive section describe used hardware and configuration chose:
 ```bash
 22-04-22 11:43:41,405.889 INFO  WaComMINFO - WaComM - C++ Version
 22-04-22 11:43:41,406.115 INFO  WaComMINFO - Parallel: Distributed Memory
@@ -161,7 +161,7 @@ A correct result file will look like:
 ...
 ```
 
-3) Then each hour of run can be divided into three sections. The second one contains the outer cycle and its results:
+3) The second one contains the outer cycle and its results:
 ```bash
 ...
 
@@ -174,7 +174,7 @@ A correct result file will look like:
 ...
 ```
 
-4) Then each hour of run can be divided into three sections. The last one save output NetCDF files and load the next input file:
+4) The last one save output NetCDF files and load the next input file:
 ```bash
 ...
 
