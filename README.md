@@ -37,10 +37,10 @@ WaComM++ has been designed with hierarchical parallelism in mind. Nevertheless, 
 
 ![WaComM++ parallelation schema.](images/wacommplusplus-parallelization-schema.png)
 
-The ocean state, adapted by the OceanModelAdapter component to be used for the transport and diffusion computation, is described by the variables u, v, w (the horizontal and the vertical components of the sea current velocity vector), zeta (the sea surface height), and $AKT$ (vertical diffusivity for the temperature) at a given time T in K, J, I position. The overall computation is performed over three nested cycles:
+The ocean state, adapted by the OceanModelAdapter component to be used for the transport and diffusion computation, is described by the variables u, v, w (the horizontal and the vertical components of the sea current velocity vector), zeta (the sea surface height), and AKT (vertical diffusivity for the temperature) at a given time T in K, J, I position. The overall computation is performed over three nested cycles:
 
-* Ocean state outer cycle: for each time-referenced dataset (typically 1-hour data), a WaComM component is instanced. \hl{It is also responsible for managing new emitted particles (sources) and ``dead'' particles, respectively adding/removing them from the workflow}.
-* Particles outer cycle: \hl{assigns} the particles to process using ocean data. \hl{Manages computational data and HPC operations}.
+* Ocean state outer cycle: for each time-referenced dataset (typically 1-hour data), a WaComM component is instanced. It is also responsible for managing new emitted particles (sources) and "dead" particles, respectively adding/removing them from the workflow.
+* Particles outer cycle: assigns the particles to process using ocean data. Manages computational data and HPC operations.
 * Particle inner cycle: moves the particles within the considered time slice applying the Lagrangian transport and diffusion equations integrated on a given time step.
 
 # Acknowledgments
