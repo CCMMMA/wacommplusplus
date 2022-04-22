@@ -89,9 +89,9 @@ In our demo we will run WaComM++ with SLURM manager using 1 Thread, 1 Process an
 sbatch --gres=gpu:tesla:1 --job-name=wpp1G --output=results/wppDemo.out --error=results/wppDemo.err -c 1 -n 1 ../examples/slurm_webinarGPU.sh
 ```
 
-Open output results file:
+Watch output results file:
 ```bash
-vi results/wppDemo.out
+tail -f results/wppDemo.out
 ```
 
 A correct result file will look like:
