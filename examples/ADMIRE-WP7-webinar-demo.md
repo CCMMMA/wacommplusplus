@@ -186,3 +186,5 @@ A correct result file will look like:
 
 ...
 ```
+![Output example of first hour of simulation (09:00 UTC) plotted using GrADS](images/ist09.png)
+![Another exaple of drifter simulation (12:00 UTC) plotted using GrADS](images/ist12.png)
