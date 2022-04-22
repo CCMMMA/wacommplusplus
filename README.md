@@ -6,7 +6,7 @@ The Water Community Model (WaComM) uses a particle-based Lagrangian approach tha
 WaComM has been developed to match the hierarchical parallelization design requirements.
 
 WaComM is an evolution of the Lagrangian Assessment for Marine Pollution 3D (LAMP3D, https://people.mio.osupytheas.fr/~doglioli/lamp.htm) model.
-We strongly optimized the algorithms to improve performance in high-performance computing environments by adding features such as restarting, distributed, and shared memory parallelization.
+We strongly optimized the algorithms to improve performance in high-performance computing environments by adding features such as restarting, GPU acceleration, distributed, and shared memory parallelization.
 
 ![Concentration of suspended matter in sea water](images/wacommplusplus-surface-suspended-matter-bay-of-naples.png)
 
