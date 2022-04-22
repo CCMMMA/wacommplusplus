@@ -1,20 +1,22 @@
 #!/bin/bash
 #SBATCH --partition=xgpu
 
+# mkdir -p $HOME/ADMIRE/build_tmp
+
 # Set the scratch directory base
-SCRATCH_DIR_BASE=$HOME/build_wacomm
+SCRATCH_DIR_BASE=$HOME/build_tmp
 
 # Here the full path to the WaComM++ executable
-WACOMMPLUSPLUS_EXEC="$HOME/wacommplusplus/build/wacommplusplus"
+WACOMMPLUSPLUS_EXEC="$HOME/ADMIRE/wacommplusplus/build/wacommplusplus"
 
 # The path to the config file
-CONFIG_FILE="$HOME/wacommplusplus/build/wacomm.json"
+CONFIG_FILE="$HOME/ADMIRE/wacommplusplus/build/wacomm.json"
 
 # The path to the sources file
-SOURCE_FILE="$HOME/wacommplusplus/build/sources.json"
+SOURCE_FILE="$HOME/ADMIRE/wacommplusplus/build/sources.json"
 
 # The path to the processed input file directory
-PROCESSED_DIR="$HOME/wacommplusplus/build/processed"
+PROCESSED_DIR="$HOME/ADMIRE/wacommplusplus/build/processed"
 
 # The path to the restart file
 #RESTART_FILE="$HOME/wacommplusplus/build/WACOMM_rst_20210701Z00.txt"
@@ -43,20 +45,17 @@ fi
 CODE_NAME="N"${SLURM_NNODES}_"P"${SLURM_TASKS_PER_NODE}_"T"${SLURM_CPUS_PER_TASK}_"G0"
 echo Creating $CODE_NAME
 
-# Set the path for the scratch directory
-SCRATCH_DIR=$SCRATCH_DIR_BASE/"GENERAL"
-
 # Change the current directory to the scratch
-cd $SCRATCH_DIR
+# cd $SCRATCH_DIR_BASE
 
 # Link the executable
-ln -sf $WACOMMPLUSPLUS_EXEC .
+# ln -sf $WACOMMPLUSPLUS_EXEC .
 
 # Link the configuration file
-ln -sf $CONFIG_FILE wacomm.json
+# ln -sf $CONFIG_FILE wacomm.json
 
 # Link the configuration file
-ln -sf $SOURCE_FILE sources.json
+# ln -sf $SOURCE_FILE sources.json
 
 # Export the number of threads
 export OMP_NUM_THREADS=$omp_threads
