@@ -144,7 +144,7 @@ void WacommPlusPlus::run() {
         // Go to the next input file
         idx++;
     }
-    LOG4CPLUS_INFO(logger,  "Outer Cycle Time (Average): " << time_average / (idx-1));
-    LOG4CPLUS_INFO(logger,  "Outer Cycle Particles/sec (Average): " << part_average / (idx-1));
-    LOG4CPLUS_INFO(logger,  "Inner Cycle (Average) sec: " << cuda_average / (idx-1));
+    // LOG4CPLUS_INFO(logger,  "Outer Cycle Time (Average): " << time_average / (idx-1));
+    // LOG4CPLUS_INFO(logger,  "Outer Cycle Particles/sec (Average): " << part_average / (idx-1));
+    // LOG4CPLUS_INFO(logger,  "Inner Cycle (Average) sec: " << cuda_average / (idx-1));
 }
