@@ -58,7 +58,7 @@ mkdir input processed output restarts
 ```bash
 ln -sf ../examples/sources-webinar.json sources.json
 ```
-5) Link the configuration file
+5) Link the "dry" configuration file. In this demo the dry configuration will be skipped because needed files have been already downoaded.
 ```bash
 ln -sf ../examples/webinar-roms-usecase-download.json wacomm.json
 ```
@@ -77,21 +77,10 @@ ln -sf ../examples/webinar-native-usecase.json wacomm.json
 Now WaComM++ is ready to run.
 
 # Running
-Be sure to have a configuration file.
-WaComM++ can read Fortran namelists used by classic WaComM implementation (https://github.com/ccmmma/wacomm).
-If possible, use native json configuration file.
-(WaComM++ automatically searchs for namelist.wacomm or wacomm.json configuration file)
 
-
-## Shared memory parallelism (OpenMP)
-WaComM++ supports shared memory parallelization using OpenMP threads.
-Select the number of threads to use exporting the OMP_NUM_THREADS environment variable.
-Due to the embarassing parallel algorithm, there is no limitation in the number of used threads.
-If the OMP_NUM_THREADS is not specified, OpenMPI assumes the number of threads is equals to the number of available CPU
-cores.
+In our demo we will run WaComM++ with SLURM manager using 1 Thread, 1 Process and 1 GPU:
 
 ```bash
-export OMP_NUM_THREADS=n
-./wacommplusplus
+sbatch --gres=gpu:tesla:1 --job-name=wpp1G --output=results/wppDemo.out --error=results/wppDemo.err -c 1 -n 1 ../examples/slurm_webinarGPU.sh
 ```
 
