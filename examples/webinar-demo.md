@@ -52,7 +52,7 @@ Download the data.
 2) Change the current working directory as the WaComM++ building directory
 3) Create the input, processed, output and restarts directories
 ```bash
-mkdir input processed output restarts
+mkdir input processed output restarts results
 ```
 4) Link the sources file
 ```bash
