@@ -1,12 +1,12 @@
 # WaComM++
 WaComM++ is a steroidized version of WaComM - Water quality Community Model.
-WaComM++ supports shared memory (OpenMP) and distributed memory (MPI) paralellization.
+WaComM++ supports CUDA GPU computation, shared memory (OpenMP), and distributed memory (MPI) parallelization.
 
-Water Community Model (WaComM) uses a particle-based Lagrangian approach relying on tridimensional marine dynamics field produced by coupled Eulerian atmosphere and ocean models.
-WaComM has been developed matching the hierarchical parallelization design requirements.
+The Water Community Model (WaComM) uses a particle-based Lagrangian approach that relies on a tridimensional marine dynamics field produced by Eulerian atmosphere and ocean models.
+WaComM has been developed to match the hierarchical parallelization design requirements.
 
 WaComM is an evolution of the Lagrangian Assessment for Marine Pollution 3D (LAMP3D, https://people.mio.osupytheas.fr/~doglioli/lamp.htm) model.
-We strongly optimized the algorithms improve the performance in high performance computing environments adding features as restarting, distributed, and shared memory parallelization.
+We strongly optimized the algorithms to improve performance in high-performance computing environments by adding features such as restarting, distributed, and shared memory parallelization.
 
 ![Concentration of suspended matter in sea water](images/wacommplusplus-surface-suspended-matter-bay-of-naples.png)
 
@@ -15,15 +15,15 @@ WaComM is operatively used for pollutants transport and diffusion at the Center 
 It is used to compute the transport and diffusion of pollutants for assessing the water quality for mussel farming and 
 fish breeding.
 
-In WaComM, several basic algorithms have been optimized and, in order to improve its performance on a High-Performance
+In WaComM, several basic algorithms have been optimized, and in order to improve its performance on a High-Performance
 Computing environment, some features like restarting and parallelization techniques in shared memory environments have
 been added.
 
 Pollutants are modeled as inert Lagrangian particles.
 
 No interactions with other particles or feedback are included in the model.
-The pollution sources are defined as a geographic location in terms of longitude, latitude, and depth, the total amount
-of Lagrangian particles released in one hour, and the emission profile that could be set statically or change during the
+The pollution sources are defined as a geographic location in terms of longitude, latitude, depth, the total amount
+of Lagrangian particles released in one hour, and the emission profile that could be set statically or changed during the
 simulation.
 
 The WaComM system can be used in more ways: as a decision support tool, to aid in the selection of the best suitable
@@ -34,7 +34,10 @@ activities.
 ...
 ![WaComM++ parallelation schema.](images/wacommplusplus-parallelization-schema.png)
 
-
+# Acknowledgments
+WaComM++ development is supported by following initiatives:
+* Research agreement MytilAI (CUP I65F21000040002) - Supporting operational pollutant transport and diffusion for AI-based farmed mussels contamination prediction.
+* EuroHPC H2020 project ADMIRE (956748-ADMIRE-H2020-JTI-EuroHPC-2019-1) - WP7: Environmental application. Using malleability to improve balance between the overall performance and the computational resource allocation.
 
 # Cite WaComM++
 * Montella Raffaele, Diana Di Luccio, Pasquale Troiano, Angelo Riccio, Alison Brizius, and Ian Foster. "WaComM: A parallel Water quality Community Model for pollutant transport and dispersion operational predictions." In Signal-Image Technology & Internet-Based Systems (SITIS), 2016 12th International Conference on, pp. 717-724. IEEE, 2016.
