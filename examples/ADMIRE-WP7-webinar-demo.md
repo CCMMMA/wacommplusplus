@@ -71,7 +71,7 @@ ln -sf ../examples/webinar-roms-usecase-download.json wacomm.json
 
 5) Copy the required files:
 ```bash
-cp -r /tmp/processed/ processed/ 
+cp /tmp/processed/* processed/ 
 ```
 
 
@@ -186,5 +186,7 @@ A correct result file will look like:
 
 ...
 ```
-![Output example of first hour of simulation (09:00 UTC) plotted using GrADS](images/ist09.png)
-![Another exaple of drifter simulation (12:00 UTC) plotted using GrADS](images/ist12.png)
+![Output example of first hour of simulation (09:00 UTC) plotted using GrADS](../images/ist09.png)
+Output example of first hour of simulation (09:00 UTC) plotted using GrADS
+![Another exaple of drifter simulation (12:00 UTC) plotted using GrADS](../images/ist12.png)
+Another exaple of drifter simulation (12:00 UTC) plotted using GrADS
