@@ -31,8 +31,17 @@ areas for farming activity deployment, or in an ex-post fashion in order to achi
 activities.
 
 # Parallelization schema
-...
+WaComM++ uses a particle-based Lagrangian approach relying on a tridimensional ocean dynamics field produced by coupled Eulerian ocean model.
+
+WaComM++ has been designed with hierarchical parallelism in mind. Nevertheless, some requirements have been strongly driven by the transport and diffusion Lagrangian model, for example, the need for data exchange using standard and well-known formats.
+
 ![WaComM++ parallelation schema.](images/wacommplusplus-parallelization-schema.png)
+
+The ocean state, adapted by the OceanModelAdapter component to be used for the transport and diffusion computation, is described by the variables u, v, w (the horizontal and the vertical components of the sea current velocity vector), zeta (the sea surface height), and $AKT$ (vertical diffusivity for the temperature) at a given time T in K, J, I position. The overall computation is performed over three nested cycles:
+
+* Ocean state outer cycle: for each time-referenced dataset (typically 1-hour data), a WaComM component is instanced. \hl{It is also responsible for managing new emitted particles (sources) and ``dead'' particles, respectively adding/removing them from the workflow}.
+* Particles outer cycle: \hl{assigns} the particles to process using ocean data. \hl{Manages computational data and HPC operations}.
+* Particle inner cycle: moves the particles within the considered time slice applying the Lagrangian transport and diffusion equations integrated on a given time step.
 
 # Acknowledgments
 WaComM++ development is supported by following initiatives:
@@ -40,12 +49,11 @@ WaComM++ development is supported by following initiatives:
 * EuroHPC H2020 project ADMIRE (956748-ADMIRE-H2020-JTI-EuroHPC-2019-1, https://www.admire-eurohpc.eu) - WP7: Environmental application. Using malleability to improve balance between the overall performance and the computational resource allocation. 
 
 # Cite WaComM++
-* Montella Raffaele, Diana Di Luccio, Pasquale Troiano, Angelo Riccio, Alison Brizius, and Ian Foster. "WaComM: A parallel Water quality Community Model for pollutant transport and dispersion operational predictions." In Signal-Image Technology & Internet-Based Systems (SITIS), 2016 12th International Conference on, pp. 717-724. IEEE, 2016.
-https://ieeexplore.ieee.org/abstract/document/7907547/
+* Di Luccio Diana, Ciro Giuseppe De Vita, Gennero Mellone, Enrico Zambianchi, and Raffaele Montella. "Modeling passive tracers in the marine environment with high performance heterogeneous and hierarchical computing". Journal of Coastal and Offshore Science and Engineering (COSE), 2022 - in press.
   
-
-* Di Luccio Diana, Angelo Riccio, Ardelio Galletti, Giuliano Laccetti, Marco Lapegna, Livia Marcellino, Sokol Kosta, and Raffaele Montella. "Coastal marine data crowdsourcing using the Internet of Floating Things: Improving the results of a water quality model." Ieee Access (2020).
-  https://ieeexplore.ieee.org/abstract/document/9098885
+* Di Luccio Diana, Angelo Riccio, Ardelio Galletti, Giuliano Laccetti, Marco Lapegna, Livia Marcellino, Sokol Kosta, and Raffaele Montella. "Coastal marine data crowdsourcing using the Internet of Floating Things: Improving the results of a water quality model." Ieee Access (2020). [Paper](https://ieeexplore.ieee.org/abstract/document/9098885) [BibText](https://scholar.googleusercontent.com/scholar.bib?q=info:zfxBb1pXu6AJ:scholar.google.com/&output=citation&scisdr=CgVAs4t4EOqOsfORuKc:AAGBfm0AAAAAYmKXoKfXYbP_udXdxi_gRtDgpRDUlAmz&scisig=AAGBfm0AAAAAYmKXoDu_U64Tee-yjLp6iEBcYJ-8OeL3&scisf=4&ct=citation&cd=-1&hl=en)
+  
+* Montella Raffaele, Diana Di Luccio, Pasquale Troiano, Angelo Riccio, Alison Brizius, and Ian Foster. "WaComM: A parallel Water quality Community Model for pollutant transport and dispersion operational predictions." In Signal-Image Technology & Internet-Based Systems (SITIS), 2016 12th International Conference on, pp. 717-724. IEEE, 2016. [Paper](https://ieeexplore.ieee.org/abstract/document/7907547/) [BibText](https://scholar.googleusercontent.com/scholar.bib?q=info:GQ2xgOQgTAIJ:scholar.google.com/&output=citation&scisdr=CgVAs4t4EOqOsfOeWMg:AAGBfm0AAAAAYmKYQMjD60Uri5Fxi4GPm3sA0XYgFUze&scisig=AAGBfm0AAAAAYmKYQNXh2mxdhne78C84APWfiPyHNB9e&scisf=4&ct=citation&cd=-1&hl=en)
 
 # Compiling
 
