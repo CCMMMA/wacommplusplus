@@ -109,6 +109,7 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     Array2<double> age(this->size(),particle_time);
     Array2<double> time(this->size(),particle_time);
 
+    /*
     Array4<float> conc(particle_time,
                         oceanModelAdapter->Depth().Nx(),
                         oceanModelAdapter->Latitude().Nx(),
@@ -121,15 +122,16 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
             }
         }
     }
+    */
 
     LOG4CPLUS_INFO(logger,"Preparing NetCDF...");
 
-    double maxDepth=oceanModelAdapter->Depth()[0];
-    double minDepth=oceanModelAdapter->Depth()[oceanModelAdapter->Depth().Nx()-1];
-    double minLat=oceanModelAdapter->Latitude()[0];
-    double maxLat=oceanModelAdapter->Latitude()[oceanModelAdapter->Latitude().Nx()-1];
-    double minLon=oceanModelAdapter->Longitude()[0];
-    double maxLon=oceanModelAdapter->Longitude()[oceanModelAdapter->Longitude().Nx()-1];
+    //double maxDepth=oceanModelAdapter->Depth()[0];
+    //double minDepth=oceanModelAdapter->Depth()[oceanModelAdapter->Depth().Nx()-1];
+    //double minLat=oceanModelAdapter->Latitude()[0];
+    //double maxLat=oceanModelAdapter->Latitude()[oceanModelAdapter->Latitude().Nx()-1];
+    //double minLon=oceanModelAdapter->Longitude()[0];
+    //double maxLon=oceanModelAdapter->Longitude()[oceanModelAdapter->Longitude().Nx()-1];
 
 
     int count=0;
@@ -158,11 +160,11 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
         age(count,0)=particle.Age();
         time(count,0)=particle.Time();
 
-        double concK=oceanModelAdapter->Depth().Nx()*depth/(maxDepth-minDepth);
-        double concJ=oceanModelAdapter->Latitude().Nx()*latitude/(maxLat-minLat);
-        double concI=oceanModelAdapter->Longitude().Nx()*longitude/(maxLon-minLon);
+        //double concK=oceanModelAdapter->Depth().Nx()*depth/(maxDepth-minDepth);
+        //double concJ=oceanModelAdapter->Latitude().Nx()*latitude/(maxLat-minLat);
+        //double concI=oceanModelAdapter->Longitude().Nx()*longitude/(maxLon-minLon);
 
-        conc(ocean_time,concK,concJ,concI )++;
+        //conc(ocean_time,concK,concJ,concI )++;
 
         count++;
     }
@@ -344,7 +346,52 @@ void Particles::loadFromJson(const string &fileName) {
 }
 
 void Particles::loadFromNetCDF(const string &fileName) {
+    LOG4CPLUS_INFO(logger,"Reading restart file: " << fileName);
     std::ifstream infile(fileName);
+    
+    // Open the file for read access
+    netCDF::NcFile dataFile(fileName, NcFile::read);
+
+    // Retrieve the variable named "id"
+    NcVar varId = dataFile.getVar("id");
+    size_t size = varId.getDim(0).getSize();
+    Array1<double> Id(size);
+    varId.getVar(Id());
+
+    // Retrieve the variable named "i"
+    NcVar varI = dataFile.getVar("i");
+    Array1<double> I(size);
+    varI.getVar(I());
+
+    // Retrieve the variable named "j"
+    NcVar varJ = dataFile.getVar("j");
+    Array1<double> J(size);
+    varJ.getVar(J());
+
+    // Retrieve the variable named "k"
+    NcVar varK = dataFile.getVar("k");
+    Array1<double> K(size);
+    varK.getVar(K());
+
+    // Retrieve the variable named "health"
+    NcVar varHealth = dataFile.getVar("health");
+    Array1<double> health(size);
+    varHealth.getVar(health());
+
+    // Retrieve the variable named "age"
+    NcVar varAge = dataFile.getVar("age");
+    Array1<double> age(size);
+    varAge.getVar(age());
+
+    // Retrieve the variable named "time"
+    NcVar varTime = dataFile.getVar("time");
+    Array1<double> time(size);
+    varTime.getVar(time());
+
+    for (int i=0; i<size; i++) {
+        Particle particle(Id[i], K[i], J[i], I[i], health[i], age[i], time[i]);
+        push_back(particle);
+    }
 }
 
 Particles::~Particles() = default;

@@ -111,7 +111,7 @@ void WacommPlusPlus::run() {
                 if (fileName.substr(fileName.find_last_of('.') + 1) == "nc") {
 
                     // The restart is a NetCDF
-                    particles->loadFromJson(fileName);
+                    particles->loadFromNetCDF(fileName);
 
                     // Check if the restart is a geojson
                 } else if (fileName.substr(fileName.find_last_of('.') + 1) == "json") {

@@ -3,34 +3,26 @@
 		"name": "Drift",
 		"institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
 		"url": "https://meteo.uniparthenope.it",
-		"start": "20190401Z09",
-		"end": "20190401Z17"
+		"start": "20190401Z01",
+		"end": "20190401Z01"
 	},
 	"io": {
 		"base_path": "processed/",
 		"nc_inputs": [
-			"ocm3_d03_20190401Z09.nc",
-			"ocm3_d03_20190401Z10.nc",
-			"ocm3_d03_20190401Z11.nc",
-			"ocm3_d03_20190401Z12.nc",
-			"ocm3_d03_20190401Z13.nc",
-			"ocm3_d03_20190401Z14.nc",
-			"ocm3_d03_20190401Z15.nc",
-			"ocm3_d03_20190401Z16.nc",
-			"ocm3_d03_20190401Z17.nc"
+			"ocm3_d03_20190401Z01.nc"
 		],
 		"ocean_model":"WaComM",
 		"nc_output_root": "output/wacomm_his_",
 		"mask_output": true,
 		"timestep": 3600,
 		"save_input": false,
-		"save_history": "text",
+		"save_history": "nc",
 		"history_root": "restart/WACOMM_rst_",
 		"nc_input_root":"processed/ocm3_d03_"
 	},
 	"restart": {
-		"active": false,
-		"restart_file": "WACOMM_rst_20210701Z00.txt"
+		"active": true,
+		"restart_file": "restart/WACOMM_rst_20190401Z01.nc"
 	},
 	"sources": {
 		"active": true,
