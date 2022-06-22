@@ -47,6 +47,11 @@ public:
     void Dry(bool value);
     bool Dry() const;
 
+    void JulianStart(double value);
+    double JulianStart() const;
+    void JulianEnd(double value);
+    double JulianEnd() const;
+
     int UpperClosure() const;
     int LowerClosure() const;
     int HorizontalClosure() const;
@@ -89,6 +94,8 @@ public:
     bool UseRestart() const;
     string RestartFile() const;
     void RestartFile(string value);
+    int RestartInterval() const;
+    void RestartInterval(int value);
 
     bool MaskOutput() const;
     void MaskOutput(bool value);

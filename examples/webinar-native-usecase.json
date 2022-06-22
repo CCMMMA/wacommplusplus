@@ -4,12 +4,14 @@
 		"institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
 		"url": "https://meteo.uniparthenope.it",
 		"start": "20190401Z01",
-		"end": "20190401Z01"
+		"end": "20190401Z03"
 	},
 	"io": {
 		"base_path": "processed/",
 		"nc_inputs": [
-			"ocm3_d03_20190401Z01.nc"
+			"ocm3_d03_20190401Z01.nc",
+			"ocm3_d03_20190401Z02.nc",
+			"ocm3_d03_20190401Z03.nc"
 		],
 		"ocean_model":"WaComM",
 		"nc_output_root": "output/wacomm_his_",
@@ -22,7 +24,8 @@
 	},
 	"restart": {
 		"active": true,
-		"restart_file": "restart/WACOMM_rst_20190401Z01.nc"
+		"restart_file": "restart/WACOMM_rst_20190401Z01.nc",
+		"interval": 7200
 	},
 	"sources": {
 		"active": true,

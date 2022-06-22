@@ -751,38 +751,44 @@ void Wacomm::run(double &time, double&part, double&cuda)
     if (world_rank==0) {
         Calendar calFinal;
 
+	// Get initial oceanTime from config file
+	double startOceanTime=config->JulianStart()*86400;
+
         // Calculate the oceanTime at the end of calculations
         double finalOceanTime=oceanModelAdapter->OceanTime()[ocean_time-1]+config->Deltat();
 
         // Convert the ocean time from modified julian to gregorian calendar
         JulianDate::fromModJulian(finalOceanTime/86400, calFinal);
 
-        // Checl if the history must be saved
+        // Check if the history must be saved
         if (!config->SaveHistory().empty()) {
+	    // Check if the history must be saved
+	    if (int(finalOceanTime-startOceanTime)%config->RestartInterval() == 0) {
 
-            // Create the history filename
-            string historyFilename = config->HistoryRoot() + calFinal.asNCEPdate() ;
+            	// Create the history filename
+            	string historyFilename = config->HistoryRoot() + calFinal.asNCEPdate() ;
 
-            LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
+            	LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
 
-            // Check if the history has to be saved as text (Fortran WaComM compatibility)
-            if (config->SaveHistory() == "text") {
+            	// Check if the history has to be saved as text (Fortran WaComM compatibility)
+            	if (config->SaveHistory() == "text") {
 
-                // Save the history as text
-                particles->saveAsTxt(historyFilename+ ".txt");
+                	// Save the history as text
+                	particles->saveAsTxt(historyFilename+ ".txt");
 
-                // Check if the history has to be saved as geojson - to be used only for a small amount of particles
-            } else if (config->SaveHistory() == "json") {
+                	// Check if the history has to be saved as geojson - to be used only for a small amount of particles
+            	} else if (config->SaveHistory() == "json") {
 
-                // Save the history as geojson
-                particles->saveAsJson(historyFilename+ ".json", finalOceanTime, oceanModelAdapter);
+                	// Save the history as geojson
+                	particles->saveAsJson(historyFilename+ ".json", finalOceanTime, oceanModelAdapter);
 
-                // Check if the history has to be saved as NetCDF file (new style, suggested)
-            } else if (config->SaveHistory() == "nc") {
+                	// Check if the history has to be saved as NetCDF file (new style, suggested)
+            	} else if (config->SaveHistory() == "nc") {
 
-                // Save the history as NetCDF
-                particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter);
-            }
+                	// Save the history as NetCDF
+                	particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter);
+            	}
+	    }
         }
 
         // Create the output filename

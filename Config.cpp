@@ -320,6 +320,22 @@ void Config::Dry(bool value) {
     dry=value;
 }
 
+double Config::JulianStart() const {
+    return julianStart;
+}
+
+void Config::JulianStart(double value) {
+    julianStart=value;
+}
+
+double Config::JulianEnd() const {
+    return julianEnd;
+}
+
+void Config::JulianEnd(double value) {
+    julianEnd=value;
+}
+
 int Config::UpperClosure() const {
     return _data.upperClosure;
 }
@@ -338,6 +354,10 @@ double Config::ReductionCoefficient() const {
 
 string Config::RestartFile() const {
     return restartFile;
+}
+
+int Config::RestartInterval() const {
+    return restartInterval;
 }
 
 bool Config::UseRestart() const {
@@ -404,6 +424,10 @@ void Config::UseRestart(bool value) {
 
 void Config::RestartFile(string value) {
     restartFile = value;
+}
+
+void Config::RestartInterval(int value) {
+    restartInterval = value;
 }
 
 string Config::SourcesFile() const {
@@ -572,6 +596,7 @@ void Config::loadFromJson(const string &fileName) {
         json restart=config["restart"];
         if (restart.contains("active")) { useRestart = restart["active"]; }
         if (restart.contains("restart_file")) { restartFile = restart["restart_file"]; }
+        if (restart.contains("interval")) { restartInterval = restart["interval"]; }
     }
     if (config.contains("sources")) {
         json sources=config["sources"];

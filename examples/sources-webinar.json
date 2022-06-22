@@ -5,9 +5,9 @@
     "type": "Feature",
     "properties": {
       "id": "Drift",
-      "start": "20190401Z0900",
-      "end": "20190401Z0900",
-      "particlesPerHour": 20000
+      "start": "20190401Z0000",
+      "end": "20190401Z2300",
+      "particlesPerHour": 250000
     },
     "geometry": {
       "type": "Point",
