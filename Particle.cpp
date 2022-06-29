@@ -256,6 +256,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         // Calculate the corrected depth
         double hc=hh+zz;
 
+#ifdef DEBUG
+        LOG4CPLUS_DEBUG(logger, "zz:" << zz << " hh:" << hh << " hc:" << hc);
+#endif
+
         /*
          * TO CHECK
         // Calculate the depth of the particle in meters
@@ -406,7 +410,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             double zleap = dzleap + rzleap;
 
 #ifdef DEBUG
-            LOG4CPLUS_DEBUG(logger, "kleap:" << kleap << " jleap:" << jleap << " ileap:" << ileap );
+            LOG4CPLUS_DEBUG(logger, "zleap:" << zleap << " yleap:" << yleap << " xleap:" << xleap );
 #endif
 
             double dLat, dLon, dLatLon, ydist, xdist, zdist;
@@ -445,6 +449,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             //zdist = hc * (depthIntervals(kI) * kF - depthIntervals(kI + 1) * (1 - kF)); //INTERPOLATION FORMULA
             //zdist = hc * (sW(kI) * kF - sW(kI - 1) * (1 - kF)); //OLD FORMULA
             zdist = hc * depthIntervals(kI);
+
+#ifdef DEBUG
+            LOG4CPLUS_DEBUG(logger, "hc:" << hc << " depthIntervals(" << kI <<"):" << depthIntervals(kI) << " zdist:" << zdist << " ydist:" << ydist << " xdist:" << xdist );
+#endif
 
             // Check if the vertical leap is greather than the vertical dimension of the cell in meters
             if (abs(zleap) > zdist) {
