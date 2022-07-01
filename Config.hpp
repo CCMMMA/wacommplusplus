@@ -78,6 +78,8 @@ public:
     string SaveHistory() const;
     string HistoryRoot() const;
     void HistoryRoot(string value);
+    int TimeStep() const;
+    void TimeStep(int value);
 
     string NcOutputRoot() const;
     void NcOutputRoot(string value);

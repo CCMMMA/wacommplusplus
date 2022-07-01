@@ -791,14 +791,16 @@ void Wacomm::run(double &time, double&part, double&cuda)
 	    }
         }
 
-        // Create the output filename
-        string ncOutputFilename=config->NcOutputRoot()+cal.asNCEPdate()+".nc";
+	if (int(finalOceanTime-startOceanTime)%config->TimeStep() == 0) {
+        	// Create the output filename
+        	string ncOutputFilename=config->NcOutputRoot()+cal.asNCEPdate()+".nc";
 
-        LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
+        	LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
 
-        // Save the history
-        save(ncOutputFilename,conc );
-        //save(ncOutputFilename);
+        	// Save the history
+        	save(ncOutputFilename,conc);
+        	//save(ncOutputFilename);
+        }
     }
 };
 

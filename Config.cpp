@@ -446,6 +446,14 @@ void Config::NcOutputRoot(string value) {
     ncOutputRoot=value;
 }
 
+int Config::TimeStep() const {
+    return timeStep;
+}
+
+void Config::TimeStep(int value) {
+    timeStep=value;
+}
+
 void  Config::SaveHistory(string value) {
     saveHistory=value;
 }
