@@ -19,7 +19,7 @@
 ### input
 
 _domain.nc_: used to get lats and lons (WRF) \
-_features.json_: stores info about area where create random particles \
+_features.json_: stores info about area where create random particles (you can use http://geojson.io coords to insert into json file ) \
 _iDate_: YYYYMMDDZHH format
 
 ### output
