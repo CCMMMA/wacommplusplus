@@ -18,7 +18,7 @@
 
 ### input
 
-_domain.nc_: used to get lats and lons (WRF) \
+_domain.nc_: The domain definition of a WaComM++ simulation \
 _features.json_: stores info about area where create random particles (you can use http://geojson.io coords to insert into json file ) \
 _iDate_: YYYYMMDDZHH format
 
@@ -44,3 +44,23 @@ Inside configuration file (.json) set
     },
 ...
 ```
+
+## Tutorial
+The following tutorial is devoted to familiarize with oil spill or similar scenarios.
+NB: the tutorial is far away to be completed
+
+Download the domain definition
+```bash
+wget https://api.meteo.uniparthenope.it/files/wcm3/domains/d03.nc
+```
+
+Prepare the restart file
+```bash
+    python3 main.py d03 ../examples/oilspill-demo-01 20220915Z00
+```
+
+Run the simulation
+```bash
+    ./wacommplusplus ../oilspill-demo.json
+```
+
