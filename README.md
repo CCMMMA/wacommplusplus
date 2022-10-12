@@ -249,3 +249,10 @@ mpirun -n np ./wacommplusplus
 
 NB: the overall performance are strictly influenced by the architecture used.
 
+# Data sources
+The Center for Marine and atmosphere Modeling and Monitoring Applicationtions (CMMMA, http://meteo.uniparthenope.it) produces data in a routinary fashion.
+
+Data is available via OPeNDAP server (http://data.meteo.uniparthenope.it/opendap/opendap/) and via HTTP server (http://api.meteo.uniparthenope.it/files/).
+Simulations produced by the Regional Ocean Model System (ROMS) set up on the Campania Region (Italy) are avaliable here: http://api.meteo.uniparthenope.it/files/rms3/d03/history/
+
+Data are stored as NetCDF files with a semantic consistent naming convetion. Those data can be used to drive the WaComM++ model.
