@@ -150,7 +150,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 ExternalProject_Add(zlib
-        URL https://zlib.net/zlib-1.2.12.tar.gz
+        URL https://zlib.net/zlib-1.2.13.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
         CONFIGURE_COMMAND CFLAGS=-fPIC ./configure --prefix=${EXTERNAL_INSTALL_LOCATION}
