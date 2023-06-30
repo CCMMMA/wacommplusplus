@@ -7,9 +7,15 @@
 #include "OceanModelAdapters/WacommAdapter.hpp"
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_EMPI)
 #define OMPI_SKIP_MPICXX
 #include <mpi.h>
+#endif
+
+#ifdef USE_EMPI
+extern "C" {
+#include <empi.h>
+}
 #endif
 
 WacommPlusPlus::~WacommPlusPlus() = default;
@@ -34,6 +40,14 @@ void WacommPlusPlus::run() {
 #ifdef USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#endif
+
+#ifdef USE_EMPI
+    MPI_Comm_size(ADM_COMM_WORLD, &world_size);
+    MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
+
+    /* starting monitoring service */
+    ADM_MonitoringService (ADM_SERVICE_START);
 #endif
 
 
@@ -144,6 +158,12 @@ void WacommPlusPlus::run() {
         // Go to the next input file
         idx++;
     }
+
+#ifdef USE_EMPI
+    /* ending monitoring service */
+    ADM_MonitoringService (ADM_SERVICE_STOP);
+#endif
+
     // LOG4CPLUS_INFO(logger,  "Outer Cycle Time (Average): " << time_average / (idx-1));
     // LOG4CPLUS_INFO(logger,  "Outer Cycle Particles/sec (Average): " << part_average / (idx-1));
     // LOG4CPLUS_INFO(logger,  "Inner Cycle (Average) sec: " << cuda_average / (idx-1));

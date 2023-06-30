@@ -8,7 +8,7 @@
 		"dry": true
 	},
 	"io": {
-		"base_path": "http://data.meteo.uniparthenope.it/opendap/opendap/rms3/d03/history/",
+		"base_path": "http://193.205.230.6:8080/opendap//rms3/d03/history/",
 		"nc_inputs": [
 			"2020/11/30/rms3_d03_20201130Z0000.nc",
 			"2020/11/30/rms3_d03_20201130Z0100.nc",
@@ -46,7 +46,7 @@
 	},
 	"restart": {
 		"active": false,
-		"restart_file": "http://data.meteo.uniparthenope.it/opendap/opendap/wcm3/d03/2020/11/30/wpp3_d03_20201130Z0000.nc"
+		"restart_file": ""
 	},
 	"sources": {
 		"active": true,

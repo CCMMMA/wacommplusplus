@@ -7,7 +7,7 @@
 #include <cuda_runtime_api.h>
 #endif
 
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_EMPI)
 #define OMPI_SKIP_MPICXX
 #include <mpi.h>
 #endif
@@ -17,6 +17,12 @@
 #endif
 
 #include "Utils.hpp"
+
+#ifdef USE_EMPI
+extern "C" {
+#include <empi.h>
+}
+#endif
 
 using namespace std;
 
@@ -59,6 +65,17 @@ int main(int argc, char **argv) {
 
     // Get the number of the current process (world_rank=0 is for the main process)
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#endif
+
+#ifdef USE_EMPI
+    // Initialize EMPI
+    MPI_Init(&argc, &argv);
+
+    // Get the number of involved processes
+    MPI_Comm_size(ADM_COMM_WORLD, &world_size);
+
+    // Get the number of the current process (world_rank=0 is for the main process)
+    MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
 #endif
 
 #ifdef USE_CUDA
@@ -112,12 +129,17 @@ int main(int argc, char **argv) {
 #ifdef USE_MPI
         LOG4CPLUS_INFO(logger, "Parallel: Distributed Memory");
 #endif
+#ifdef USE_EMPI
+        LOG4CPLUS_INFO(logger, "Parallel: Distributed Memory with Malleability");
+#endif
 #ifdef USE_OMP
         LOG4CPLUS_INFO(logger, "Parallel: Shared Memory");
 #endif
 #ifndef USE_OMP
 #ifndef USE_MPI
+#ifndef USE_EMPI
         LOG4CPLUS_INFO(logger, "Parallel: None");
+#endif
 #endif
 #endif
 #ifdef USE_OPENACC

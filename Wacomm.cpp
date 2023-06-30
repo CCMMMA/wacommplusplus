@@ -9,9 +9,15 @@
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
 
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_EMPI)
 #define OMPI_SKIP_MPICXX
 #include <mpi.h>
+#endif
+
+#ifdef USE_EMPI
+extern "C" {
+#include <empi.h>
+}
 #endif
 
 #ifdef USE_OMP
@@ -22,6 +28,7 @@
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #include "cuda/kernel.h"
+
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
@@ -62,6 +69,14 @@ void Wacomm::run(double &time, double&part, double&cuda)
 
     // Get the number of the current MPI processor
     MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#endif
+
+#ifdef USE_EMPI
+    // Get the number of involved processes
+    MPI_Comm_size(ADM_COMM_WORLD, &world_size);
+
+    // Get the number of the current process (world_rank=0 is for the main process)
+    MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
 #endif
 
 #ifdef USE_OMP
@@ -122,13 +137,18 @@ void Wacomm::run(double &time, double&part, double&cuda)
     // Total number of particles (valued only if world_rank==0)
     size_t nParticles = -1;
 
+#if USE_EMPI
+    /* start malelability region */
+    ADM_MalleableRegion (ADM_SERVICE_START);
+#endif
+
     // For each element in the time axis
     for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
 
         // Record start time
         auto start = std::chrono::high_resolution_clock::now();
 
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_EMPI)
         // Define a vector of integers hosting the number of particles for each processor
         std::unique_ptr<int[]> send_counts = std::make_unique<int[]>(world_size);
 
@@ -182,7 +202,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
 
             LOG4CPLUS_INFO(logger, "Emitted particles: " << (nParticles-nParticles0) << " Total particles: " << nParticles);
 
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_EMPI)
             // Get the number of particles to be processed for each process
             size_t particlesPerProcess = nParticles / world_size;
 
@@ -222,7 +242,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
 #endif
         }
 
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_EMPI)
         // Broadcast the number of particles for each processor
         MPI_Bcast(send_counts.get(),world_size,MPI_INT,0,MPI_COMM_WORLD);
 
@@ -587,7 +607,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
         // Record end time
         auto finishLocal = std::chrono::high_resolution_clock::now();
 
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_EMPI)
         // For each particle processed by the current process...
         for (int idx=0;idx<localParticles.size();idx++) {
             // Copy the particle data in the receivig buffer
@@ -656,7 +676,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
                                                         << " seconds (" << nParticlesPerSecondLocal
                                                         << " particles/second).");
 
-#ifdef USE_MPI
+#if defined(USE_MPI) || defined(USE_EMPI)
             // For each particle...
             for (int idx = 0; idx < particles->size(); idx++) {
                 // Copy the particle status from the sending buffer
@@ -802,6 +822,21 @@ void Wacomm::run(double &time, double&part, double&cuda)
         	//save(ncOutputFilename);
         }
     }
+
+#ifdef USE_EMPI
+    int status;
+    status = ADM_MalleableRegion(ADM_SERVICE_STOP);
+
+    // check if process ended after malleable region
+    if (status == ADM_ACTIVE) {
+	// updata world_rank and size
+        MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
+        MPI_Comm_size(ADM_COMM_WORLD, &world_size);
+    } else {
+        // end the process
+        return;
+    }
+#endif
 };
 
 Wacomm::~Wacomm() = default;

@@ -4,14 +4,35 @@
 		"institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
 		"url": "https://meteo.uniparthenope.it",
 		"start": "20201130Z00",
-		"end": "20201130Z02"
+		"end": "20201130Z23"
 	},
 	"io": {
 		"base_path": "processed/",
 		"nc_inputs": [
 			"ocm3_d03_20201130Z00.nc",
 			"ocm3_d03_20201130Z01.nc",
-			"ocm3_d03_20201130Z02.nc"
+			"ocm3_d03_20201130Z02.nc",
+			"ocm3_d03_20201130Z03.nc",
+                        "ocm3_d03_20201130Z04.nc",
+                        "ocm3_d03_20201130Z05.nc",
+			"ocm3_d03_20201130Z06.nc",
+                        "ocm3_d03_20201130Z07.nc",
+                        "ocm3_d03_20201130Z08.nc",
+			"ocm3_d03_20201130Z09.nc",
+                        "ocm3_d03_20201130Z10.nc",
+                        "ocm3_d03_20201130Z11.nc",
+			"ocm3_d03_20201130Z12.nc",
+                        "ocm3_d03_20201130Z13.nc",
+                        "ocm3_d03_20201130Z14.nc",
+			"ocm3_d03_20201130Z15.nc",
+                        "ocm3_d03_20201130Z16.nc",
+                        "ocm3_d03_20201130Z17.nc",
+			"ocm3_d03_20201130Z18.nc",
+                        "ocm3_d03_20201130Z19.nc",
+                        "ocm3_d03_20201130Z20.nc",
+			"ocm3_d03_20201130Z21.nc",
+                        "ocm3_d03_20201130Z22.nc",
+                        "ocm3_d03_20201130Z23.nc"
 		],
 		"ocean_model":"WaComM",
 		"nc_output_root": "output/wacomm_his_",
