@@ -36,6 +36,16 @@ void WacommPlusPlus::run() {
     LOG4CPLUS_DEBUG(logger, "External loop...");
 
     int world_size = 1, world_rank = 0;
+    char mpi_name[128];
+    int len, nParticles = 0;
+
+    char bin[1024];
+    sprintf(bin,"%s","wacomm");
+
+    int idx = 0;
+    double time_average = 0.0;
+    double part_average = 0.0;
+    double cuda_average = 0.0;
 
 #ifdef USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -46,15 +56,30 @@ void WacommPlusPlus::run() {
     MPI_Comm_size(ADM_COMM_WORLD, &world_size);
     MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
 
+    MPI_Get_processor_name (mpi_name, &len);
+    
+    if (world_rank == 0) {
+        nParticles = -1;
+    }
+
+    // get process type
+    int proctype;
+    ADM_GetSysAttributesInt ("ADM_GLOBAL_PROCESS_TYPE", &proctype);
+
+    // if process is native
+    if (proctype == ADM_NATIVE) {
+        printf ("Rank(%d/%d): Process native\n", world_rank, world_size);
+    // if process is spawned
+    } else {
+        printf ("Rank(%d/%d): Process spawned\n", world_rank, world_size);
+    }
+
+    ADM_GetSysAttributesInt ("ADM_GLOBAL_ITERATION", &idx);
+    ADM_GetSysAttributesInt ("ADM_GLOBAL_PARTICLES", &nParticles);
+
     /* starting monitoring service */
     ADM_MonitoringService (ADM_SERVICE_START);
 #endif
-
-
-    int idx = 0;
-    double time_average = 0.0;
-    double part_average = 0.0;
-    double cuda_average = 0.0;
 
     for (auto &ncInput : config->NcInputs()) {
 
@@ -80,8 +105,6 @@ void WacommPlusPlus::run() {
         modJulian=modJulian/86400;
 
         JulianDate::fromModJulian(modJulian, cal);
-
-
 
         // Check if the rank is 0
         if (world_rank == 0) {
@@ -149,7 +172,19 @@ void WacommPlusPlus::run() {
             // Run the model
             double t=0, p=0, cuda=0;
 
-            wacomm.run(t,p,cuda);
+            int status = wacomm.run(t,p,cuda,nParticles,idx);
+            
+            // check if process ended after malleable region
+            if (status == ADM_ACTIVE) {
+                // updata world_rank and size
+                MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
+                MPI_Comm_size(ADM_COMM_WORLD, &world_size);
+
+                printf("world_size: %d\n", world_size);
+            } else {
+                // end the process
+                break;
+            }
 
             time_average += t;
             part_average += p;

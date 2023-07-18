@@ -9,6 +9,10 @@
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
 
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
 #if defined(USE_MPI) || defined(USE_EMPI)
 #define OMPI_SKIP_MPICXX
 #include <mpi.h>
@@ -18,10 +22,6 @@
 extern "C" {
 #include <empi.h>
 }
-#endif
-
-#ifdef USE_OMP
-#include <omp.h>
 #endif
 
 #ifdef USE_CUDA
@@ -55,13 +55,12 @@ Wacomm::Wacomm(std::shared_ptr<Config> config,
 
 }
 
-void Wacomm::run(double &time, double&part, double&cuda)
+int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &idx)
 {
     LOG4CPLUS_DEBUG(logger,"Dry mode:" << config->Dry() );
     int num_gpus=0;
     int world_size=1, world_rank=0;
     int ompMaxThreads=1, ompThreadNum=0;
-
 
 #ifdef USE_MPI
     // Get the size of the MPI world (the number of available processors)
@@ -77,6 +76,18 @@ void Wacomm::run(double &time, double&part, double&cuda)
 
     // Get the number of the current process (world_rank=0 is for the main process)
     MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
+
+    int procs_hint = 0;
+    int excl_nodes_hint = 0;
+    //if ( nParticles > 0){
+    //    procs_hint = 2;
+    //    excl_nodes_hint = 0;
+    //    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_HINT_NUM_PROCESS", &procs_hint);
+    //    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_HINT_EXCL_NODES", &excl_nodes_hint);
+    //}
+
+    /* start malelability region */
+    ADM_MalleableRegion (ADM_SERVICE_START);
 #endif
 
 #ifdef USE_OMP
@@ -134,14 +145,6 @@ void Wacomm::run(double &time, double&part, double&cuda)
     // Define a gregorian calendar
     Calendar cal;
 
-    // Total number of particles (valued only if world_rank==0)
-    size_t nParticles = -1;
-
-#if USE_EMPI
-    /* start malelability region */
-    ADM_MalleableRegion (ADM_SERVICE_START);
-#endif
-
     // For each element in the time axis
     for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
 
@@ -168,6 +171,10 @@ void Wacomm::run(double &time, double&part, double&cuda)
          */
         Particles *pLocalParticles;
 
+#if defined(USE_EMPI)
+        MPI_Barrier (ADM_COMM_WORLD);
+#endif
+
         // Check if the processor is the number 0
         if (world_rank == 0) {
             
@@ -176,7 +183,6 @@ void Wacomm::run(double &time, double&part, double&cuda)
 
             // Convert time in days based
             modJulian = modJulian / 86400;
-
 
             JulianDate::fromModJulian(modJulian, cal);
 
@@ -242,16 +248,21 @@ void Wacomm::run(double &time, double&part, double&cuda)
 #endif
         }
 
-#if defined(USE_MPI) || defined(USE_EMPI)
+#if defined(USE_MPI)
         // Broadcast the number of particles for each processor
         MPI_Bcast(send_counts.get(),world_size,MPI_INT,0,MPI_COMM_WORLD);
+#endif
 
+#if defined(USE_EMPI)
+        // Broadcast the number of particles for each processor
+        MPI_Bcast(send_counts.get(),world_size,MPI_INT,0,ADM_COMM_WORLD);
+#endif
+
+#if defined(USE_MPI) || defined(USE_EMPI)
         // Get the numeber of particles to process for the current processor
         int particlesToProcess=send_counts.get()[world_rank];
 
         LOG4CPLUS_DEBUG(logger, world_rank << ":" << " particlesToProcess:" << particlesToProcess);
-
-
 
         // Allocate the receiving buffer
         recvbuf=std::make_unique<particle_data[]>(particlesToProcess);
@@ -298,9 +309,17 @@ void Wacomm::run(double &time, double&part, double&cuda)
         // Add the new datatype
         MPI_Type_commit(&mpiParticleData);
 
+#if defined(USE_MPI)
         // Distribute to all processes the send buffer
         mpiError=MPI_Scatterv(sendbuf.get(), send_counts.get(), displs.get(), mpiParticleData,
                      recvbuf.get(), particlesToProcess, mpiParticleData, 0, MPI_COMM_WORLD);
+#endif
+
+#if defined(USE_EMPI)
+        // Distribute to all processes the send buffer
+        mpiError=MPI_Scatterv(sendbuf.get(), send_counts.get(), displs.get(), mpiParticleData,
+                     recvbuf.get(), particlesToProcess, mpiParticleData, 0, ADM_COMM_WORLD);
+#endif
 
         LOG4CPLUS_DEBUG(logger, world_rank << ": mpiError=" << mpiError);
 
@@ -614,9 +633,17 @@ void Wacomm::run(double &time, double&part, double&cuda)
             recvbuf[idx]=localParticles.at(idx).data();
         }
 
+#if defined(USE_MPI)
         // Send the receiving buffer to the process with world_rank==0
         MPI_Gatherv(recvbuf.get(), send_counts.get()[world_rank],mpiParticleData,
                     sendbuf.get(),send_counts.get(),displs.get(),mpiParticleData,0,MPI_COMM_WORLD);
+#endif
+
+#if defined(USE_EMPI)
+        // Send the receiving buffer to the process with world_rank==0
+        MPI_Gatherv(recvbuf.get(), send_counts.get()[world_rank],mpiParticleData,
+                    sendbuf.get(),send_counts.get(),displs.get(),mpiParticleData,0,ADM_COMM_WORLD);
+#endif
 
         // Remove the MPI Data type
         MPI_Type_free(&mpiParticleData);
@@ -699,7 +726,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
             auto _str = std::chrono::high_resolution_clock::now();
 
             // Evaluate the concentration of particles per grid cell
-#pragma omp parallel for default(none) shared(nParticles, ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
+            #pragma omp parallel for default(none) shared(nParticles, ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
             // For each particle...
             for (int idx = 0; idx < nParticles; idx++) {
                 // Get the reference to the particle
@@ -724,7 +751,7 @@ void Wacomm::run(double &time, double&part, double&cuda)
 
             if (config->MaskOutput()) {
                 // Mask all grid cells belonging to the land
-#pragma omp parallel for collapse(3) default(none) shared(ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
+                #pragma omp parallel for collapse(3) default(none) shared(ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
                 // For each level...
                 for (int k = -(int) s_rho + 1; k <= 0; k++) {
 
@@ -771,8 +798,8 @@ void Wacomm::run(double &time, double&part, double&cuda)
     if (world_rank==0) {
         Calendar calFinal;
 
-	// Get initial oceanTime from config file
-	double startOceanTime=config->JulianStart()*86400;
+        // Get initial oceanTime from config file
+        double startOceanTime=config->JulianStart()*86400;
 
         // Calculate the oceanTime at the end of calculations
         double finalOceanTime=oceanModelAdapter->OceanTime()[ocean_time-1]+config->Deltat();
@@ -782,60 +809,54 @@ void Wacomm::run(double &time, double&part, double&cuda)
 
         // Check if the history must be saved
         if (!config->SaveHistory().empty()) {
-	    // Check if the history must be saved
-	    if (int(finalOceanTime-startOceanTime)%config->RestartInterval() == 0) {
+        // Check if the history must be saved
+            if (int(finalOceanTime-startOceanTime)%config->RestartInterval() == 0) {
+                // Create the history filename
+                string historyFilename = config->HistoryRoot() + calFinal.asNCEPdate() ;
 
-            	// Create the history filename
-            	string historyFilename = config->HistoryRoot() + calFinal.asNCEPdate() ;
+                LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
 
-            	LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
+                // Check if the history has to be saved as text (Fortran WaComM compatibility)
+                if (config->SaveHistory() == "text") {
 
-            	// Check if the history has to be saved as text (Fortran WaComM compatibility)
-            	if (config->SaveHistory() == "text") {
+                    // Save the history as text
+                    particles->saveAsTxt(historyFilename+ ".txt");
 
-                	// Save the history as text
-                	particles->saveAsTxt(historyFilename+ ".txt");
+                    // Check if the history has to be saved as geojson - to be used only for a small amount of particles
+                } else if (config->SaveHistory() == "json") {
 
-                	// Check if the history has to be saved as geojson - to be used only for a small amount of particles
-            	} else if (config->SaveHistory() == "json") {
+                    // Save the history as geojson
+                    particles->saveAsJson(historyFilename+ ".json", finalOceanTime, oceanModelAdapter);
 
-                	// Save the history as geojson
-                	particles->saveAsJson(historyFilename+ ".json", finalOceanTime, oceanModelAdapter);
+                    // Check if the history has to be saved as NetCDF file (new style, suggested)
+                } else if (config->SaveHistory() == "nc") {
 
-                	// Check if the history has to be saved as NetCDF file (new style, suggested)
-            	} else if (config->SaveHistory() == "nc") {
-
-                	// Save the history as NetCDF
-                	particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter);
-            	}
-	    }
+                    // Save the history as NetCDF
+                    particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter);
+                }
+            }
         }
 
-	if (int(finalOceanTime-startOceanTime)%config->TimeStep() == 0) {
-        	// Create the output filename
-        	string ncOutputFilename=config->NcOutputRoot()+cal.asNCEPdate()+".nc";
+        if (int(finalOceanTime-startOceanTime)%config->TimeStep() == 0) {
+            // Create the output filename
+            string ncOutputFilename=config->NcOutputRoot()+cal.asNCEPdate()+".nc";
 
-        	LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
+            LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
 
-        	// Save the history
-        	save(ncOutputFilename,conc);
-        	//save(ncOutputFilename);
+            // Save the history
+            save(ncOutputFilename,conc);
+            //save(ncOutputFilename);
         }
     }
 
 #ifdef USE_EMPI
+    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_PARTICLES", &nParticles);
+    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_ITERATION", &idx);
+
     int status;
     status = ADM_MalleableRegion(ADM_SERVICE_STOP);
 
-    // check if process ended after malleable region
-    if (status == ADM_ACTIVE) {
-	// updata world_rank and size
-        MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
-        MPI_Comm_size(ADM_COMM_WORLD, &world_size);
-    } else {
-        // end the process
-        return;
-    }
+    return status;
 #endif
 };
 

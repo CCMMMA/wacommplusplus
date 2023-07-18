@@ -1,32 +1,3 @@
-#include <iostream>
-#include <stdlib.h> /* getenv */
-#include <string>
-
-#ifdef USE_CUDA
-#include <cuda.h>
-#include <cuda_runtime_api.h>
-#endif
-
-#if defined(USE_MPI) || defined(USE_EMPI)
-#define OMPI_SKIP_MPICXX
-#include <mpi.h>
-#endif
-
-#ifdef USE_OMP
-#include <omp.h>
-#endif
-
-#include "Utils.hpp"
-
-#ifdef USE_EMPI
-extern "C" {
-#include <empi.h>
-}
-#endif
-
-using namespace std;
-
-
 // log4cplus - https://github.com/log4cplus/log4cplus
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
@@ -42,6 +13,32 @@ using namespace std;
 #include "JulianDate.hpp"
 
 #include <iostream>
+#include <stdlib.h> /* getenv */
+#include <string>
+
+#ifdef USE_CUDA
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#endif
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif
+
+#include "Utils.hpp"
+
+#if defined(USE_MPI) || defined(USE_EMPI)
+#define OMPI_SKIP_MPICXX
+#include <mpi.h>
+#endif
+
+#ifdef USE_EMPI
+extern "C" {
+#include <empi.h>
+}
+#endif
+
+using namespace std;
 
 
 log4cplus::Logger logger;
@@ -182,6 +179,7 @@ int main(int argc, char **argv) {
     auto start_whole = std::chrono::high_resolution_clock::now();
 
     wacommPlusPlus.run();
+    
     auto end_whole = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsedLocal = end_whole - start_whole;
     // LOG4CPLUS_INFO(logger,  "Global Execution Time (sec): " << elapsedLocal.count() / 24);
