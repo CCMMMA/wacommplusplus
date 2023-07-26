@@ -79,12 +79,24 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
     int procs_hint = 0;
     int excl_nodes_hint = 0;
-    //if ( nParticles > 0){
-    //    procs_hint = 2;
+    //if (part > 20000){
+    //    procs_hint = -1;
+    //    excl_nodes_hint = 0;
+    //    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_HINT_NUM_PROCESS", &procs_hint);
+    //    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_HINT_EXCL_NODES", &excl_nodes_hint);
+    //} else if (part <= 15000) {
+    //    procs_hint = 1;
     //    excl_nodes_hint = 0;
     //    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_HINT_NUM_PROCESS", &procs_hint);
     //    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_HINT_EXCL_NODES", &excl_nodes_hint);
     //}
+
+    if (time > 2000) {
+	    procs_hint = 1;
+        excl_nodes_hint = 0;
+        ADM_RegisterSysAttributesInt ("ADM_GLOBAL_HINT_NUM_PROCESS", &procs_hint);
+        ADM_RegisterSysAttributesInt ("ADM_GLOBAL_HINT_EXCL_NODES", &excl_nodes_hint);
+    }
 
     /* start malelability region */
     ADM_MalleableRegion (ADM_SERVICE_START);
@@ -787,7 +799,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
             // Calculate the number of particles per second
             double nParticlesPerSecond = nParticles / elapsed.count();
-            time = elapsed.count();
+            time = elapsed.count() * 1000;
             part = nParticlesPerSecond;
 
             LOG4CPLUS_INFO(logger, "Processed " << nParticles << " in " << elapsed.count() << " seconds ("<< nParticlesPerSecond <<" particles/second).");
@@ -850,7 +862,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
     }
 
 #ifdef USE_EMPI
-    ADM_RegisterSysAttributesInt ("ADM_GLOBAL_PARTICLES", &nParticles);
+    ADM_RegisterSysAttributesDouble ("ADM_GLOBAL_TIME", &time);
+    ADM_RegisterSysAttributesDouble ("ADM_GLOBAL_PARTICLES", &part);
     ADM_RegisterSysAttributesInt ("ADM_GLOBAL_ITERATION", &idx);
 
     int status;

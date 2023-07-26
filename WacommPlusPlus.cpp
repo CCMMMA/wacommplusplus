@@ -43,6 +43,7 @@ void WacommPlusPlus::run() {
     sprintf(bin,"%s","wacomm");
 
     int idx = 0;
+    double p = 17000, t = 0.0;
     double time_average = 0.0;
     double part_average = 0.0;
     double cuda_average = 0.0;
@@ -75,7 +76,8 @@ void WacommPlusPlus::run() {
     }
 
     ADM_GetSysAttributesInt ("ADM_GLOBAL_ITERATION", &idx);
-    ADM_GetSysAttributesInt ("ADM_GLOBAL_PARTICLES", &nParticles);
+    ADM_RegisterSysAttributesDouble ("ADM_GLOBAL_PARTICLES", &p);
+    ADM_RegisterSysAttributesDouble ("ADM_GLOBAL_TIME", &t);
 
     /* starting monitoring service */
     ADM_MonitoringService (ADM_SERVICE_START);
@@ -170,10 +172,11 @@ void WacommPlusPlus::run() {
             Wacomm wacomm(config, oceanModelAdapter, sources, particles);
 
             // Run the model
-            double t=0, p=0, cuda=0;
+            double cuda=0;
 
             int status = wacomm.run(t,p,cuda,nParticles,idx);
             
+#ifdef USE_EMPI
             // check if process ended after malleable region
             if (status == ADM_ACTIVE) {
                 // updata world_rank and size
@@ -185,6 +188,7 @@ void WacommPlusPlus::run() {
                 // end the process
                 break;
             }
+#endif
 
             time_average += t;
             part_average += p;
