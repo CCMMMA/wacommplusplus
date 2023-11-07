@@ -871,6 +871,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
     return status;
 #endif
+
+    return 0;
 };
 
 Wacomm::~Wacomm() = default;
