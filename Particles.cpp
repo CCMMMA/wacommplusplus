@@ -8,7 +8,6 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <iomanip>
-#include <cpr/cpr.h>
 
 // for convenience
 using json = nlohmann::json;
