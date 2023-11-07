@@ -173,7 +173,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 ExternalProject_Add(zlib
-        URL https://zlib.net/zlib-1.2.13.tar.gz
+        URL https://zlib.net/zlib-1.3.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
         CONFIGURE_COMMAND CFLAGS=-fPIC ./configure --prefix=${EXTERNAL_INSTALL_LOCATION}
@@ -189,7 +189,7 @@ ExternalProject_Add(curl
         URL https://curl.haxx.se/download/curl-7.73.0.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --without-libidn --disable-ldap
+        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --without-libidn --disable-ldap --without-brotli --without-openssl
         BUILD_COMMAND make
         INSTALL_COMMAND make install
         )
@@ -249,9 +249,6 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.dylib)
 endif()
 
-FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/whoshuu/cpr.git GIT_TAG c8d33915dbd88ad6c92b258869b03aba06587ff9) # the commit hash for 1.5.0
-FetchContent_MakeAvailable(cpr)
-
 add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h Source.cpp Source.hpp Sources.cpp Sources.hpp OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/ROMSAdapter.hpp Config.cpp Config.hpp OceanModelAdapter.cpp OceanModelAdapter.hpp Utils.cpp Utils.hpp WacommPlusPlus.cpp WacommPlusPlus.hpp JulianDate.cpp JulianDate.hpp OceanModelAdapters/WacommAdapter.cpp OceanModelAdapters/WacommAdapter.hpp ${gpu_cu_files} ${gpu_h_files})
 
 # Expicit the dependencies
@@ -263,4 +260,4 @@ add_dependencies(netcdfcxx netcdf )
 add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
 
-target_link_libraries(${PROJECT_NAME} ${EMPI_LIBRARY} ${PAPI_LIBRARY} ${GLPK_LIBRARY} ${ICC_LIBRARY} ${LIBOMP} pthread dl OpenSSL::SSL nlohmann_json::nlohmann_json cpr::cpr ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} ${CUDART_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${EMPI_LIBRARY} ${PAPI_LIBRARY} ${GLPK_LIBRARY} ${ICC_LIBRARY} ${LIBOMP} pthread dl nlohmann_json::nlohmann_json ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} ${CUDART_LIBRARY} OpenSSL::SSL)
