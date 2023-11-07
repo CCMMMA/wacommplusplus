@@ -35,7 +35,8 @@ double JulianDate::toJulian(int year, int month, int day, int hour, int minute, 
         int ja = (int)(0.01 * julianYear);
         julian += 2 - ja + (0.25 * ja);
     }
-    julian=floor(julian)+hour/24.+minute/1440.+second/86400.;
+    //julian=floor(julian)+hour/24.+minute/1440.+second/86400.;
+    julian=floor(julian)+hour/24.;
 
     return julian;
 }
