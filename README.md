@@ -92,9 +92,8 @@ WaComM++ is developed using C++17. Be sure a compatible toolchain is installed a
     ```
   - Set the environment as user
     ```bash
-    `scl enable devtoolset-9 -- bash`
+    scl enable devtoolset-9 -- bash
     ``
-    
   
 * MacOS:
   CLang
@@ -278,7 +277,28 @@ export OMP_NUM_THREADS=n
 mpirun -n np ./wacommplusplus
 ```
 ## Computational malleability (FlexMPI)
-...
+
+FLEX-MPI is a runtime system that extends the functionalities of the MPI library by providing dynamic load balancing and performance-aware malleability capabilities to MPI applications. Dynamic load balancing allows FLEX-MPI to adapt the workload assignments at runtime to the performance of the computing elements that execute the parallel application. Performance-aware malleability improves the performance of applications by changing the number of processes at runtime.
+
+### Installation
+
+Follow the instructions (https://gitlab.arcos.inf.uc3m.es/acascajo/adm_fmpi) to install Flex-MPI and IC (the intelligent controller communication library). Once Flex-MPI and IC are installed, edit the CMakeLists.txt file (lines 44-47) with the correct paths to where the different components were installed, e.g:
+
+```
+find_library(EMPI_LIBRARY empi HINTS "path_EMPI_lib")
+find_library(PAPI_LIBRARY papi HINTS "path_PAPI_lib")
+find_library(GLPK_LIBRARY glpk HINTS "path_GLPK_lib")
+find_library(ICC_LIBRARY icc HINTS "path_ICC_lib")
+```
+
+- Example: compile with OpenMP, and Flex-MPI support:
+```bash
+cmake -DUSE_OMP=ON -DUSE_MPI=OFF -DUSE_EMPI=ON -DUSE_CUDA=OFF -DDEBUG=OFF ..
+make
+mpirun -n np ./wacommplusplus
+```
+
+NB: you hare to require access to https://gitlab.arcos.inf.uc3m.es/acascajo/adm_fmpi repository.
 
 NB: the overall performance is strictly influenced by the architecture used.
 
