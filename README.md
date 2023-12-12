@@ -1,12 +1,12 @@
 # WaComM++
-WaComM++ is a steroidized version of WaComM - Water quality Community Model.
-WaComM++ supports CUDA GPU computation, shared memory (OpenMP), and distributed memory (MPI) parallelization.
+WaComM++, the Water quality COMmunity Model in C++, is a highly scalable, high-performance Lagrangian transport and diffusion model for marine pollutants assessment.
+WaComM++ supports CUDA GPU computation, shared memory (OpenMP), distributed memory (MPI) parallelization, and computational malleability with Flex-MPI.
 
 The Water Community Model (WaComM) uses a particle-based Lagrangian approach that relies on a tridimensional marine dynamics field produced by Eulerian atmosphere and ocean models.
 WaComM has been developed to match the hierarchical parallelization design requirements.
 
 WaComM is an evolution of the Lagrangian Assessment for Marine Pollution 3D (LAMP3D, https://people.mio.osupytheas.fr/~doglioli/lamp.htm) model.
-We strongly optimized the algorithms to improve performance in high-performance computing environments by adding features such as restarting, GPU acceleration, distributed, and shared memory parallelization.
+We strongly optimized the algorithms to improve performance in high-performance computing environments by adding features such as restarting, GPU acceleration, and distributed and shared memory parallelization.
 
 ![Concentration of suspended matter in sea water](images/wacommplusplus-surface-suspended-matter-bay-of-naples.png)
 
@@ -84,7 +84,7 @@ module load cuda/10.1
 ```
 
 ## Dependencies
-Most part of the dependencies involved in the WaComM++ building is automatically resolved by cmake at the source
+Most of the dependencies involved in the WaComM++ building are automatically resolved by cmake at the source
 preparation time (when cmake is invoked). Nevertheless, some dependencies have to be satisfied a priori:
 
 1) [CMake](https://cmake.org): the latest is the better, the minimum required is the 3.13, but we are currently using the 3.19.
@@ -94,12 +94,12 @@ If your environment doesn't support an updated cmake version, you can install it
 2) [MPI](https://www.mpich.org): usually the most part of cluster environments offer one or more versions of already compiled MPI libraries.
 Those MPI libraries are already integrated with the local scheduler and configured/optimized for the networking hardware 
 available in the cluster. [OpenMPI](https://www.open-mpi.org) and [MVAPICH2](https://mvapich.cse.ohio-state.edu) have been tested. In conjunction with InfiniBand networks, we experienced 
-some troubles in mixing MPI and OpenMP while using OpenMPI, then we successfully switched to MVAPICH2.
+some troubles in mixing MPI and OpenMP while using OpenMPI, but we successfully switched to MVAPICH2.
 
 
 3) [CUDA](https://developer.nvidia.com/cuda-toolkit): we tested WaComM++ with CUDA 10.1 on GeeForce TitanX, Quadro and Tesla V100 equipments with success.
 At the current development state, just the computing capabilities level 3.0 are required, so it could be possible to
-use not recent CUDA-enabled devices. Be aware that the production usage of non-Tesla devices could result
+use devices that are not recent CUDA-enabled. Just to let you know, the production usage of non-Tesla devices could result
 in irreversible hardware damage. By default, the CUDA Toolkit libraries are statically linked. If your environment uses
 GPU remoting as [GVirtuS](https://github.com/gvirtus/) or [rCUDA](http://www.rcuda.net), please link the libraries
 dynamically.
@@ -127,11 +127,11 @@ cd build
 5) Invoke cmake using the following options:
 - USE_MPI - Activate the distributed memory parallelization.
 - USE_OMP - Activate the shared memory parallelization.
-- USE_OPENACC - Activate the OpenACC acceleration (future feature).
-- USE_CUDA - Activate the CUDA acceleration (future feature).
+- USE_FLEXMPI - Activate the computational malleability.
+- USE_CUDA - Activate the CUDA acceleration.
 - DEBUG - Add logging printouts (do not use for production or evaluation.)
 
-WaComM++ uses cmake version 3. In some Linux systems cmake is version 3 by default. In other systems version 3
+WaComM++ uses cmake version 3. In some Linux systems, cmake is version 3 by default. In other systems, version 3
 must be specified using the cmake3 command. 
 
 - Example: compile vanilla WaComM++ (No parallelization)
@@ -144,7 +144,7 @@ cmake ..
 cmake -DUSE_OMP=ON -DUSE_MPI=ON -DUSE_CUDA=ON -DDEBUG=OFF ..
 ```
 
-6) Run, make and wait
+6) Run, make, and wait
 
 ```bash
 make
@@ -165,7 +165,7 @@ Download the data.
 
 1) Open a console application (I.e. Terminal)
 2) Change the current working directory to the WaComM++ building directory
-3) Create the input, processed, output, and restarts directories
+3) Create the input, processed, output, and restart directories
 ```bash
 mkdir input processed output restarts
 ```
@@ -193,10 +193,10 @@ preprocessed, and saved in processed directory.
 ```bash
 ln -sf ../examples/wacomm-native-usecase.json wacomm.json
 ```
-Now WaComM++ is ready to run.
+Now, WaComM++ is ready to run.
 
 # Running
-Could you be sure to have a configuration file?
+Can you have a configuration file?
 WaComM++ can read Fortran namelists used by classic WaComM implementation (https://github.com/ccmmma/wacomm).
 If possible, use a native json configuration file.
 
@@ -247,11 +247,13 @@ follows:
 export OMP_NUM_THREADS=n
 mpirun -n np ./wacommplusplus
 ```
+## Computational malleability (Flex-MPI)
+...
 
 NB: the overall performance is strictly influenced by the architecture used.
 
 # Data sources
-The Center for Monitoring and Modelling Marine and Atmosphere applicationtions (CMMMA, http://meteo.uniparthenope.it) produces data in a routinary fashion.
+The Center for Monitoring and Modelling Marine and Atmosphere applications (CMMMA, http://meteo.uniparthenope.it) produces data in a routinary fashion.
 
 Data is available via OPeNDAP server (http://data.meteo.uniparthenope.it/opendap/opendap/) and via HTTP server (http://api.meteo.uniparthenope.it/files/).
 Simulations produced by the Regional Ocean Model System (ROMS) set up in the Campania Region (Italy) are available here: http://api.meteo.uniparthenope.it/files/rms3/d03/history/
