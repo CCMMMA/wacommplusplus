@@ -1,6 +1,6 @@
 # WaComM++
 WaComM++, the Water quality COMmunity Model in C++, is a highly scalable, high-performance Lagrangian transport and diffusion model for marine pollutants assessment.
-WaComM++ supports CUDA GPU computation, shared memory (OpenMP), distributed memory (MPI) parallelization, and computational malleability with Flex-MPI.
+WaComM++ supports CUDA GPU computation, shared memory (OpenMP), distributed memory (MPI) parallelization, and computational malleability with FlexMPI.
 
 The Water Community Model (WaComM) uses a particle-based Lagrangian approach that relies on a tridimensional marine dynamics field produced by Eulerian atmosphere and ocean models.
 WaComM has been developed to match the hierarchical parallelization design requirements.
@@ -31,25 +31,52 @@ areas for farming activity deployment or in an ex-post fashion to achieve better
 activities.
 
 # Parallelization schema
-WaComM++ uses a particle-based Lagrangian approach relying on a tridimensional ocean dynamics field produced by a coupled Eulerian ocean model.
+WaComM++ uses a particle-based Lagrangian approach relying on a tridimensional ocean dynamics field produced by coupled Eulerian ocean model.
 
 WaComM++ has been designed with hierarchical parallelism in mind. Nevertheless, some requirements have been strongly driven by the transport and diffusion Lagrangian model, for example, the need for data exchange using standard and well-known formats.
 
+The WaComM++ overall structure design is shown in the following figure.
+
+
 ![WaComM++ parallelation schema.](images/wacommplusplus-parallelization-schema.png)
 
-The ocean state, adapted by the OceanModelAdapter component to be used for the transport and diffusion computation, is described by the variables u, v, w (the horizontal and the vertical components of the sea current velocity vector), zeta (the sea surface height), and AKT (vertical diffusivity for the temperature) at a given time T in K, J, I position. The overall computation is performed over three nested cycles:
+The ocean state, adapted by the OceanModelAdapter component to be used for the transport and diffusion computation, is described by the variables _u_, _v_, _w_
+(the horizontal and the vertical components of the sea current velocity vector), _zeta_ (the sea surface height),
+and _AKT_ (vertical diffusivity for the temperature) at a given time _T_ in _K_, _J_, _I_ position.
+The overall computation is performed over three nested cycles:
+* *Ocean state outer cycle:* for each time-referenced dataset (usually 1-hour), a WaComM component is instanced. 
+* *Particles outer cycle:* moves the particle to process using ocean data. 
+* *Particle inner cycle:* moves the particle within the considered time slice, applying the Lagrangian transport and diffusion equations integrated on a given time step.
 
-* Ocean state outer cycle: for each time-referenced dataset (typically 1-hour data), a WaComM component is instanced. It is also responsible for managing newly emitted particles (sources) and "dead" particles, adding/removing them from the workflow.
-* Particles outer cycle: assigns the particles to process using ocean data. Manages computational data and HPC operations.
-* Particle inner cycle: moves the particles within the considered time slice applying the Lagrangian transport and diffusion equations integrated on a given time step.
+While time-dependent iterations characterize the ocean state outer cycle and the inner particle cycle, the particles' outer cycle has been hierarchically parallelized because each particle movement is independent.
+
+Therefore, the OceanModelAdapter component prepares and adapts data from ocean simulations or forecasts to the data structures managed by the transport and diffusion model.
+This data is managed as multidimensional matrices usually stored in NetCDF files. Although most parts of environmental models use the [NetCDF CF Conventions and Metadata](https://cfconventions.org),
+some processing is needed to prepare the ocean state for WaComM++.
+
+The Source component implements the sea pollutant emission generator. Each emission source is defined by its position (latitude, longitude, and depth),
+the number of Lagrangian particles spilled out per hour and the emission time interval. 
+
+We designed WaComM++ using an Object-Oriented approach applied to the physics equation solver embedded in the Particle component. First, each particle is moved using the algorithm implemented in the Particle component.
+
+This component represents a Lagrangian particle characterized by its _3D position_, _timestamp of generation_, _age_, and _health_.
+
+The _Particles_ component is composed of the _particle_ components.
+Its duty deals with particle-related I/O operations as the state persistence among two simulations (restarting). 
+
+The WaComMPlusPlus component aggregates OceanModelAdapter, Sources, and Particles.
+This component manages the ocean state outer cycle, providing, for each time-related dataset, the WaComM component with the momentum (u, v, and w components of the current sea vector),
+the variation of the sea surface height (zeta), and the vertical turbulent diffusion (AKT). The actual particle movement is encapsulated in the Particle component.
+
+The WaComM component encapsulates the particles' outer cycle of the transport and diffusion model as detailed in [Montella et Al.](https://ieeexplore.ieee.org/abstract/document/10137219). 
 
 # Acknowledgments
 The following initiatives support waComM++ development:
 * Research agreement MytilAI (CUP I65F21000040002, http://meteo.uniparthenope.it/mytiluse/) - Supporting operational pollutant transport and diffusion for AI-based farmed mussels contamination prediction.
-* EuroHPC H2020 project ADMIRE (956748-ADMIRE-H2020-JTI-EuroHPC-2019-1, https://www.admire-eurohpc.eu) - WP7: Environmental application. Using malleability to improve balance between the overall performance and the computational resource allocation. 
+* EuroHPC H2020 project ADMIRE (956748-ADMIRE-H2020-JTI-EuroHPC-2019-1, https://www.admire-eurohpc.eu) - WP7: Environmental application. Using malleability to improve the balance between the overall performance and the computational resource allocation. 
 
 # Cite WaComM++
-* Di Luccio Diana, Ciro Giuseppe De Vita, Gennero Mellone, Enrico Zambianchi, and Raffaele Montella. "Modeling passive tracers in the marine environment with high performance heterogeneous and hierarchical computing". Journal of Coastal and Offshore Science and Engineering (COSE), 2022 - in press.
+* Montella Raffaele, Diana Di Luccio, Ciro Giuseppe De Vita, Gennaro Mellone, Marco Lapegna, Gloria Ortega, Livia Marcellino, Enrico Zambianchi, and Giulio Giunta. "A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment." In 2023 31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing (PDP), pp. 17-26. IEEE, 2023.[Paper](https://ieeexplore.ieee.org/abstract/document/10137219) [BibText](https://scholar.googleusercontent.com/scholar.bib?q=info:lm5MT5UXsbsJ:scholar.google.com/&output=citation&scisdr=ClHkMdBFEO_Nu9tFARo:AFWwaeYAAAAAZXhDGRqgCwHQSP46ByXPJ7rmjkA&scisig=AFWwaeYAAAAAZXhDGcaIZF6NQTQBw0yZiqBLSsc&scisf=4&ct=citation&cd=-1&hl=en)
   
 * Di Luccio Diana, Angelo Riccio, Ardelio Galletti, Giuliano Laccetti, Marco Lapegna, Livia Marcellino, Sokol Kosta, and Raffaele Montella. "Coastal marine data crowdsourcing using the Internet of Floating Things: Improving the results of a water quality model." Ieee Access (2020). [Paper](https://ieeexplore.ieee.org/abstract/document/9098885) [BibText](https://scholar.googleusercontent.com/scholar.bib?q=info:zfxBb1pXu6AJ:scholar.google.com/&output=citation&scisdr=CgVAs4t4EOqOsfORuKc:AAGBfm0AAAAAYmKXoKfXYbP_udXdxi_gRtDgpRDUlAmz&scisig=AAGBfm0AAAAAYmKXoDu_U64Tee-yjLp6iEBcYJ-8OeL3&scisf=4&ct=citation&cd=-1&hl=en)
   
@@ -84,7 +111,7 @@ module load cuda/10.1
 ```
 
 ## Dependencies
-Most of the dependencies involved in the WaComM++ building are automatically resolved by cmake at the source
+Most dependencies involved in the WaComM++ building are automatically resolved by cmake at the source
 preparation time (when cmake is invoked). Nevertheless, some dependencies have to be satisfied a priori:
 
 1) [CMake](https://cmake.org): the latest is the better, the minimum required is the 3.13, but we are currently using the 3.19.
@@ -99,12 +126,15 @@ some troubles in mixing MPI and OpenMP while using OpenMPI, but we successfully 
 
 3) [CUDA](https://developer.nvidia.com/cuda-toolkit): we tested WaComM++ with CUDA 10.1 on GeeForce TitanX, Quadro and Tesla V100 equipments with success.
 At the current development state, just the computing capabilities level 3.0 are required, so it could be possible to
-use devices that are not recent CUDA-enabled. Just to let you know, the production usage of non-Tesla devices could result
+use devices that are not recent CUDA-enabled. The production usage of non-Tesla devices could result
 in irreversible hardware damage. By default, the CUDA Toolkit libraries are statically linked. If your environment uses
 GPU remoting as [GVirtuS](https://github.com/gvirtus/) or [rCUDA](http://www.rcuda.net), please link the libraries
 dynamically.
 **NB:** Since version 11.0, the CUDA Toolkit is not longer available for MacOS. The latest supported
 MacOS version is the 10.13.
+
+
+4) [FlexMPI](https://gitlab.arcos.inf.uc3m.es/desingh/FlexMPI): ...
    
 ## Using the command line interface
 
@@ -247,7 +277,7 @@ follows:
 export OMP_NUM_THREADS=n
 mpirun -n np ./wacommplusplus
 ```
-## Computational malleability (Flex-MPI)
+## Computational malleability (FlexMPI)
 ...
 
 NB: the overall performance is strictly influenced by the architecture used.
