@@ -8,7 +8,7 @@
 		"dry": true
 	},
 	"io": {
-		"base_path": "http://data.meteo.uniparthenope.it/opendap/opendap/rms3/d03/history/",
+		"base_path": "http://data.meteo.uniparthenope.it/opendap/rms3/d03/history/",
 		"nc_inputs": [
 			"2019/04/01/rms3_d03_20190401Z0800.nc",
 			"2019/04/01/rms3_d03_20190401Z0900.nc",

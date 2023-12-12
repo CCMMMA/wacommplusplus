@@ -9,9 +9,9 @@
 	"io": {
 		"base_path": "processed/",
 		"nc_inputs": [
-			"ocm3_d03_20190401Z01.nc",
-			"ocm3_d03_20190401Z02.nc",
-			"ocm3_d03_20190401Z03.nc"
+			"ocm3_d03_20190401Z08.nc",
+			"ocm3_d03_20190401Z09.nc",
+			"ocm3_d03_20190401Z10.nc"
 		],
 		"ocean_model":"WaComM",
 		"nc_output_root": "output/wacomm_his_",
@@ -23,8 +23,8 @@
 		"nc_input_root":"processed/ocm3_d03_"
 	},
 	"restart": {
-		"active": true,
-		"restart_file": "restart/WACOMM_rst_20190401Z01.nc",
+		"active": false,
+		"restart_file": "",
 		"interval": 7200
 	},
 	"sources": {

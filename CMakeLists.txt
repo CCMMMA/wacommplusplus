@@ -260,4 +260,4 @@ add_dependencies(netcdfcxx netcdf )
 add_dependencies(${PROJECT_NAME} netcdfcxx)
 add_dependencies(${PROJECT_NAME} log4cplus)
 
-target_link_libraries(${PROJECT_NAME} ${EMPI_LIBRARY} ${PAPI_LIBRARY} ${GLPK_LIBRARY} ${ICC_LIBRARY} ${LIBOMP} pthread dl nlohmann_json::nlohmann_json ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} ${CUDART_LIBRARY} OpenSSL::SSL)
+target_link_libraries(${PROJECT_NAME} ${EMPI_LIBRARY} ${PAPI_LIBRARY} ${GLPK_LIBRARY} ${ICC_LIBRARY} ${LIBOMP} pthread dl nlohmann_json::nlohmann_json ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} ${CUDART_LIBRARY} OpenSSL::SSL dl)
