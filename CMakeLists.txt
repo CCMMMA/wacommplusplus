@@ -173,7 +173,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 ExternalProject_Add(zlib
-        URL https://zlib.net/zlib-1.3.tar.gz
+        URL https://zlib.net/zlib-1.3.1.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
         CONFIGURE_COMMAND CFLAGS=-fPIC ./configure --prefix=${EXTERNAL_INSTALL_LOCATION}
@@ -186,10 +186,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 ExternalProject_Add(curl
-        URL https://curl.haxx.se/download/curl-7.73.0.tar.gz
+        URL https://curl.se/download/curl-8.7.1.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --without-libidn --disable-ldap --without-brotli --without-openssl
+        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --disable-ldap --without-brotli --without-ssl
         BUILD_COMMAND make
         INSTALL_COMMAND make install
         )
@@ -237,7 +237,8 @@ endif()
 
 
 ExternalProject_Add(log4cplus
-        URL https://kumisystems.dl.sourceforge.net/project/log4cplus/log4cplus-stable/2.0.5/log4cplus-2.0.5.tar.gz
+        #URL https://kumisystems.dl.sourceforge.net/project/log4cplus/log4cplus-stable/2.0.5/log4cplus-2.0.5.tar.gz
+        URL https://github.com/log4cplus/log4cplus/releases/download/REL_2_1_1/log4cplus-2.1.1.tar.gz
         TIMEOUT 360
         BUILD_IN_SOURCE 1
         CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/
