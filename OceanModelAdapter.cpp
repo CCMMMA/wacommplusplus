@@ -259,7 +259,7 @@ void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double
     size_t s_w = _data.w.Ny();
 
     for (int j=0; j<eta_rho; j++) {
-        for (int i=0; i<eta_rho; i++) {
+        for (int i=0; i<xi_rho; i++) {
             // Calculate the distance in radiants of latitude between the grid cell where is
             // currently located the particle and the next one.
             d1=(latRad-_data.latRad(j,i));
