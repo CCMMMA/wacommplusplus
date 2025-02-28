@@ -99,18 +99,22 @@ void WacommPlusPlus::run() {
             oceanModelAdapter = make_shared<WacommAdapter>(ncInput);
         }
 
+#ifdef USE_MPI
         // Initialize variables for ocean model dimensions
         size_t ocean_time = 0, s_rho = 0, s_w = 0, eta_rho = 0, xi_rho = 0;
+#endif
 
         // Process the ocean model input only on the root process (rank 0)
         if (world_rank == 0) {
             oceanModelAdapter->process();
 
+#ifdef USE_MPI
             ocean_time = oceanModelAdapter->OceanTime().Nx();
             s_rho = oceanModelAdapter->SRho().Nx();
             s_w = oceanModelAdapter->SW().Nx();
             eta_rho = oceanModelAdapter->Lat().Nx();
             xi_rho = oceanModelAdapter->Lon().Ny();
+#endif
         }
 
 #ifdef USE_MPI
@@ -120,28 +124,12 @@ void WacommPlusPlus::run() {
         MPI_Bcast(&s_w, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
         MPI_Bcast(&eta_rho, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
         MPI_Bcast(&xi_rho, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
-#endif
 
         // Allocate memory for non-root processes after receiving dimensions
         if (world_rank != 0) {
-            oceanModelAdapter->OceanTime().Allocate(ocean_time);
-            oceanModelAdapter->SRho().Allocate(s_rho, -(int)s_rho+1);
-            oceanModelAdapter->SW().Allocate(s_w, -(int)s_w+1);
-            oceanModelAdapter->DepthIntervals().Allocate(s_w, -(int)s_w+2);
-            oceanModelAdapter->Mask().Allocate(eta_rho, xi_rho);
-            oceanModelAdapter->Lon().Allocate(eta_rho, xi_rho);
-            oceanModelAdapter->Lat().Allocate(eta_rho, xi_rho);
-            oceanModelAdapter->LonRad().Allocate(eta_rho, xi_rho);
-            oceanModelAdapter->LatRad().Allocate(eta_rho, xi_rho);
-            oceanModelAdapter->H().Allocate(eta_rho, xi_rho);
-            oceanModelAdapter->Zeta().Allocate(ocean_time, eta_rho, xi_rho);
-            oceanModelAdapter->U().Allocate(ocean_time, s_rho, eta_rho, xi_rho, 0, -(int)s_rho+1, 0, 0);
-            oceanModelAdapter->V().Allocate(ocean_time, s_rho, eta_rho, xi_rho, 0, -(int)s_rho+1, 0, 0);
-            oceanModelAdapter->W().Allocate(ocean_time, s_w, eta_rho, xi_rho, 0, -(int)s_w+1, 0, 0);
-            oceanModelAdapter->AKT().Allocate(ocean_time, s_w, eta_rho, xi_rho, 0, -(int)s_w+1, 0, 0);
+            oceanModelAdapter->allocateMemory(ocean_time, s_rho, s_w, eta_rho, xi_rho);
         }
 
-#ifdef USE_MPI
         // Broadcast the ocean model data to all processes
         MPI_Bcast(oceanModelAdapter->OceanTime(), ocean_time, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         MPI_Bcast(oceanModelAdapter->SRho(), s_rho, MPI_DOUBLE, 0, MPI_COMM_WORLD);

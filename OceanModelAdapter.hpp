@@ -40,18 +40,17 @@ public:
 
     void saveAsNetCDF(std::string &fileName);
 
-
     virtual void process()=0;
 
     void kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon);
     void deplatlon2kji(double dep, double lat, double lon, double &k, double &j, double &i);
+    void allocateMemory(size_t ocean_time, size_t s_rho, size_t s_w, size_t eta_rho, size_t xi_rho);
 
     oceanmodel_data *dataptr();
 
     Array1<double> &OceanTime();
     Array1<double> &SRho();
     Array1<double> &SW();
-
 
     Array2<double> &Mask();
     Array2<double> &Lon();

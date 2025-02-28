@@ -110,24 +110,9 @@ void ROMSAdapter::process()
 
     LOG4CPLUS_DEBUG(logger,"Loaded!");
 
-    this->OceanTime().Allocate(ocean_time);
-    this->SRho().Allocate(s_rho, -(int)s_rho+1);
-    this->SW().Allocate(s_w, -(int)s_w+1);
-    this->DepthIntervals().Allocate(s_w,-(int)s_w+2);
-    this->Mask().Allocate(eta_rho,xi_rho);
-    this->Lon().Allocate(eta_rho,xi_rho);
-    this->Lat().Allocate(eta_rho,xi_rho);
-    this->LonRad().Allocate(eta_rho,xi_rho);
-    this->LatRad().Allocate(eta_rho,xi_rho);
-    this->H().Allocate(eta_rho,xi_rho);
-    this->Zeta().Allocate(ocean_time,eta_rho,xi_rho);
-    this->U().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
-    this->V().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
-    this->W().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
-    this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
+    this->allocateMemory(ocean_time, s_rho, s_w, eta_rho, xi_rho);
 
     LOG4CPLUS_DEBUG(logger,"Copying 1D ...");
-
 
     this->OceanTime().Load(oceanTime());
     this->SRho().Load(sRho());
@@ -136,9 +121,6 @@ void ROMSAdapter::process()
     for(int k=-(int)s_w+2; k<=0;k++) {
         this->DepthIntervals().operator()(k)=sW(k)-sW(k-1);
     }
-
-
-
 
     this->Mask().Load(mask_rho());
     this->Lat().Load(lat_rho());
@@ -185,7 +167,6 @@ void ROMSAdapter::process()
 
 void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array2<double>& mask_v,
                          Array4<float>& u, Array4<float>& v) {
-
 
     LOG4CPLUS_DEBUG(logger,"uv2rho");
 

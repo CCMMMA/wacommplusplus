@@ -28,28 +28,10 @@ void WacommAdapter::process()  {
     size_t eta_rho=etaRhoDim.getSize();
     size_t xi_rho=xiRhoDim.getSize();
 
-
-    this->OceanTime().Allocate(ocean_time);
-    this->SRho().Allocate(s_rho, -(int)s_rho+1);
-    this->SW().Allocate(s_w, -(int)s_w+1);
-    this->DepthIntervals().Allocate(s_w,-(int)s_w+2);
-    this->Mask().Allocate(eta_rho,xi_rho);
-    this->Lon().Allocate(eta_rho,xi_rho);
-    this->Lat().Allocate(eta_rho,xi_rho);
-    this->LonRad().Allocate(eta_rho,xi_rho);
-    this->LatRad().Allocate(eta_rho,xi_rho);
-    this->H().Allocate(eta_rho,xi_rho);
-    this->Zeta().Allocate(ocean_time,eta_rho,xi_rho);
-    this->U().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
-    this->V().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
-    this->W().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
-    this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
+    this->allocateMemory(ocean_time, s_rho, s_w, eta_rho, xi_rho);
 
     NcVar oceanTimeVar = dataFile.getVar("ocean_time");
     oceanTimeVar.getVar(this->OceanTime()());
-
-    //cout << "OceanModelAdapter::loadFromNetCDF : " << _data.oceanTime(0) << endl;
-
 
     NcVar sRhoVar = dataFile.getVar("s_rho");
     sRhoVar.getVar(this->SRho()());

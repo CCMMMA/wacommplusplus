@@ -29,10 +29,7 @@ Array1<double> &OceanModelAdapter::Latitude(){ return latitude; }
 Array1<double> &OceanModelAdapter::Longitude() { return longitude; }
 Array1<double> &OceanModelAdapter::Depth() { return depth; }
 
-
-
 void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
-
     size_t ocean_time=_data.oceanTime.Nx();
     size_t s_rho=_data.sRho.Nx();
     size_t s_w=_data.sW.Nx();
@@ -184,7 +181,6 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     aktVar.putAtt("field","AKt, scalar, series");
     aktVar.putAtt("time","ocean_time");
     aktVar.putVar(_data.akt());
-
 }
 
 oceanmodel_data *OceanModelAdapter::dataptr() {
@@ -361,6 +357,20 @@ void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double
 // Returns -1 if a < 0 and 1 if a > 0
 double OceanModelAdapter::sgn(double a) { return (a > 0) - (a < 0); }
 
-
-
-
+void OceanModelAdapter::allocateMemory(size_t ocean_time, size_t s_rho, size_t s_w, size_t eta_rho, size_t xi_rho) {
+    this->OceanTime().Allocate(ocean_time);
+    this->SRho().Allocate(s_rho, -(int)s_rho+1);
+    this->SW().Allocate(s_w, -(int)s_w+1);
+    this->DepthIntervals().Allocate(s_w,-(int)s_w+2);
+    this->Mask().Allocate(eta_rho,xi_rho);
+    this->Lon().Allocate(eta_rho,xi_rho);
+    this->Lat().Allocate(eta_rho,xi_rho);
+    this->LonRad().Allocate(eta_rho,xi_rho);
+    this->LatRad().Allocate(eta_rho,xi_rho);
+    this->H().Allocate(eta_rho,xi_rho);
+    this->Zeta().Allocate(ocean_time,eta_rho,xi_rho);
+    this->U().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
+    this->V().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
+    this->W().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
+    this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
+}
