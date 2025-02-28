@@ -36,11 +36,7 @@ void WacommPlusPlus::run() {
     LOG4CPLUS_DEBUG(logger, "External loop...");
 
     int world_size = 1, world_rank = 0;
-    char mpi_name[128];
-    int len, nParticles = 0;
-
-    char bin[1024];
-    sprintf(bin,"%s","wacomm");
+    int nParticles = 0;
 
     int idx = 0;
     double p = 17000, t = 0.0;
@@ -54,6 +50,12 @@ void WacommPlusPlus::run() {
 #endif
 
 #ifdef USE_EMPI
+    char mpi_name[128];
+    int len = 0;
+
+    char bin[1024];
+    sprintf(bin,"%s","wacomm");
+
     MPI_Comm_size(ADM_COMM_WORLD, &world_size);
     MPI_Comm_rank(ADM_COMM_WORLD, &world_rank);
 
@@ -96,7 +98,67 @@ void WacommPlusPlus::run() {
         } else {
             oceanModelAdapter = make_shared<WacommAdapter>(ncInput);
         }
-        oceanModelAdapter->process();
+
+        // Initialize variables for ocean model dimensions
+        size_t ocean_time = 0, s_rho = 0, s_w = 0, eta_rho = 0, xi_rho = 0;
+
+        // Process the ocean model input only on the root process (rank 0)
+        if (world_rank == 0) {
+            oceanModelAdapter->process();
+
+            ocean_time = oceanModelAdapter->OceanTime().Nx();
+            s_rho = oceanModelAdapter->SRho().Nx();
+            s_w = oceanModelAdapter->SW().Nx();
+            eta_rho = oceanModelAdapter->Lat().Nx();
+            xi_rho = oceanModelAdapter->Lon().Ny();
+        }
+
+#ifdef USE_MPI
+        // Broadcast the ocean model dimensions to all processes
+        MPI_Bcast(&ocean_time, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&s_rho, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&s_w, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&eta_rho, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+        MPI_Bcast(&xi_rho, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
+#endif
+
+        // Allocate memory for non-root processes after receiving dimensions
+        if (world_rank != 0) {
+            oceanModelAdapter->OceanTime().Allocate(ocean_time);
+            oceanModelAdapter->SRho().Allocate(s_rho, -(int)s_rho+1);
+            oceanModelAdapter->SW().Allocate(s_w, -(int)s_w+1);
+            oceanModelAdapter->DepthIntervals().Allocate(s_w, -(int)s_w+2);
+            oceanModelAdapter->Mask().Allocate(eta_rho, xi_rho);
+            oceanModelAdapter->Lon().Allocate(eta_rho, xi_rho);
+            oceanModelAdapter->Lat().Allocate(eta_rho, xi_rho);
+            oceanModelAdapter->LonRad().Allocate(eta_rho, xi_rho);
+            oceanModelAdapter->LatRad().Allocate(eta_rho, xi_rho);
+            oceanModelAdapter->H().Allocate(eta_rho, xi_rho);
+            oceanModelAdapter->Zeta().Allocate(ocean_time, eta_rho, xi_rho);
+            oceanModelAdapter->U().Allocate(ocean_time, s_rho, eta_rho, xi_rho, 0, -(int)s_rho+1, 0, 0);
+            oceanModelAdapter->V().Allocate(ocean_time, s_rho, eta_rho, xi_rho, 0, -(int)s_rho+1, 0, 0);
+            oceanModelAdapter->W().Allocate(ocean_time, s_w, eta_rho, xi_rho, 0, -(int)s_w+1, 0, 0);
+            oceanModelAdapter->AKT().Allocate(ocean_time, s_w, eta_rho, xi_rho, 0, -(int)s_w+1, 0, 0);
+        }
+
+#ifdef USE_MPI
+        // Broadcast the ocean model data to all processes
+        MPI_Bcast(oceanModelAdapter->OceanTime(), ocean_time, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->SRho(), s_rho, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->SW(), s_w, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->DepthIntervals(), s_w, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->Mask(), eta_rho * xi_rho, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->Lon(), eta_rho * xi_rho, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->Lat(), eta_rho * xi_rho, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->LonRad(), eta_rho * xi_rho, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->LatRad(), eta_rho * xi_rho, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->H(), eta_rho * xi_rho, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->Zeta(), ocean_time * eta_rho * xi_rho, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->U(), ocean_time * s_rho * eta_rho * xi_rho, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->V(), ocean_time * s_rho * eta_rho * xi_rho, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->W(), ocean_time * s_w * eta_rho * xi_rho, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Bcast(oceanModelAdapter->AKT(), ocean_time * s_w * eta_rho * xi_rho, MPI_FLOAT, 0, MPI_COMM_WORLD);
+#endif
 
         Calendar cal;
 
@@ -199,11 +261,11 @@ void WacommPlusPlus::run() {
     }
 
 #ifdef USE_EMPI
-    /* ending monitoring service */
+    // ending monitoring service
     ADM_MonitoringService (ADM_SERVICE_STOP);
 #endif
 
-    // LOG4CPLUS_INFO(logger,  "Outer Cycle Time (Average): " << time_average / (idx-1));
-    // LOG4CPLUS_INFO(logger,  "Outer Cycle Particles/sec (Average): " << part_average / (idx-1));
-    // LOG4CPLUS_INFO(logger,  "Inner Cycle (Average) sec: " << cuda_average / (idx-1));
+    LOG4CPLUS_DEBUG(logger,  "Outer Cycle Time (Average): " << time_average / (idx-1));
+    LOG4CPLUS_DEBUG(logger,  "Outer Cycle Particles/sec (Average): " << part_average / (idx-1));
+    LOG4CPLUS_DEBUG(logger,  "Inner Cycle (Average) sec: " << cuda_average / (idx-1));
 }
